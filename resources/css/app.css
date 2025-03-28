@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Table pagination: active page highlight */
+.mary-table-pagination span[aria-current="page"] > span {
+    @apply bg-primary text-base-100
+}
+
+/* Table pagination: for dark mode*/
+.mary-table-pagination span[aria-disabled="true"] span {
+    @apply bg-inherit
+}
+
+/* Table pagination: for dark mode */
+.mary-table-pagination button {
+    @apply bg-base-100
+}
+
+.gallery_wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    row-gap: 30px;
+    column-gap: 20px;
+    padding: 35px 0px;
+}
+
+.gallery_wrapper .wall_data {
+    width: 100%;
+    display: block;
+}
+
+
+.gallery_wrapper .image_wrapper img {
+    object-fit: cover;
+    width: 10em;
+    height: 10em;
+}
+.gallery_wrapper .moderation_buttons {
+    width: 100%;
+    margin-top: -35px;
+    padding: 0px 5px 0px 5px;
+}
+.gallery_wrapper .uper_image_data {
+    display: flex;
+    width: 100%;
+    margin-bottom: -35px;
+    position: relative;
+    z-index: 10;
+    text-align: right;
+    padding: 0px 5px 0px 5px;
+}
