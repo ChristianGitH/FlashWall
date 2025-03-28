@@ -1,0 +1,35 @@
+6. Utilisation des Relations en Eloquent
+
+Tu peux maintenant utiliser tes relations ainsi :
+🔹 Récupérer les images d’un utilisateur
+
+$user = User::find(1);
+$images = $user->images; // Liste des images de l'utilisateur
+
+🔹 Récupérer les catégories d’un utilisateur
+
+$user = User::find(1);
+$categories = $user->categories; // Liste des catégories créées par l'utilisateur
+
+🔹 Récupérer toutes les images d’une catégorie
+
+$category = Category::find(1);
+$images = $category->images; // Liste des images de cette catégorie
+
+🔹 Récupérer l’utilisateur et la catégorie d’une image
+
+$image = Image::find(10);
+$user = $image->user; // L'utilisateur qui possède cette image
+$category = $image->category; // La catégorie de cette image
+
+
+
+
+MISE A JOUR LARAVEL : 
+Modifier composer.json
+puis Terminal : composer update
+
+Reset BDD : 
+php artisan migrate:fresh --seed
+
+Start Vite server : npm run dev (or build)

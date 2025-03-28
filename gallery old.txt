@@ -1,0 +1,91 @@
+ tooltip tooltip-bottom" data-tip="{{ __( $image->caption ) }}
+ 
+<?php
+
+use Livewire\Volt\Component;
+use App\Models\Category;
+use App\Models\Wall;
+use App\Models\Image;
+use Intervention\Image\ImageManager;
+use Mary\Traits\Toast;
+use Illuminate\Support\Facades\Storage;
+
+
+new class extends Component {
+    use Toast;
+
+    public Wall $wall;
+    
+    public $images;
+
+    public function mount(Wall $wall)
+    {
+        $this->images = Image::where('wall_id', $wall->id)->get();
+    }
+
+
+    public function approve($id)
+    {
+        $image = Image::findOrFail($id);
+        $image->update(['approved' => true]);
+
+        // Rafraîchir les images
+        $this->images = Image::where('approved', false)->get();
+    }
+
+    public function archive($id)
+    {
+        $image = Image::findOrFail($id);
+        $image->update(['archived' => true]);
+
+        // Rafraîchir les images
+        $this->images = Image::where('approved', false)->get();
+    }
+
+    public function deleteImage(int $id): void
+    {
+        $image = Image::find($id);
+        Storage::disk('public')->delete ([
+            $image->name,
+            $image->thumb,
+        ]);
+        $image->delete();
+        $this->success(__('Photo deleted with success.'));
+    }
+
+}; ?>
+
+<div class="gallery_wrapper">
+
+        @foreach($images as $image)
+        <div class="image_wrapper">
+                <a href="{{ asset('storage/' . $image->name) }}" class="block">
+                    <img src="{{ asset('storage/' . $image->thumb) }}" />
+                </a>
+            <div class="moderation_buttons flex justify-between">
+                <x-button 
+                    wire:click="approve({{ $image->id }})"
+                    icon="o-check"
+                    class="btn btn-sm btn-outline"
+                    tooltip="{{ __('Appprove') }}"
+                    aria-label="{{ __('Appprove') }}"
+                />
+                <x-button 
+                    wire:click="archive({{ $image->id }})"
+                    icon="o-archive-box"
+                    class="btn btn-sm btn-outline"
+                    tooltip="{{ __('Archive') }}"
+                    aria-label="{{ __('Archive') }}"
+                />
+                <x-button 
+                    wire:click.prevent="deleteImage({{ $image->id }})"
+                    icon="o-trash"
+                    class="btn btn-sm btn-outline"
+                    wire:confirm="{{ __('Are you sure you want to delete this photo?') }}"
+                    tooltip="{{ __('Delete') }}"
+                       aria-label="{{ __('Delete') }}"
+                />
+            </div>
+        </div>
+        @endforeach
+</div>
