@@ -30,4 +30,6 @@ new class extends Component {
 
 <livewire:walls.approved-images :wall="$wall" />
 
+<livewire:walls.archived-images :wall="$wall" />
+
 </div>

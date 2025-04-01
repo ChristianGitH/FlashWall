@@ -33,3 +33,5 @@ Reset BDD :
 php artisan migrate:fresh --seed
 
 Start Vite server : npm run dev (or build)
+
+Create volt component : php artisan make:volt walls/archived-images --class
