@@ -71,14 +71,29 @@ use Illuminate\Support\Facades\Storage;
 
     <?php if (isset($component)) { $__componentOriginal602b228a887fab12f0012a3179e5b533 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal602b228a887fab12f0012a3179e5b533 = $attributes; } ?>
-<?php $component = Mary\View\Components\Button::resolve(['icon' => 'o-archive-box','tooltip' => ''.e(__('Archive Selected')).''] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Mary\View\Components\Button::resolve(['icon' => 'o-archive-box','tooltip' => ''.e(__('Archive selected')).''] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Mary\View\Components\Button::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['@click' => '','class' => 'btn btn-sm','aria-label' => ''.e(__('Archive Selected')).'']); ?>
+<?php $component->withAttributes(['@click' => 'if (selected.length === 0) { 
+                    errorMessage = \''.e(__('No images selected.')).'\'; 
+                    setTimeout(() => errorMessage = \'\', 1500);
+                } else {
+                    modalTitle = \''.e(__('Archive Images')).'\';
+                    modalMessage = \''.e(__('You are about to archive')).' \' + selected.length + \' '.e(__('images.')).'\';
+                    modalConfirmText = \''.e(__('Yes, archive !')).'\';
+                    modalConfirmClass = \'bg-blue-600 hover:bg-blue-700\';
+                    showConfirmModal = true; 
+                    confirmAction = () => { 
+                        errorMessage = \'\'; 
+                        $wire.call(\'archiveSelected\', selected);
+                        showConfirmModal = false;
+                    };
+                }
+            ','class' => 'btn btn-sm','aria-label' => ''.e(__('Archive selected')).'']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal602b228a887fab12f0012a3179e5b533)): ?>
@@ -188,7 +203,7 @@ use Illuminate\Support\Facades\Storage;
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Mary\View\Components\Button::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['wire:click' => 'archiveSelected','class' => 'btn btn-sm','aria-label' => ''.e(__('Archive Selected')).'','@click' => '$wire.set(\'selectedImages\', selected)']); ?>
+<?php $component->withAttributes(['wire:click' => 'archiveImage('.e($image->id).')','class' => 'btn btn-sm','aria-label' => ''.e(__('Archive Selected')).'','@click' => '$wire.set(\'selectedImages\', selected)']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal602b228a887fab12f0012a3179e5b533)): ?>

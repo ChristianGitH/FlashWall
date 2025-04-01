@@ -30,8 +30,21 @@ new class extends Component {
     {
         return Image::where('wall_id', $this->wall->id)
                     ->where('approved', false)
+                    ->where('archived', false)
                     ->orderBy('created_at', 'desc')
                     ->get();
+    }
+
+
+    // Approving images //
+    public function approveImage(int $id): void
+    {
+        // Récupérer directement les données nécessaires en une seule requête
+       Image::where('id', $id)->update(['approved' => true]);
+
+        // Réinitialiser la sélection
+        $this->dispatch('reset-selection');
+        $this->success(__('Image approved successfully.'));
     }
 
     public function approveSelected(array $selectedImages)
@@ -46,32 +59,59 @@ new class extends Component {
 
         // Réinitialiser la sélection
         $this->dispatch('reset-selection');
-
         $this->success(__('Selected images approved.'));
     }
     
-    public function approveImage(int $id): void
+
+    // Archiving images //
+    public function archiveImage(int $id): void
     {
         // Récupérer directement les données nécessaires en une seule requête
-       Image::where('id', $id)->update(['approved' => true]);
+       Image::where('id', $id)->update(['archived' => true]);
 
         // Réinitialiser la sélection
         $this->dispatch('reset-selection');
-
-        $this->success(__('Photo approved successfully.'));
+        $this->success(__('Image archived successfully.'));
     }
 
-
-    
-    public function archiveSelected()
+    public function archiveSelected(array $selectedImages)
     {
-        Image::whereIn('id', $this->selectedImages)->update(['archived' => true]);
-        $this->images = Image::where('wall_id', $this->wall->id)->where('approved', false)->get();
+        
+        if (empty($selectedImages)) {
+            $this->error(__('No images selected.'));
+            return;
+        }
+
+        Image::whereIn('id', $selectedImages)->update(['archived' => true]);
+
+        // Réinitialiser la sélection
+        $this->dispatch('reset-selection');
         $this->success(__('Selected images archived.'));
     }
 
 
 
+    // Delete images //
+    public function deleteImage(int $id): void
+    {
+        // Récupérer directement les données nécessaires en une seule requête
+        $image = Image::where('id', $id)->first(['id', 'name', 'thumb']);
+    
+        if (!$image) {
+            $this->error(__('Image not found.'));
+            return;
+        }
+    
+        // Supprimer les fichiers
+        Storage::disk('public')->delete([$image->name, $image->thumb]);
+    
+        // Supprimer l'image de la base de données
+        $image->delete();
+
+        // Réinitialiser la sélection
+        $this->dispatch('reset-selection');
+        $this->success(__('Image deleted successfully.'));
+    }
 
     public function deleteSelected(array $selectedImages)
     {
@@ -99,32 +139,7 @@ new class extends Component {
 
         // Réinitialiser la sélection
         $this->dispatch('reset-selection');
-
-    
         $this->success(__('Selected images deleted.'));
-    }
-    
-    
-    public function deleteImage(int $id): void
-    {
-        // Récupérer directement les données nécessaires en une seule requête
-        $image = Image::where('id', $id)->first(['id', 'name', 'thumb']);
-    
-        if (!$image) {
-            $this->error(__('Image not found.'));
-            return;
-        }
-    
-        // Supprimer les fichiers
-        Storage::disk('public')->delete([$image->name, $image->thumb]);
-    
-        // Supprimer l'image de la base de données
-        $image->delete();
-
-        // Réinitialiser la sélection
-        $this->dispatch('reset-selection');
-    
-        $this->success(__('Photo deleted successfully.'));
     }
         
 }; ?>
@@ -177,11 +192,26 @@ new class extends Component {
     />
 
     <x-button 
-        @click=""
+        @click="if (selected.length === 0) { 
+                    errorMessage = '{{ __('No images selected.') }}'; 
+                    setTimeout(() => errorMessage = '', 1500);
+                } else {
+                    modalTitle = '{{ __('Archive Images') }}';
+                    modalMessage = '{{ __('You are about to archive') }} ' + selected.length + ' {{ __('images.') }}';
+                    modalConfirmText = '{{ __('Yes, archive !') }}';
+                    modalConfirmClass = 'bg-blue-600 hover:bg-blue-700';
+                    showConfirmModal = true; 
+                    confirmAction = () => { 
+                        errorMessage = ''; 
+                        $wire.call('archiveSelected', selected);
+                        showConfirmModal = false;
+                    };
+                }
+            "
         icon="o-archive-box"
         class="btn btn-sm"
-        tooltip="{{ __('Archive Selected') }}"
-        aria-label="{{ __('Archive Selected') }}"
+        tooltip="{{ __('Archive selected') }}"
+        aria-label="{{ __('Archive selected') }}"
     />
     <x-button     
         @click="
@@ -250,7 +280,7 @@ new class extends Component {
                     @click="$wire.set('selectedImages', selected)"
                 />
                 <x-button 
-                    wire:click="archiveSelected"
+                    wire:click="archiveImage({{ $image->id }})"
                     icon="o-archive-box"
                     class="btn btn-sm"
                     tooltip="{{ __('Archive Selected') }}"
