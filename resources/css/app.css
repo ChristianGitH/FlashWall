@@ -52,3 +52,10 @@
     text-align: right;
     padding: 0px 5px 0px 5px;
 }
+
+.close-button-wrapper {
+    top: 1.5em;
+    position: absolute;
+    right: 0.5em;
+    text-align: right;
+}

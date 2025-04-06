@@ -16,6 +16,8 @@ new class extends Component {
 
     public Wall $wall;
 
+    public array $selectedImages = [];
+
     /*public function mount(Wall $wall)
     {
         $this->images = Image::where('wall_id', $wall->id)->get();
@@ -34,7 +36,65 @@ new class extends Component {
                     ->get();
     }
 
-    protected $listeners = ['reset-selection' => '$refresh'];
+    protected $listeners = ['reset-selection-approved' => '$refresh', 'approved-images-updated' => '$refresh'];
+
+
+
+    // Archiving images //
+    public function archiveImage(int $id): void
+    {
+        // Récupérer directement les données nécessaires en une seule requête
+       Image::where('id', $id)->update(['archived' => true, 'approved' => false]);
+
+        // Réinitialiser la sélection
+        $this->dispatch('reset-selection-approved');
+        //  Émission d’événement Livewire vers le composant archived-images
+        $this->dispatch('archived-images-updated');
+        $this->success(__('Image archived successfully.'));
+    }
+
+    public function archiveSelected(array $selectedImages)
+    {
+        
+        if (empty($selectedImages)) {
+            $this->error(__('No image selected.'));
+            return;
+        }
+
+        Image::whereIn('id', $selectedImages)->update(['archived' => true, 'approved' => false]);
+
+        // Réinitialiser la sélection
+        $this->dispatch('reset-selection-approved');
+        //  Émission d’événement Livewire vers le composant archived-images
+        $this->dispatch('archived-images-updated');
+        $this->success(__('Selected images archived.'));
+    }
+   
+
+
+
+    // Delete images //
+    public function deleteImage(int $id): void
+    {
+        // Récupérer directement les données nécessaires en une seule requête
+        $image = Image::where('id', $id)->first(['id', 'name', 'thumb']);
+    
+        if (!$image) {
+            $this->error(__('Image not found.'));
+            return;
+        }
+    
+        // Supprimer les fichiers
+        Storage::disk('public')->delete([$image->name, $image->thumb]);
+    
+        // Supprimer l'image de la base de données
+        $image->delete();
+
+        // Réinitialiser la sélection
+        $this->dispatch('reset-selection-approved');
+    
+        $this->success(__('Photo deleted successfully.'));
+    }
 
     public function deleteSelected(array $selectedImages)
     {
@@ -65,28 +125,6 @@ new class extends Component {
     
         $this->success(__('Selected images deleted.'));
     }
-
-    public function deleteImage(int $id): void
-    {
-        // Récupérer directement les données nécessaires en une seule requête
-        $image = Image::where('id', $id)->first(['id', 'name', 'thumb']);
-    
-        if (!$image) {
-            $this->error(__('Image not found.'));
-            return;
-        }
-    
-        // Supprimer les fichiers
-        Storage::disk('public')->delete([$image->name, $image->thumb]);
-    
-        // Supprimer l'image de la base de données
-        $image->delete();
-
-        // Réinitialiser la sélection
-        $this->dispatch('reset-selection-approved');
-    
-        $this->success(__('Photo deleted successfully.'));
-    }
     
 }; ?>
 
@@ -96,7 +134,9 @@ new class extends Component {
         modalMessage: '', 
         modalConfirmText: '', 
         modalConfirmClass: 'bg-blue-600 hover:bg-blue-700', 
-        confirmAction: null  }" @reset-selection-approved.window="selectedApproved = []; allSelectedApproved = false">
+        confirmAction: null,
+        showImageZoomModal: false,
+        modalImageUrl: '' }" @reset-selection-approved.window="selectedApproved = []; allSelectedApproved = false">
 
 <div class="galery_data">
     <h2>{{ __( 'Approved images' ) }}</h2>
@@ -114,11 +154,26 @@ new class extends Component {
     </button>
 
     <x-button 
-        @click=""
+        @click="if (selectedApproved.length === 0) { 
+                    errorMessage = '{{ __('No images selected.') }}'; 
+                    setTimeout(() => errorMessage = '', 1500);
+                } else {
+                    modalTitle = '{{ __('Archive Images') }}';
+                    modalMessage = '{{ __('You are about to archive') }} ' + selectedApproved.length + ' {{ __('images.') }}';
+                    modalConfirmText = '{{ __('Yes, archive !') }}';
+                    modalConfirmClass = 'bg-blue-600 hover:bg-blue-700';
+                    showConfirmModal = true; 
+                    confirmAction = () => { 
+                        errorMessage = ''; 
+                        $wire.call('archiveSelected', selectedApproved);
+                        showConfirmModal = false;
+                    };
+                }
+            "
         icon="o-archive-box"
         class="btn btn-sm"
-        tooltip="{{ __('Archive Selected') }}"
-        aria-label="{{ __('Archive Selected') }}"
+        tooltip="{{ __('Archive selected') }}"
+        aria-label="{{ __('Archive selected') }}"
     />
     <x-button     
         @click="
@@ -159,26 +214,37 @@ new class extends Component {
         @if ($image->caption)
         <div class="image_wrapper tooltip tooltip-bottom" data-tip="{{ __( $image->caption ) }}" wire:key="image-{{ $image->id }}">
             <div class="uper_image_data justify-between">
+                <a role="button" @click="modalImageUrl = '{{ asset('storage/' . $image->name) }}'; showImageZoomModal = true;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
+                    </svg>
+                </a>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                 </svg>
         @else
         <div class="image_wrapper" wire:key="image-{{ $image->id }}">
-            <div class="uper_image_data justify-end">
+            <div class="uper_image_data justify-between">
+                <a role="button" @click="modalImageUrl = '{{ asset('storage/' . $image->name) }}'; showImageZoomModal = true;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
+                    </svg>
+                </a>
         @endif
             <input 
                 type="checkbox" 
                 class="checkbox checkbox-sm approved-image-checkbox"
                 :value="{{ $image->id }}"
                 x-model="selectedApproved"
+                id="checkbox-{{ $image->id }}"
             />
             </div>
-                <a href="{{ asset('storage/' . $image->name) }}" class="block">
+                <label for="checkbox-{{ $image->id }}" display="block">
                     <img src="{{ asset('storage/' . $image->thumb) }}" />
-                </a>
+                </label>
             <div class="moderation_buttons flex justify-between">
                 <x-button 
-                    wire:click="archiveSelected"
+                    wire:click="archiveImage({{ $image->id }})"
                     icon="o-archive-box"
                     class="btn btn-sm"
                     tooltip="{{ __('Archive Selected') }}"
@@ -209,7 +275,7 @@ new class extends Component {
     @endif
 </div>
 
-    <!-- Fenêtre modale dynamique (Suppression) -->
+    <!-- Fenêtre modale de confirmation avant action -->
     <div x-show="showConfirmModal" x-transition class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-96 overflow-auto relative">
             <h2 class="text-lg font-semibold" x-text="modalTitle"></h2>
@@ -223,6 +289,16 @@ new class extends Component {
                     <span x-text="modalConfirmText"></span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Fenêtre modale pour afficher l'image en grand -->
+    <div x-show="showImageZoomModal" @click="showImageZoomModal = false" x-transition class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="shadow-lg overflow-auto relative">
+            <div class="close-button-wrapper">
+                <x-button @click="showImageZoomModal = false" class="btn btn-sm" icon="o-x-mark" />
+            </div>
+            <img :src="modalImageUrl" alt="Image Preview" class="w-full h-auto mt-4" />
         </div>
     </div>
 
