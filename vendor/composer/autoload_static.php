@@ -144,6 +144,7 @@ class ComposerStaticInitf86dcf0dae2097e9af0cf00d4a288711
             'Laravel\\Sanctum\\' => 16,
             'Laravel\\Sail\\' => 13,
             'Laravel\\Prompts\\' => 16,
+            'LaravelLang\\StarterKits\\' => 24,
             'LaravelLang\\Routes\\' => 19,
             'LaravelLang\\Publisher\\' => 22,
             'LaravelLang\\NativeLocaleNames\\' => 30,
@@ -505,6 +506,10 @@ class ComposerStaticInitf86dcf0dae2097e9af0cf00d4a288711
         'Laravel\\Prompts\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/prompts/src',
+        ),
+        'LaravelLang\\StarterKits\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/laravel-lang/starter-kits/src',
         ),
         'LaravelLang\\Routes\\' => 
         array (
@@ -3706,6 +3711,8 @@ class ComposerStaticInitf86dcf0dae2097e9af0cf00d4a288711
         'LaravelLang\\Config\\Data\\Shared\\ModelsFilterData' => __DIR__ . '/..' . '/laravel-lang/config/src/Data/Shared/ModelsFilterData.php',
         'LaravelLang\\Config\\Data\\Shared\\RouteNameData' => __DIR__ . '/..' . '/laravel-lang/config/src/Data/Shared/RouteNameData.php',
         'LaravelLang\\Config\\Data\\Shared\\RoutesData' => __DIR__ . '/..' . '/laravel-lang/config/src/Data/Shared/RoutesData.php',
+        'LaravelLang\\Config\\Data\\Shared\\RoutesGroup' => __DIR__ . '/..' . '/laravel-lang/config/src/Data/Shared/RoutesGroup.php',
+        'LaravelLang\\Config\\Data\\Shared\\RoutesGroupMiddleware' => __DIR__ . '/..' . '/laravel-lang/config/src/Data/Shared/RoutesGroupMiddleware.php',
         'LaravelLang\\Config\\Data\\Shared\\SmartPunctuationData' => __DIR__ . '/..' . '/laravel-lang/config/src/Data/Shared/SmartPunctuationData.php',
         'LaravelLang\\Config\\Data\\Shared\\TranslatorsData' => __DIR__ . '/..' . '/laravel-lang/config/src/Data/Shared/TranslatorsData.php',
         'LaravelLang\\Config\\Data\\Shared\\Translators\\TranslatorChannelsData' => __DIR__ . '/..' . '/laravel-lang/config/src/Data/Shared/Translators/TranslatorChannelsData.php',
@@ -3858,6 +3865,11 @@ class ComposerStaticInitf86dcf0dae2097e9af0cf00d4a288711
         'LaravelLang\\Routes\\Middlewares\\Middleware' => __DIR__ . '/..' . '/laravel-lang/routes/src/Middlewares/Middleware.php',
         'LaravelLang\\Routes\\ServiceProvider' => __DIR__ . '/..' . '/laravel-lang/routes/src/ServiceProvider.php',
         'LaravelLang\\Routes\\Services\\Route' => __DIR__ . '/..' . '/laravel-lang/routes/src/Services/Route.php',
+        'LaravelLang\\StarterKits\\Plugin' => __DIR__ . '/..' . '/laravel-lang/starter-kits/src/Plugin.php',
+        'LaravelLang\\StarterKits\\Plugins\\Livewire' => __DIR__ . '/..' . '/laravel-lang/starter-kits/src/Plugins/Livewire.php',
+        'LaravelLang\\StarterKits\\Plugins\\React' => __DIR__ . '/..' . '/laravel-lang/starter-kits/src/Plugins/React.php',
+        'LaravelLang\\StarterKits\\Plugins\\Vue' => __DIR__ . '/..' . '/laravel-lang/starter-kits/src/Plugins/Vue.php',
+        'LaravelLang\\StarterKits\\ServiceProvider' => __DIR__ . '/..' . '/laravel-lang/starter-kits/src/ServiceProvider.php',
         'Laravel\\Prompts\\Clear' => __DIR__ . '/..' . '/laravel/prompts/src/Clear.php',
         'Laravel\\Prompts\\Concerns\\Colors' => __DIR__ . '/..' . '/laravel/prompts/src/Concerns/Colors.php',
         'Laravel\\Prompts\\Concerns\\Cursor' => __DIR__ . '/..' . '/laravel/prompts/src/Concerns/Cursor.php',
@@ -4946,6 +4958,7 @@ class ComposerStaticInitf86dcf0dae2097e9af0cf00d4a288711
         'Monolog\\Registry' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/Registry.php',
         'Monolog\\ResettableInterface' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/ResettableInterface.php',
         'Monolog\\SignalHandler' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/SignalHandler.php',
+        'Monolog\\Test\\MonologTestCase' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/Test/MonologTestCase.php',
         'Monolog\\Test\\TestCase' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/Test/TestCase.php',
         'Monolog\\Utils' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/Utils.php',
         'Nette\\ArgumentOutOfRangeException' => __DIR__ . '/..' . '/nette/utils/src/exceptions.php',
@@ -4976,6 +4989,7 @@ class ComposerStaticInitf86dcf0dae2097e9af0cf00d4a288711
         'Nette\\Schema\\Processor' => __DIR__ . '/..' . '/nette/schema/src/Schema/Processor.php',
         'Nette\\Schema\\Schema' => __DIR__ . '/..' . '/nette/schema/src/Schema/Schema.php',
         'Nette\\Schema\\ValidationException' => __DIR__ . '/..' . '/nette/schema/src/Schema/ValidationException.php',
+        'Nette\\ShouldNotHappenException' => __DIR__ . '/..' . '/nette/utils/src/exceptions.php',
         'Nette\\SmartObject' => __DIR__ . '/..' . '/nette/utils/src/SmartObject.php',
         'Nette\\StaticClass' => __DIR__ . '/..' . '/nette/utils/src/StaticClass.php',
         'Nette\\UnexpectedValueException' => __DIR__ . '/..' . '/nette/utils/src/exceptions.php',

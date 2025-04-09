@@ -75,6 +75,7 @@ return array(
     'Laravel\\Sanctum\\' => array($vendorDir . '/laravel/sanctum/src'),
     'Laravel\\Sail\\' => array($vendorDir . '/laravel/sail/src'),
     'Laravel\\Prompts\\' => array($vendorDir . '/laravel/prompts/src'),
+    'LaravelLang\\StarterKits\\' => array($vendorDir . '/laravel-lang/starter-kits/src'),
     'LaravelLang\\Routes\\' => array($vendorDir . '/laravel-lang/routes/src'),
     'LaravelLang\\Publisher\\' => array($vendorDir . '/laravel-lang/publisher/src'),
     'LaravelLang\\NativeLocaleNames\\' => array($vendorDir . '/laravel-lang/native-locale-names/src'),

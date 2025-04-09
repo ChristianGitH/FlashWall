@@ -94,6 +94,13 @@
       0 => 'LaravelLang\\Routes\\ServiceProvider',
     ),
   ),
+  'laravel-lang/starter-kits' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'LaravelLang\\StarterKits\\ServiceProvider',
+    ),
+  ),
   'laravel/sail' => 
   array (
     'providers' => 

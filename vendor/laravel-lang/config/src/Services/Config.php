@@ -15,6 +15,8 @@ use LaravelLang\Config\Data\Shared\ModelsData;
 use LaravelLang\Config\Data\Shared\ModelsFilterData;
 use LaravelLang\Config\Data\Shared\RouteNameData;
 use LaravelLang\Config\Data\Shared\RoutesData;
+use LaravelLang\Config\Data\Shared\RoutesGroup;
+use LaravelLang\Config\Data\Shared\RoutesGroupMiddleware;
 use LaravelLang\Config\Data\Shared\SmartPunctuationData;
 use LaravelLang\Config\Data\Shared\Translators\TranslatorChannelsData;
 use LaravelLang\Config\Data\Shared\Translators\TranslatorData;
@@ -30,8 +32,7 @@ class Config
 {
     public function __construct(
         protected Repository $config
-    ) {
-    }
+    ) {}
 
     public function shared(): SharedData
     {
@@ -68,7 +69,6 @@ class Config
         return new SmartPunctuationData(
             enabled: $this->value(Name::Shared, 'smart_punctuation.enable', fallback: false),
             common : $this->value(Name::Shared, 'smart_punctuation.common', fallback: []),
-
             locales: $this->value(
                 Name::Shared,
                 'smart_punctuation.locales',
@@ -90,6 +90,9 @@ class Config
             ),
             namePrefix: $this->value(Name::Shared, 'routes.name_prefix', fallback: 'localized.'),
             redirect  : $this->value(Name::Shared, 'routes.redirect_default', fallback: false),
+            group     : new RoutesGroup(
+                middleware: $this->routesGroupMiddleware()
+            ),
         );
     }
 
@@ -106,6 +109,14 @@ class Config
     {
         return new ModelsFilterData(
             enabled: (bool) $this->value(Name::Shared, 'models.filter.enabled'),
+        );
+    }
+
+    protected function routesGroupMiddleware(): RoutesGroupMiddleware
+    {
+        return new RoutesGroupMiddleware(
+            default: $this->value(Name::Shared, 'routes.group.middlewares.default'),
+            prefix : $this->value(Name::Shared, 'routes.group.middlewares.prefix'),
         );
     }
 
@@ -142,7 +153,7 @@ class Config
                 enabled    : $item['enabled'] ?? true,
                 translator : $item['translator'],
                 credentials: $item['credentials'] ?? [],
-                priority   : $item['priority'] ?? 0
+                priority   : $item['priority']    ?? 0
             )
         )->sortBy(fn (TranslatorData $item) => $item->priority)->all();
     }
@@ -154,7 +165,7 @@ class Config
         ?string $object = null,
         mixed $fallback = null
     ): mixed {
-        $main = $name->value . '.' . $key;
+        $main    = $name->value . '.' . $key;
         $default = $default ? $name->value . '.' . $default : null;
 
         if (is_null($object)) {
