@@ -6,13 +6,9 @@ use App\Models\Image;
 use Intervention\Image\ImageManager;
 use Mary\Traits\Toast;
 use Illuminate\Support\Facades\Storage;
-use Livewire\WithPagination;
-use Livewire\WithoutUrlPagination;
-
 
 new class extends Component {
     use Toast;
-    use WithPagination, WithoutUrlPagination;
 
     public Wall $wall;
         

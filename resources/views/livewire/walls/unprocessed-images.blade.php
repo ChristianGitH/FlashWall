@@ -6,35 +6,33 @@ use App\Models\Image;
 use Intervention\Image\ImageManager;
 use Mary\Traits\Toast;
 use Illuminate\Support\Facades\Storage;
-
+use Livewire\WithPagination;
+use Livewire\WithoutUrlPagination;
 
 new class extends Component {
-    use Toast;
+    use Toast, WithPagination, WithoutUrlPagination;
 
-    public Wall $wall;
-    
-    //public $images;
+    public Wall $wall;   
     public array $selectedImages = [];
+    public int $unprocessedImagesPageCount = 0;
 
-    /*public function mount(Wall $wall)
-    {
-        $this->images = Image::where('wall_id', $wall->id)->get();
-    }*/
 
     public function mount(Wall $wall)
     {
         $this->wall = $wall;
     }
 
-    public function images()
+    public function getImagesProperty()
     {
-        return Image::where('wall_id', $this->wall->id)
+        $images = Image::where('wall_id', $this->wall->id)
                     ->where('approved', false)
                     ->where('archived', false)
                     ->orderBy('created_at', 'desc')
-                    ->get();
-    }
+                    ->paginate(5, pageName: 'unprocessed-images');
 
+        $this->unprocessedImagesPageCount = $images->count();
+        return $images;
+    }
 
     // Approving images //
     public function approveImage(int $id): void
@@ -42,8 +40,10 @@ new class extends Component {
         // Récupérer directement les données nécessaires en une seule requête
        Image::where('id', $id)->update(['approved' => true]);
 
-        // Réinitialiser la sélection
-        $this->dispatch('reset-selection');
+        // Reset la pagination uniquement si c'était la dernière image de la page
+        if ($this->unprocessedImagesPageCount <= 1) {
+            $this->resetPage(pageName: 'unprocessed-images');
+        }
         //  Émission d’événement Livewire vers le composant approved-images
         $this->dispatch('approved-images-updated');
         $this->success(__('Image approved successfully.'));
@@ -61,6 +61,10 @@ new class extends Component {
 
         // Réinitialiser la sélection
         $this->dispatch('reset-selection');
+        // Reset la pagination uniquement si c'était la dernière image de la page
+        if ($this->unprocessedImagesPageCount <= 1) {
+            $this->resetPage(pageName: 'unprocessed-images');
+        }
         //  Émission d’événement Livewire vers le composant approved-images
         $this->dispatch('approved-images-updated');
         $this->success(__('Selected images approved.'));
@@ -73,8 +77,10 @@ new class extends Component {
         // Récupérer directement les données nécessaires en une seule requête
        Image::where('id', $id)->update(['archived' => true]);
 
-        // Réinitialiser la sélection
-        $this->dispatch('reset-selection');
+        // Reset la pagination uniquement si c'était la dernière image de la page
+        if ($this->unprocessedImagesPageCount <= 1) {
+            $this->resetPage(pageName: 'unprocessed-images');
+        }
         //  Émission d’événement Livewire vers le composant archived-images
         $this->dispatch('archived-images-updated');
         $this->success(__('Image archived successfully.'));
@@ -92,6 +98,10 @@ new class extends Component {
 
         // Réinitialiser la sélection
         $this->dispatch('reset-selection');
+        // Reset la pagination uniquement si c'était la dernière image de la page
+        if ($this->unprocessedImagesPageCount <= 1) {
+            $this->resetPage(pageName: 'unprocessed-images');
+        }
         //  Émission d’événement Livewire vers le composant archived-images
         $this->dispatch('archived-images-updated');
         $this->success(__('Selected images archived.'));
@@ -116,8 +126,10 @@ new class extends Component {
         // Supprimer l'image de la base de données
         $image->delete();
 
-        // Réinitialiser la sélection
-        $this->dispatch('reset-selection');
+        // Reset la pagination uniquement si c'était la dernière image de la page
+        if ($this->unprocessedImagesPageCount <= 1) {
+            $this->resetPage(pageName: 'unprocessed-images');
+        }
         $this->success(__('Image deleted successfully.'));
     }
 
@@ -147,6 +159,10 @@ new class extends Component {
 
         // Réinitialiser la sélection
         $this->dispatch('reset-selection');
+        // Reset la pagination uniquement si c'était la dernière image de la page
+        if ($this->unprocessedImagesPageCount <= 1) {
+            $this->resetPage(pageName: 'unprocessed-images');
+        }
         $this->success(__('Selected images deleted.'));
     }
         
@@ -167,8 +183,8 @@ new class extends Component {
 </div>
 
 <div class="bulk-actions flex items-center">
-    <button class="btn btn-sm" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.image-checkbox')].map(cb => cb.value) : []">
-        <label for="select-all-checkbox" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">Select All</label>
+    <button class="btn btn-sm" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.unprocessed-image-checkbox')].map(cb => cb.value) : []">
+        <label for="select-all-checkbox" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.unprocessed-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">Select All</label>
         <input 
             type="checkbox"
             id="select-all-checkbox"
@@ -255,34 +271,34 @@ new class extends Component {
 
 
 <div class="gallery_wrapper">
-
-    @if($this->images()->isEmpty())
+    @if($this->images->isEmpty())
         <p class="text-center text-gray-500">{{ __('No image pending.') }}</p>
     @else
-        @foreach($this->images() as $image)
-        @if ($image->caption)
-        <div class="image_wrapper tooltip tooltip-bottom" data-tip="{{ __( $image->caption ) }}" wire:key="image-{{ $image->id }}">
+        @foreach($this->images as $image)
+        @php
+        if ($image->caption) {
+            $data1 = "tooltip tooltip-bottom";
+            $data2 = "$image->caption";
+            $data3 = "";
+        } else {
+            $data1 = "";
+            $data2 = "";
+            $data3 = "hidden";
+        }
+    @endphp
+        <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{!! $data2 !!}" wire:key="image-{{ $image->id }}">
             <div class="uper_image_data justify-between">
                 <a role="button" @click="modalImageUrl = '{{ asset('storage/' . $image->name) }}'; showImageZoomModal = true;">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                     </svg>
                 </a>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 {{ ( $data3 ) }}">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                 </svg>
-        @else
-        <div class="image_wrapper" wire:key="image-{{ $image->id }}">
-            <div class="uper_image_data justify-between">
-                <a role="button" @click="modalImageUrl = '{{ asset('storage/' . $image->name) }}'; showImageZoomModal = true;">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
-                    </svg>
-                </a>
-        @endif
             <input 
                 type="checkbox" 
-                class="checkbox checkbox-sm image-checkbox"
+                class="checkbox checkbox-sm unprocessed-image-checkbox"
                 :value="{{ $image->id }}"
                 x-model="selected"
                 id="checkbox-{{ $image->id }}"
@@ -331,7 +347,9 @@ new class extends Component {
         @endforeach
     @endif
 </div>
-
+<div class="galerie-navigation flex justify-evenly">
+    {{ $this->images->links(data: ['scrollTo' => false]) }}
+</div>
 
     <!-- Fenêtre modale dynamique (Validation & Suppression) -->
     <div x-show="showConfirmModal" x-transition class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
