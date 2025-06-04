@@ -23,6 +23,9 @@ $user = $image->user; // L'utilisateur qui possède cette image
 $category = $image->category; // La catégorie de cette image
 
 
+DEPLOY :
+J'ai modifié les assets parce que j'avais oublié de build avant de deployer.sym
+J'ai modifié les urls vers les images dans la modération des walls. j'ai ajouté "public" dans "public/storage/images" (et thumbs). Je pense que le SymLynk ne fonctionne pas sur le serveur mutualisé.
 
 
 MISE A JOUR LARAVEL : 
