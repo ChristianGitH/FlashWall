@@ -199,16 +199,14 @@ new class extends Component {
                     errorMessage = '{{ __('No images selected.') }}'; 
                     setTimeout(() => errorMessage = '', 1500);
                 } else {
-                    modalTitle = '{{ __('Approve Images') }}';
-                    modalMessage = '{{ __('You are about to approve') }} ' + selected.length + ' {{ __('images.') }}';
-                    modalConfirmText = '{{ __('Yes, approve !') }}';
-                    modalConfirmClass = 'bg-green-600 hover:bg-green-700';
-                    showConfirmModal = true; 
-                    confirmAction = () => { 
-                        errorMessage = ''; 
-                        $wire.call('approveSelected', selected);
-                        showConfirmModal = false;
-                    };
+                    let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+                    $dispatch('confirm-action', {
+                        title: '{{ __('Approve images') }}',
+                        message: '{{ __('You are about to approve') }} ' + selected.length + ' ' + textPlural + '.',
+                        confirmText: '{{ __('Yes, approve !') }}',
+                        confirmClass: 'bg-green-600 hover:bg-green-700',
+                        action: () => $wire.call('approveSelected', selected)
+                    })
                 }
             "
         icon="o-check"
@@ -222,16 +220,14 @@ new class extends Component {
                     errorMessage = '{{ __('No images selected.') }}'; 
                     setTimeout(() => errorMessage = '', 1500);
                 } else {
-                    modalTitle = '{{ __('Archive Images') }}';
-                    modalMessage = '{{ __('You are about to archive') }} ' + selected.length + ' {{ __('images.') }}';
-                    modalConfirmText = '{{ __('Yes, archive !') }}';
-                    modalConfirmClass = 'bg-blue-600 hover:bg-blue-700';
-                    showConfirmModal = true; 
-                    confirmAction = () => { 
-                        errorMessage = ''; 
-                        $wire.call('archiveSelected', selected);
-                        showConfirmModal = false;
-                    };
+                    let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+                    $dispatch('confirm-action', {
+                        title: '{{ __('Archive images') }}',
+                        message: '{{ __('You are about to archive') }} ' + selected.length + ' ' + textPlural + '.',
+                        confirmText: '{{ __('Yes, archive!') }}',
+                        confirmClass: 'bg-blue-600 hover:bg-blue-700',
+                        action: () => $wire.call('archiveSelected', selected)
+                    })
                 }
             "
         icon="o-archive-box"
@@ -245,16 +241,14 @@ new class extends Component {
                     errorMessage = '{{ __('No images selected.') }}'; 
                     setTimeout(() => errorMessage = '', 1500);
                 } else {
-                    modalTitle = '{{ __('Delete images') }}';
-                    modalMessage = '{{ __('You are about to delete') }} ' + selected.length + ' {{ __('images.') }}';
-                    modalConfirmText = '{{ __('Yes, delete !') }}';
-                    modalConfirmClass = 'bg-red-600 hover:bg-red-700';
-                    showConfirmModal = true; 
-                    confirmAction = () => { 
-                        errorMessage = ''; 
-                        $wire.call('deleteSelected', selected);
-                        showConfirmModal = false;
-                    };
+                    let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+                    $dispatch('confirm-action', {
+                        title: '{{ __('Delete images') }}',
+                        message: '{{ __('You are about to delete') }} ' + selected.length + ' ' + textPlural + '.',
+                        confirmText: '{{ __('Yes, delete !') }}',
+                        confirmClass: 'bg-red-600 hover:bg-red-700',
+                        action: () => $wire.call('deleteSelected', selected)
+                    })
                 }
             "
         icon="o-trash"
@@ -288,7 +282,7 @@ new class extends Component {
     @endphp
         <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{!! $data2 !!}" wire:key="image-{{ $image->id }}">
             <div class="uper_image_data justify-between">
-                <a role="button" @click="modalImageUrl = '{{ asset('storage/' . $image->name) }}'; showImageZoomModal = true;">
+                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->name) }}' })">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                     </svg>
@@ -331,15 +325,13 @@ new class extends Component {
                     tooltip="{{ __('Delete image') }}"
                     aria-label="{{ __('Delete image') }}"
                     @click="
-                    modalTitle = '{{ __('Delete image') }}';
-                    modalMessage = '{{ __('Are you sure you want to delete this image?') }}';
-                    modalConfirmText = '{{ __('Yes, delete!') }}';
-                    modalConfirmClass = 'bg-red-600 hover:bg-red-700';
-                    confirmAction = () => { 
-                        $wire.call('deleteImage', {{ $image->id }});
-                        showConfirmModal = false;
-                    };
-                    showConfirmModal = true;
+                        $dispatch('confirm-action', {
+                            title: '{{ __('Delete image') }}',
+                            message: '{{ __('Are you sure you want to delete this image?') }}',
+                            confirmText: '{{ __('Yes, delete!') }}',
+                            confirmClass: 'bg-red-600 hover:bg-red-700',
+                            action: () => $wire.call('deleteImage', {{ $image->id }})
+                        })
                     "
                 />
             </div>
@@ -351,31 +343,6 @@ new class extends Component {
     {{ $this->images->links(data: ['scrollTo' => false]) }}
 </div>
 
-    <!-- Fenêtre modale dynamique (Validation & Suppression) -->
-    <div x-show="showConfirmModal" x-transition class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-96 overflow-auto relative">
-            <h2 class="text-lg font-semibold" x-text="modalTitle"></h2>
-            <p class="mt-2 text-gray-600" x-text="modalMessage"></p>
 
-            <div class="mt-4 flex justify-end space-x-2">
-                <button @click="showConfirmModal = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-                    {{ __('Cancel') }}
-                </button>
-                <button @click="confirmAction()" class="px-4 py-2 text-white rounded" :class="modalConfirmClass">
-                    <span x-text="modalConfirmText"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Fenêtre modale pour afficher l'image en grand -->
-    <div x-show="showImageZoomModal" @click="showImageZoomModal = false" x-transition class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="shadow-lg overflow-auto relative">
-            <div class="close-button-wrapper">
-                <x-button @click="showImageZoomModal = false" class="btn btn-sm" icon="o-x-mark" />
-            </div>
-            <img :src="modalImageUrl" alt="Image Preview" class="w-full h-auto mt-4" />
-        </div>
-    </div>
 
 </div>
