@@ -2,8 +2,6 @@
 
 use Livewire\Volt\Volt;
 
-Volt::route('/', 'index');
-
 /* Route for register, login, forgot password */
 use Illuminate\Support\Facades\Route;
 
@@ -26,3 +24,4 @@ Volt::route('/{slug}', 'images.create-image')->name('create-image');
 
 // Autres routes accessibles à tous (si besoin)
 Volt::route('/', 'index')->name('home');
+Volt::route('/display/{slug}', 'walls.display-images')->name('display-images');

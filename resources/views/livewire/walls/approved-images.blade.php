@@ -1,5 +1,7 @@
 <?php
 
+// This is a component for walls>moderation.blade.php
+
 use Livewire\Volt\Component;
 use App\Models\Wall;
 use App\Models\Image;

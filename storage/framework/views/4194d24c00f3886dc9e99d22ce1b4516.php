@@ -10,6 +10,9 @@
 </head>
 <body class="min-h-screen font-sans antialiased bg-base-200/50 dark:bg-base-200">
 
+
+<!-- If it's not the display-images page we use the normal layout -->
+<?php if(!Request::is('display/*')): ?>
     
     <?php if (isset($component)) { $__componentOriginalc7e9ca4bc90f51d317ff9ec682225f58 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalc7e9ca4bc90f51d317ff9ec682225f58 = $attributes; } ?>
@@ -132,6 +135,7 @@ unset($__params);
 unset($__split);
 if (isset($__slots)) unset($__slots);
 ?>
+
      <?php $__env->endSlot(); ?>
 
     
@@ -149,7 +153,6 @@ if (isset($__slots)) unset($__slots);
 <?php $component = $__componentOriginal11da67fd6f50ab34ca1b98cbdd145132; ?>
 <?php unset($__componentOriginal11da67fd6f50ab34ca1b98cbdd145132); ?>
 <?php endif; ?>
-
 
     
     <?php if (isset($component)) { $__componentOriginal2aca76be1376419dfd37220f36011753 = $component; } ?>
@@ -172,6 +175,37 @@ if (isset($__slots)) unset($__slots);
 <?php $component = $__componentOriginal2aca76be1376419dfd37220f36011753; ?>
 <?php unset($__componentOriginal2aca76be1376419dfd37220f36011753); ?>
 <?php endif; ?>
+<?php else: ?>
+
+<!-- If it's the display-images page then we use a blank layout which was created for this page (app/view/components/Blank.php)-->
+<?php if (isset($component)) { $__componentOriginal405ce4d0ca68340cd9f871fb7e9bc7f1 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal405ce4d0ca68340cd9f871fb7e9bc7f1 = $attributes; } ?>
+<?php $component = App\View\Components\Blank::resolve(['fullWidth' => true] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('blank'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\App\View\Components\Blank::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+    
+     <?php $__env->slot('content', null, []); ?> 
+        <?php echo e($slot); ?>
+
+     <?php $__env->endSlot(); ?>
+ <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal405ce4d0ca68340cd9f871fb7e9bc7f1)): ?>
+<?php $attributes = $__attributesOriginal405ce4d0ca68340cd9f871fb7e9bc7f1; ?>
+<?php unset($__attributesOriginal405ce4d0ca68340cd9f871fb7e9bc7f1); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal405ce4d0ca68340cd9f871fb7e9bc7f1)): ?>
+<?php $component = $__componentOriginal405ce4d0ca68340cd9f871fb7e9bc7f1; ?>
+<?php unset($__componentOriginal405ce4d0ca68340cd9f871fb7e9bc7f1); ?>
+<?php endif; ?>
+
+<?php endif; ?>
+
 </body>
 </html>
 <?php /**PATH C:\laragon\www\FlashWall\resources\views/components/layouts/app.blade.php ENDPATH**/ ?>
