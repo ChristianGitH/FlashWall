@@ -182,6 +182,8 @@ new class extends Component {
         class="btn btn-sm"
         tooltip="{{ __('Approve Selected') }}"
         aria-label="{{ __('Approve Selected') }}"
+        wire:loading.attr="disabled"
+        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
     />
 
     <x-button     
@@ -205,6 +207,8 @@ new class extends Component {
         wire:click.prevent=""
         tooltip="{{ __('Delete Selected') }}"
         aria-label="{{ __('Delete Selected') }}"
+        wire:loading.attr="disabled"
+        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
     />
     <!-- Message d'erreur affiché dynamiquement -->
     <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
@@ -259,6 +263,8 @@ new class extends Component {
                     tooltip="{{ __('Approve image') }}"
                     aria-label="{{ __('Approve image') }}"
                     @click="$wire.set('selectedImages', selectedArchived)"
+                    wire:loading.attr="disabled"
+                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
                 />
                 <x-button 
                     wire:click.prevent=""
@@ -275,6 +281,8 @@ new class extends Component {
                             action: () => $wire.call('deleteImage', {{ $image->id }})
                         })
                     "
+                    wire:loading.attr="disabled"
+                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
                 />
             </div>
         </div>

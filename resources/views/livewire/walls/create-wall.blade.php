@@ -13,18 +13,14 @@ new
 
 class extends Component {
  
-    #[Rule('required|string|max:255|unique:walls,name')]
+    #[Rule('required|string|max:255')]
     public string $name = '';
-    #[Rule('required|string|max:255|unique:walls,slug')]
-    public string $slug = '';
     #[Rule('string|max:255')]
     public string $description = '';
-    #[Rule('nullable|integer|max:99')]
-    public ?int $max_images_user;
     #[Rule('boolean')]
-    public string $allow_captions = '';
+    public bool  $allow_captions = false;
     #[Rule('boolean')]
-    public string $activate_moderation = '';
+    public bool $activate_moderation = false;
 
 
     public function createWall()
@@ -33,10 +29,9 @@ class extends Component {
 
         Wall::create([
             'name' => $data['name'],
-            'slug' => $data['slug'],
+            'slug' => Str::slug($data['name']),
             'description' => $data['description'],
             'user_id' => Auth::id(),
-            'max_images_user' => $data['max_images_user'],
             'captions' => $data['allow_captions'],
             'moderation' => $data['activate_moderation'],
         ]);
@@ -57,10 +52,8 @@ class extends Component {
 
         <x-form wire:submit="createWall">
             <x-input label="{{__('Name')}}" wire:model="name"  inline />
-            <x-input label="{{__('Slug')}}" wire:model="slug" icon="o-link" inline />
             <x-input label="{{__('Description')}}" wire:model="description" inline separator />
             <x-menu-separator />
-            <x-input label="{{__('Max images per user')}}" wire:model="max_images_user" inline />
             <x-toggle label="{{__('Allow captions?')}}" wire:model="allow_captions" right inline/>
             <x-toggle label="{{__('Activate moderation?')}}" wire:model="activate_moderation" right inline/>
 

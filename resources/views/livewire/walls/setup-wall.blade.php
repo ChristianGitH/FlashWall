@@ -24,11 +24,22 @@ class extends Component {
     public string $max_images_user;
     public bool $captions = false;
     public bool $moderation = false;
-    public string $color;
+    public string $background_color;
     public int $background_choice;
     public string $background_image;
     public $new_background_image;
-    
+    public int $duration;
+    public int $caption_max_width;
+    public int $caption_position;
+    public int $caption_font_size;
+    public int $vertical_borders_width;
+    public int $horizontal_borders_width;
+    public string $caption_font_color;
+    public string $caption_background_color;
+    public int $caption_background_opacity;
+    public int $caption_max_characters;
+   
+    public string $lastSavedSlug;
 
 
     public function mount(Wall $wall)
@@ -44,21 +55,55 @@ class extends Component {
         }
         $this->captions = $wall->captions;
         $this->moderation = $wall->moderation;
-        $this->color = $wall->background_color;
+        $this->duration = $wall->duration;
+        $this->background_color = $wall->background_color;
         $this->background_choice = $wall->background_choice;
         $this->background_image = $wall->background_image;
+        $this->caption_max_width = $wall->caption_max_width;
+        $this->caption_position = $wall->caption_position;
+        $this->caption_font_size = $wall->caption_font_size;
+        $this->vertical_borders_width = $wall->vertical_borders_width;
+        $this->horizontal_borders_width = $wall->horizontal_borders_width;
+        $this->caption_font_color = $wall->caption_font_color;
+        $this->caption_background_color = $wall->caption_background_color;
+        $this->caption_background_opacity = $wall->caption_background_opacity;
+        $this->caption_max_characters = $wall->caption_max_characters;
+
+        // Var for the Sharing card, copy to clipboard. 
+        $this->lastSavedSlug = $wall->slug;
     }
+
+
+    // Function to get the last saved slug for the copy to clipboard functionality.
+    public function getDisplayImageUrlProperty(): string
+    {
+        return route('display-images', ['slug' => $this->lastSavedSlug]);
+    }
+    public function getCreateImageUrlProperty(): string
+    {
+        return route('create-image', ['slug' => $this->lastSavedSlug]);
+    }
+
+
 
     public function updateWall()
     {
         $data = $this->validate([
-            'name' => 'required|string|max:255|unique:walls,name,' . $this->wall->id,
-            'slug' => 'required|string|max:255|unique:walls,slug,' . $this->wall->id,
+            'name' => 'required|string|max:255' . $this->wall->id,
+            'slug' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                'unique:walls,slug,' . $this->wall->id,
+            ],
             'description' => 'nullable|string|max:255',
             'max_images_user' => 'nullable|integer|max:99',
             'captions' => 'boolean',
             'moderation' => 'boolean',
-        ]);
+            'duration' => 'required|integer|max:99',
+            'caption_max_characters' => 'integer|min:10|max:255',
+        ]); 
     
         // Filtrer uniquement les champs modifiés
         // Old code before using fill : $changes = array_filter($data, fn ($value, $key) => $this->wall->$key !== $value, ARRAY_FILTER_USE_BOTH);
@@ -69,17 +114,52 @@ class extends Component {
         if ($this->wall->isDirty()) {
             $this->wall->save();
             $this->success(__('Changes saved!'));
-
+            // Refresh navigation when a wall name is updated.
+            $this->dispatch('refreshNavigation');
         } else {
             $this->warning(__('No change detected!'));
         }
     }
 
 
-    public function updateWallDisplayBackground()
+
+
+    public function updateShareOptions()
     {
         $data = $this->validate([
-            'color' => 'required|string|max:255',
+            'slug' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                'unique:walls,slug,' . $this->wall->id,
+            ],
+        ]); 
+    
+        // Filtrer uniquement les champs modifiés
+        // Old code before using fill : $changes = array_filter($data, fn ($value, $key) => $this->wall->$key !== $value, ARRAY_FILTER_USE_BOTH);
+        // Remplit le modèle avec les données validées
+        $this->wall->fill($data);
+    
+        // Vérifie s'il y a des modifications
+        if ($this->wall->isDirty()) {
+            $this->wall->save();
+            $this->lastSavedSlug = $this->wall->slug; // Updating for the copy to clipboard functionality.
+            $this->success(__('Changes saved!'));
+            // Refresh navigation when a wall name is updated.
+            $this->dispatch('refreshNavigation');
+        } else {
+            $this->warning(__('No change detected!'));
+        }
+    }
+
+
+
+
+    public function updateWallBackground()
+    {
+        $data = $this->validate([
+            'background_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'new_background_image' => 'nullable|image|max:5120',
             'background_choice' => 'required|integer|max:2',
         ]);
@@ -93,7 +173,7 @@ class extends Component {
         
         // On prépare les changements sur le modèle (sauf l'image)
         // Remplit le modèle avec les données validées
-        $this->wall->background_color = $this->color;
+        $this->wall->background_color = $this->background_color;
         $this->wall->background_choice = $this->background_choice;
     
         // Vérifie s'il y a des modifications
@@ -105,6 +185,53 @@ class extends Component {
         }
     }
 
+
+
+    public function updateCaptionStyle()
+    {
+        $data = $this->validate([
+            'caption_font_size' => 'required|integer|max:50',
+            'caption_font_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'caption_background_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'caption_background_opacity' => 'required|integer|max:100',
+        ]);
+
+        // Filtrer uniquement les champs modifiés
+        // Remplit le modèle avec les données validées
+        $this->wall->fill($data);
+    
+        // Vérifie s'il y a des modifications
+        if ($this->wall->isDirty()) {
+            $this->wall->save();
+            $this->success(__('Changes saved!'));
+        } else {
+            $this->warning(__('No change detected!'));
+        }
+    }
+
+
+
+    public function updateWallLayout()
+    {
+        $data = $this->validate([
+            'caption_max_width' => 'required|integer|max:100',
+            'caption_position' => 'required|integer|max:3',
+            'vertical_borders_width' => 'required|integer|max:40',
+            'horizontal_borders_width' => 'required|integer|max:40',
+        ]);
+
+        // Filtrer uniquement les champs modifiés
+        // Remplit le modèle avec les données validées
+        $this->wall->fill($data);
+    
+        // Vérifie s'il y a des modifications
+        if ($this->wall->isDirty()) {
+            $this->wall->save();
+            $this->success(__('Changes saved!'));
+        } else {
+            $this->warning(__('No change detected!'));
+        }
+    }
 
 
     public function deleteWall()
@@ -124,19 +251,33 @@ class extends Component {
 ?>
 <div>
     <h1 class="font-bold text-2xl mb-3 me-3 text-gray-700">
-            Update wall : {{ __( $wall->name ) }}
+            Update wall : {{ $wall->name }}
     </h1>
 
 <div class="flex items-start justify-center gap-7 flex-wrap">
     <x-card title="{{ __('Update Wall') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateWall">
-            <x-input label="{{ __('Name') }}" wire:model="name" />
-            <x-input label="{{ __('Slug') }}" wire:model="slug" icon="o-link"/>
-            <x-input label="{{ __('Description') }}" wire:model="description" />
+            <x-input label="{{ __('Name') }}" wire:model="name" inline />
+            <x-input label="{{ __('Description') }}" wire:model="description" inline />
             <x-menu-separator />
-            <x-input label="{{__('Max images per user')}}" wire:model="max_images_user" inline />
-            <x-toggle label="{{__('Allow captions?')}}" wire:model="captions" right inline/>
+            <x-input type="number" label="{{__('Max images per user')}}" wire:model="max_images_user" inline />
+            <x-input type="number" label="{{ __('Time per image') }}" wire:model="duration" hint="{{ __('In seconds') }}" inline />
+            
+            <div x-data="{ captions: @entangle('captions') }">
+                <x-toggle label="{{__('Allow captions?')}}" x-model="captions" wire:model="captions" class="mb-[10px]" right inline/>
+                <template x-if="captions">
+                    <x-input 
+                        label="{{ __('Max captions characters') }}" 
+                        wire:model="caption_max_characters" 
+                        type="number" 
+                        min="10" 
+                        max="255"
+                        hint="Min: 10, max: 255"
+                        inline
+                    />
+                </template>
+            </div>
             <x-toggle label="{{__('Activate moderation?')}}" wire:model="moderation" right inline/>
 
             <x-slot:actions>
@@ -148,33 +289,100 @@ class extends Component {
             wire:click="deleteWall" 
             wire:confirm.prompt="Are you sure?\n\nType DELETE to confirm|DELETE" />
     </x-card>
+
+
+
+
+    <x-card title="{{ __('Share') }}" class="w-96" shadow separator>
+
+        <x-form wire:submit="updateShareOptions">
+            <x-input label="{{ __('Slug') }}" wire:model="slug" icon="o-link" hint="{{ __('Numbers and lower case letters only') }}" inline/>
+            <x-menu-separator />
+            
+            <div x-data="{ copied: false }" class="text-center">
+                <div class="flex items-end justify-center gap-2">
+                    <x-input 
+                        x-bind:value="'{{ $this->displayImageUrl }}'"
+                        type="text"
+                        label="Wall display link"
+                        readonly 
+                        class="w-full px-3 py-2 border rounded bg-gray-100 text-sm text-gray-800"
+                    />
+                    <x-button 
+                        label="{{ __('Copy') }}"
+                        type="button" 
+                        @click="navigator.clipboard.writeText('{{ $this->displayImageUrl }}').then(() => { copied = true; setTimeout(() => copied = false, 2000); })" 
+                        icon="o-clipboard-document-check"
+                    />
+                </div>
+                <p x-show="copied" x-transition class="text-green-600 text-sm mt-1">
+                    {{ __('Link copied!') }}
+                </p>
+            </div>
+
+                        
+            <div x-data="{ copied: false }" class="text-center">
+                <div class="flex items-end justify-center gap-2">
+                    <x-input 
+                        x-bind:value="'{{ $this->CreateImageUrl }}'"
+                        type="text"
+                        label="Post image link"
+                        readonly 
+                        class="w-full px-3 py-2 border rounded bg-gray-100 text-sm text-gray-800"
+                    />
+                    <x-button 
+                        label="{{ __('Copy') }}"
+                        type="button" 
+                        @click="navigator.clipboard.writeText('{{ $this->CreateImageUrl }}').then(() => { copied = true; setTimeout(() => copied = false, 2000); })" 
+                        icon="o-clipboard-document-check"
+                    />
+                </div>
+                <p x-show="copied" x-transition class="text-green-600 text-sm mt-1">
+                    {{ __('Link copied!') }}
+                </p>
+            </div>
+
+
+            <x-slot:actions>
+                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateShareOptions" />
+            </x-slot:actions>
+        </x-form>
+
+    </x-card>
+
+
     
+
+
     <x-card title="{{ __('Background') }}" class="w-96" shadow separator>
 
-        <x-form wire:submit="updateWallDisplayBackground">
-            <div x-data="{ color: @entangle('color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="Background color" x-model="color" />
+        <x-form wire:submit="updateWallBackground">
+            <div x-data="{ background_color: @entangle('background_color') }"class="flex flex-row items-end justify-evenly">
+                <x-input class="w-full" label="Background color" x-model="background_color" />
 
                 <input
                     type="color"
-                    x-model="color"
-                    wire:model="color"
+                    x-model="background_color"
+                    wire:model="background_color"
                     class="p-1 h-10 w-14 bg-white border border-gray-200 cursor-pointer rounded-lg"
-                    title="Choose a color"
+                    title="{{ __('Choose a color') }}"
                 >
             </div>
+            @error('background_color')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
 
             <div class="max-w-full overflow-hidden">
-                <x-file style="max-width: 100% !important" wire:model="new_background_image" label="{{ __('Background-image') }}" 
+                <x-file style="max-width: 100% !important" wire:model="new_background_image" label="{{ __('Background image') }}" 
                     hint="{{ __('Only image formats allowed') }}"
                     accept="image/png, image/jpeg"
                 />
             </div>
             <x-progress wire:loading wire:target="new_background_image" class="progress-primary h-0.5" indeterminate />
             @if($new_background_image)
-                <img src="{{ $new_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover " />
+                <img src="{{ $new_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
             @elseif($background_image)
-                <img src="{{ asset('storage/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover " />
+                <img src="{{ asset('storage/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
             @endif
 
             @php
@@ -184,13 +392,104 @@ class extends Component {
                 ];
             @endphp
             <div class="flex justify-center">
-                <x-radio label="Use as background:" wire:model="background_choice" :options="$options" option-value="custom_key" inline center />
+                <x-radio label="{{ __('Use as background') }}" wire:model="background_choice" :options="$options" option-value="custom_key" inline center />
             </div>
 
             <x-slot:actions>
-                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallDisplayBackground" />
+                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallBackground" />
             </x-slot:actions>
         </x-form>
     </x-card>
+
+
+
+    <x-card title="{{ __('Captions style') }}" class="w-96" shadow separator>
+
+        <x-form wire:submit="updateCaptionStyle">
+
+            <x-input type="number" label="{{ __('Captions font size') }}" wire:model="caption_font_size" hint="{{ __('In pixels') }}" inline />
+
+            <div x-data="{ caption_font_color: @entangle('caption_font_color') }"class="flex flex-row items-end justify-evenly">
+                <x-input class="w-full" label="{{ __('Font color')}}" x-model="caption_font_color" />
+
+                <input
+                    type="color"
+                    x-model="caption_font_color"
+                    wire:model="caption_font_color"
+                    class="p-1 h-10 w-14 bg-white border border-gray-200 cursor-pointer rounded-lg"
+                    title="{{ __('Choose a color') }}"
+                >
+            </div>
+            @error('caption_font_color')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
+
+            <div x-data="{ caption_background_color: @entangle('caption_background_color') }"class="flex flex-row items-end justify-evenly">
+                <x-input class="w-full" label="{{ __('Background color')}}" x-model="caption_background_color" />
+
+                <input
+                    type="color"
+                    x-model="caption_background_color"
+                    wire:model="caption_background_color"
+                    class="p-1 h-10 w-14 bg-white border border-gray-200 cursor-pointer rounded-lg"
+                    title="{{ __('Choose a color') }}"
+                >
+            </div>
+            @error('caption_background_color')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
+
+            <div x-data="{ opacity: @entangle('caption_background_opacity') }">
+                <x-range
+                wire:model.live.debounce="caption_background_opacity"
+                min="0"
+                max="100"
+                step="10"
+                label="Opacity level"
+                hint="{{ __('Greater than 20') }}"
+                class="range-primary range-xs" />
+                <div class="text-sm text-gray-600 mt-2">
+                    {{ __('Selected :') }} <span x-text="opacity + '%'"></span>
+                </div>
+            </div>
+
+            <x-slot:actions>
+                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateCaptionStyle" />
+            </x-slot:actions>
+            
+        </x-form>
+    </x-card>
+
+
+
+    <x-card title="{{ __('Layout') }}" class="w-96" shadow separator>
+
+        <x-form wire:submit="updateWallLayout">
+            <x-input type="number" label="{{ __('Vertical margins') }}" wire:model="vertical_borders_width" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{__('Horizontal margins') }}" wire:model="horizontal_borders_width" hint="{{ __('As a percentage') }}" inline />
+            <x-menu-separator />
+            <x-input type="number" label="{{ __('Captions max width') }}" wire:model="caption_max_width" hint="{{ __('As a percentage') }}" inline />
+
+            @php
+                $options = [
+                    ['custom_key' => 1 , 'name' => 'On image'],
+                    ['custom_key' => 0 , 'name' => 'Bellow image'],
+                ];
+            @endphp
+            <div class="flex justify-center">
+                <x-radio label="{{__('Captions position') }}" wire:model="caption_position" :options="$options" option-value="custom_key" inline />
+            </div>
+
+            <x-input type="number" label="{{ __('Captions font size') }}" wire:model="caption_font_size" hint="{{ __('In pixels') }}" inline />
+
+
+            <x-slot:actions>
+                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallLayout" />
+            </x-slot:actions>
+            
+        </x-form>
+    </x-card>
+
+    
 </div>
 </div>

@@ -4,6 +4,7 @@ use Livewire\Volt\Component;
 use App\Models\Wall;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Livewire\Attributes\On;
 
 new class extends Component 
 {
@@ -27,6 +28,10 @@ new class extends Component
         $this->redirect('/');
     }
 
+
+    // Refresh navigation when a wall name is updated.
+    protected $listeners = ['refreshNavigation' => '$refresh'];
+
 }; ?>
 
 
@@ -45,7 +50,7 @@ new class extends Component
         {{-- Affichage des Walls de l'utilisateur --}}
         @if(count($walls) > 0)
                 @foreach($walls as $wall)
-                    <x-menu-sub title="{{ $wall->name }}" icon="o-sparkles" open>
+                    <x-menu-sub :title="$wall->name" icon="o-sparkles" open>
                         <x-menu-item title="Settings" icon="o-cog-6-tooth" link="{{ route('setup-wall', ['wall' => $wall->id]) }}"  />
                         <x-menu-item title="Moderation" icon="o-magnifying-glass-circle" link="{{ route('moderation', ['wall' => $wall->id]) }}"  />
                         <x-menu-item title="{{__('Post image')}}" icon="o-plus" link="{{ route('create-image', ['slug' => $wall->slug]) }}"  />

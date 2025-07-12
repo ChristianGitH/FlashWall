@@ -30,9 +30,14 @@ class Wall extends Model
         'background_image',
         'caption_max_width',
         'caption_position',
+        'caption_font_size',
         'vertical_borders_width',
         'horizontal_borders_width',
-        'duration'
+        'duration',
+        'caption_font_color',
+        'caption_background_color',
+        'caption_background_opacity',
+        'caption_max_characters'
     ];
 
 
