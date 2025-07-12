@@ -24,7 +24,7 @@ use App\Models\Image;
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Mary\View\Components\Card::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['class' => 'h-screen flex items-center justify-center']); ?>
+<?php $component->withAttributes(['class' => 'flex items-center justify-center']); ?>
         <?php if (isset($component)) { $__componentOriginal6bfd0631c6b8a47111403266db046f63 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal6bfd0631c6b8a47111403266db046f63 = $attributes; } ?>
 <?php $component = Mary\View\Components\Form::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -56,10 +56,32 @@ use App\Models\Image;
 <?php unset($__componentOriginal34d3cad3f3cac9fafaaed454c83e534d); ?>
 <?php endif; ?>
             
+            <?php if (isset($component)) { $__componentOriginal88c6ff351b5bf2bf11e13c8bbbe3615b = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal88c6ff351b5bf2bf11e13c8bbbe3615b = $attributes; } ?>
+<?php $component = Mary\View\Components\Progress::resolve(['indeterminate' => true] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('progress'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Mary\View\Components\Progress::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['wire:loading' => true,'wire:target' => 'photo','class' => 'progress-primary h-0.5']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal88c6ff351b5bf2bf11e13c8bbbe3615b)): ?>
+<?php $attributes = $__attributesOriginal88c6ff351b5bf2bf11e13c8bbbe3615b; ?>
+<?php unset($__attributesOriginal88c6ff351b5bf2bf11e13c8bbbe3615b); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal88c6ff351b5bf2bf11e13c8bbbe3615b)): ?>
+<?php $component = $__componentOriginal88c6ff351b5bf2bf11e13c8bbbe3615b; ?>
+<?php unset($__componentOriginal88c6ff351b5bf2bf11e13c8bbbe3615b); ?>
+<?php endif; ?>
+
             <!--[if BLOCK]><![endif]--><?php if($photo): ?>
                 <img src="<?php echo e($photo->temporaryUrl()); ?>" class="max-w-xs mx-auto shadow-md object-cover " />
             <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
+            <!--[if BLOCK]><![endif]--><?php if($wall->captions): ?>
             <?php if (isset($component)) { $__componentOriginalf51438a7488970badd535e5f203e0c1b = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf51438a7488970badd535e5f203e0c1b = $attributes; } ?>
 <?php $component = Mary\View\Components\Input::resolve(['label' => ''.e(__('Caption')).'','hint' => ''.e(__('Caption')).''] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -80,7 +102,8 @@ use App\Models\Image;
 <?php $component = $__componentOriginalf51438a7488970badd535e5f203e0c1b; ?>
 <?php unset($__componentOriginalf51438a7488970badd535e5f203e0c1b); ?>
 <?php endif; ?>
-            
+            <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
              <?php $__env->slot('actions', null, []); ?> 
                 <?php if (isset($component)) { $__componentOriginal602b228a887fab12f0012a3179e5b533 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal602b228a887fab12f0012a3179e5b533 = $attributes; } ?>

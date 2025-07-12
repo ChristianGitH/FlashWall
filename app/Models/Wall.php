@@ -12,7 +12,6 @@ class Wall extends Model
 
     use HasFactory;
 
-
         /**
      * The attributes that are mass assignable.
      *
@@ -23,7 +22,28 @@ class Wall extends Model
         'slug',
         'description',
         'user_id',
+        'captions',
+        'moderation',
+        'max_images_user',
+        'background_choice',
+        'background_color',
+        'background_image',
+        'caption_max_width',
+        'caption_position',
+        'vertical_borders_width',
+        'horizontal_borders_width',
+        'duration'
     ];
+
+
+    /**
+     * Cast des attributs pour garantir une bonne comparaison avec isDirty(), (ADDED when adding wall settings)
+     */
+    protected $casts = [
+        'captions' => 'boolean',
+        'moderation' => 'boolean',
+    ];
+
 
         /**
      * The attributes that should be hidden for serialization.

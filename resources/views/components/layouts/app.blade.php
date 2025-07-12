@@ -10,6 +10,9 @@
 </head>
 <body class="min-h-screen font-sans antialiased bg-base-200/50 dark:bg-base-200">
 
+
+<!-- If it's not the display-images page we use the normal layout -->
+@if (!Request::is('display/*'))
     {{-- NAVBAR mobile only --}}
     <x-nav sticky class="lg:hidden">
         <x-slot:brand>
@@ -33,6 +36,7 @@
 
         {{-- MENU --}}
         <livewire:navigation />
+
     </x-slot:sidebar>
 
     {{-- The `$slot` goes here --}}
@@ -41,8 +45,19 @@
     </x-slot:content>
 </x-main>
 
-
     {{--  TOAST area --}}
     <x-toast />
+@else
+
+<!-- If it's the display-images page then we use a blank layout which was created for this page (app/view/components/Blank.php)-->
+<x-blank full-width>
+    {{-- The `$slot` goes here --}}
+    <x-slot:content>
+        {{ $slot }}
+    </x-slot:content>
+</x-blank>
+
+@endif
+
 </body>
 </html>

@@ -15,12 +15,17 @@ class extends Component {
  
     #[Rule('required|string|max:255|unique:walls,name')]
     public string $name = '';
- 
     #[Rule('required|string|max:255|unique:walls,slug')]
     public string $slug = '';
- 
     #[Rule('string|max:255')]
     public string $description = '';
+    #[Rule('nullable|integer|max:99')]
+    public ?int $max_images_user;
+    #[Rule('boolean')]
+    public string $allow_captions = '';
+    #[Rule('boolean')]
+    public string $activate_moderation = '';
+
 
     public function createWall()
     {
@@ -31,10 +36,14 @@ class extends Component {
             'slug' => $data['slug'],
             'description' => $data['description'],
             'user_id' => Auth::id(),
+            'max_images_user' => $data['max_images_user'],
+            'captions' => $data['allow_captions'],
+            'moderation' => $data['activate_moderation'],
         ]);
 
     
-        $this->success(__('Wall created successfully.'), redirectTo: "/setup-wall/{$this->wall->id}");
+        session()->flash('message', __('Wall created successfully.'));
+        return redirect('/'); 
     }
 
 }; ?>
@@ -47,10 +56,13 @@ class extends Component {
         @endif
 
         <x-form wire:submit="createWall">
-            <x-input label="{{__('Name')}}" wire:model="name" icon="o-folder" inline />
-            <x-input label="{{__('Slug')}}" wire:model="slug" icon="o-folder" inline />
-            <x-input label="{{__('Description')}}" wire:model="description" icon="o-folder" inline />
-
+            <x-input label="{{__('Name')}}" wire:model="name"  inline />
+            <x-input label="{{__('Slug')}}" wire:model="slug" icon="o-link" inline />
+            <x-input label="{{__('Description')}}" wire:model="description" inline separator />
+            <x-menu-separator />
+            <x-input label="{{__('Max images per user')}}" wire:model="max_images_user" inline />
+            <x-toggle label="{{__('Allow captions?')}}" wire:model="allow_captions" right inline/>
+            <x-toggle label="{{__('Activate moderation?')}}" wire:model="activate_moderation" right inline/>
 
             <x-slot:actions>
                 <x-button label="{{__('Créer')}}" type="submit" icon="o-plus" class="btn-primary" spinner="createWall" />

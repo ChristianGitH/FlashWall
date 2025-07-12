@@ -31,6 +31,7 @@ new class extends Component {
 
     public function save()
     {
+        
         $data = $this->validate();
 
         // Sauvegarde de l'image principale
@@ -61,16 +62,20 @@ new class extends Component {
 ?>   
 
 <div class="h-screen flex items-center justify-center">
-    <x-card class="h-screen flex items-center justify-center" title="{{ __('Add Image to') }} {{ $wall->name }}">
+    <x-card class="flex items-center justify-center" title="{{ __('Add Image to') }} {{ $wall->name }}">
         <x-form wire:submit="save"> 
             <x-file wire:model="photo" label="{{__('Image')}}" hint="{{__('Only image formats allowed')}}" accept="image/png, image/jpeg"/>
             
+            <x-progress wire:loading wire:target="photo" class="progress-primary h-0.5" indeterminate />
+
             @if($photo)
                 <img src="{{ $photo->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover " />
             @endif
 
+            @if ($wall->captions)
             <x-input label="{{__('Caption')}}" wire:model="caption" hint="{{__('Caption')}}" />
-            
+            @endif
+
             <x-slot:actions>
                 <x-button label="{{__('Save')}}" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />
             </x-slot:actions>

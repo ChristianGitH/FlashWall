@@ -1,0 +1,1 @@
+    <span <?php echo e($attributes->class("loading loading-spinner")); ?>></span><?php /**PATH C:\laragon\www\FlashWall\storage\framework\views/1969ec24ce99266a7c6fdb624d88e0c9.blade.php ENDPATH**/ ?>

@@ -36,13 +36,19 @@ new class extends Component {
     x-cloak
 >
     <div class="wall_data">
-        <h1>{{ __( $wall->name ) }}</h1>
-        <h3>{{ __( $wall->description ) }}</h3>
+        <h1 class="text-2xl font-extrabold leading-none tracking-tight text-gray-900 md:text-3xl lg:text-4xl dark:text-white">
+            Modération : {{ __( $wall->name ) }}
+        </h1>
+        <p class="text-sm font-normal text-gray-500 lg:text-base xl:text-lg dark:text-gray-400">{{ __( $wall->description ) }}</p>
     </div>
 
-    <livewire:walls.unprocessed-images :wall="$wall" />
-    <livewire:walls.approved-images :wall="$wall" />
-    <livewire:walls.archived-images :wall="$wall" />
+    @if ($wall->moderation)
+        <livewire:walls.unprocessed-images :wall="$wall" />
+        <livewire:walls.approved-images :wall="$wall" />
+        <livewire:walls.archived-images :wall="$wall" />
+    @else
+        <livewire:walls.all-images :wall="$wall" />
+    @endif
 
     <!-- Zoom Image Modal -->
     <div 

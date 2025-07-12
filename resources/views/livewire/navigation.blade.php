@@ -33,10 +33,8 @@ new class extends Component
 <div>
     <x-menu activate-by-route>
 
-        
         {{-- Vérifie si l'utilisateur est connecté --}}
         @if($user = auth()->user())
-            <x-menu-separator />
                 <x-list-item :item="$user" value="name" sub-value="email" no-separator no-hover class="-mx-2 !-my-2 rounded">
                     <x-slot:actions>
                         <x-button icon="o-power" wire:click="logout" class="btn-circle btn-ghost btn-xs" tooltip-left="{{__('Logout')}}" no-wire-navigate />
@@ -46,10 +44,13 @@ new class extends Component
 
         {{-- Affichage des Walls de l'utilisateur --}}
         @if(count($walls) > 0)
-            <x-menu-sub title="Mes Walls" icon="o-folder">            </x-menu-sub>
                 @foreach($walls as $wall)
-                    <x-menu-item title="{{ $wall->name }}" icon="o-cog-6-tooth" link="{{ route('setup-wall', ['wall' => $wall->id]) }}"  />
-                    <x-menu-item title="{{ $wall->name }}" icon="o-tv" link="{{ route('moderation', ['wall' => $wall->id]) }}"  />
+                    <x-menu-sub title="{{ $wall->name }}" icon="o-sparkles" open>
+                        <x-menu-item title="Settings" icon="o-cog-6-tooth" link="{{ route('setup-wall', ['wall' => $wall->id]) }}"  />
+                        <x-menu-item title="Moderation" icon="o-magnifying-glass-circle" link="{{ route('moderation', ['wall' => $wall->id]) }}"  />
+                        <x-menu-item title="{{__('Post image')}}" icon="o-plus" link="{{ route('create-image', ['slug' => $wall->slug]) }}"  />
+                        <x-menu-item title="View" icon="o-tv" link="{{ route('display-images', ['slug' => $wall->slug]) }}"  />
+                    </x-menu-sub>
                 @endforeach
 
         @endif

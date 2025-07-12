@@ -1,3 +1,27 @@
+Optimisation possible (éviter d’exécuter 2 fois la requête)
+
+Actuellement, tu appelles deux fois $this->approvedImages() : une fois pour isEmpty() et une fois dans la boucle @foreach.
+
+Cela exécute la requête deux fois. Tu pourrais plutôt faire :
+
+@php
+    $approvedImages = $this->approvedImages();
+@endphp
+
+@if($approvedImages->isEmpty())
+    <p class="text-center text-gray-500">{{ __('No approved image.') }}</p>
+@else
+    @foreach($approvedImages as $image)
+        <!-- contenu -->
+    @endforeach
+@endif
+
+Cela permet de ne faire qu’une seule requête.
+
+
+
+
+
 6. Utilisation des Relations en Eloquent
 
 Tu peux maintenant utiliser tes relations ainsi :
@@ -24,8 +48,11 @@ $category = $image->category; // La catégorie de cette image
 
 
 DEPLOY :
-J'ai modifié les assets parce que j'avais oublié de build avant de deployer.sym
-J'ai modifié les urls vers les images dans la modération des walls. j'ai ajouté "public" dans "public/storage/images" (et thumbs). Je pense que le SymLynk ne fonctionne pas sur le serveur mutualisé.
+Modification de la navigation pour la rendre plus pratique
+Création de la page "display_images", et d'un layout "blank" pour l'affichage sans navigation, et autres. app.blade.php a été modifié.
+Ajouts des paramètres "modération" et "captions" sur les walls.
+Ajouts dans la table Walls, des paramètres pour le paramétrage de "display_walls". 
+Les paramètres sont loadés depuis la bdd sur display_walls. Mais il faut terminer le travail sur setup_walls.
 
 
 MISE A JOUR LARAVEL : 
@@ -37,4 +64,4 @@ php artisan migrate:fresh --seed
 
 Start Vite server : npm run dev (or build)
 
-Create volt component : php artisan make:volt walls/archived-images --class
+Create volt component : php artisan make:volt walls/all-images --class
