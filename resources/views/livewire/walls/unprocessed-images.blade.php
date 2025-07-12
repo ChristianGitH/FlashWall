@@ -178,7 +178,9 @@ new class extends Component {
         modalConfirmClass: 'bg-blue-600 hover:bg-blue-700', 
         confirmAction: null,        
         showImageZoomModal: false,
-        modalImageUrl: '' }" @reset-selection.window="selected = []; allSelected = false,  errorMessage = ''">
+        modalImageUrl: '' }"
+        
+        @reset-selection.window="selected = []; allSelected = false,  errorMessage = ''">
 
 <div class="galery_data">
     <h2>{{ __( 'Pending images' ) }}</h2>
@@ -215,6 +217,8 @@ new class extends Component {
         class="btn btn-sm"
         tooltip="{{ __('Approve Selected') }}"
         aria-label="{{ __('Approve Selected') }}"
+        wire:loading.attr="disabled"
+        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
     />
 
     <x-button 
@@ -236,6 +240,8 @@ new class extends Component {
         class="btn btn-sm"
         tooltip="{{ __('Archive selected') }}"
         aria-label="{{ __('Archive selected') }}"
+        wire:loading.attr="disabled"
+        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
     />
     <x-button     
         @click="
@@ -258,6 +264,8 @@ new class extends Component {
         wire:click.prevent=""
         tooltip="{{ __('Delete Selected') }}"
         aria-label="{{ __('Delete Selected') }}"
+        wire:loading.attr="disabled"
+        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
     />
     <!-- Message d'erreur affiché dynamiquement -->
     <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
@@ -282,7 +290,7 @@ new class extends Component {
             $data3 = "hidden";
         }
     @endphp
-        <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{!! $data2 !!}" wire:key="image-{{ $image->id }}">
+        <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{{ $data2 }}" wire:key="image-{{ $image->id }}">
             <div class="uper_image_data justify-between">
                 <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->name) }}' })">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -311,6 +319,8 @@ new class extends Component {
                     tooltip="{{ __('Approve image') }}"
                     aria-label="{{ __('Approve image') }}"
                     @click="$wire.set('selectedImages', selected)"
+                    wire:loading.attr="disabled"
+                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
                 />
                 <x-button 
                     wire:click="archiveImage({{ $image->id }})"
@@ -319,6 +329,8 @@ new class extends Component {
                     tooltip="{{ __('Archive Selected') }}"
                     aria-label="{{ __('Archive Selected') }}"
                     @click="$wire.set('selectedImages', selected)"
+                    wire:loading.attr="disabled"
+                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
                 />
                 <x-button 
                     wire:click.prevent=""
@@ -335,6 +347,8 @@ new class extends Component {
                             action: () => $wire.call('deleteImage', {{ $image->id }})
                         })
                     "
+                    wire:loading.attr="disabled"
+                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
                 />
             </div>
         </div>

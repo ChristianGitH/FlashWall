@@ -18,10 +18,7 @@ new class extends Component {
 
     public Wall $wall; // Stocke le Wall correspondant au token
 
-    #[Rule('required|image|max:5120')]
     public $photo;
-
-    #[Rule('nullable|string|max:255')]
     public string $caption = '';
 
     public function mount(string $slug)
@@ -31,9 +28,11 @@ new class extends Component {
 
     public function save()
     {
-        
-        $data = $this->validate();
-
+        $data = $this->validate([
+            'photo' => 'required|image|max:5120',
+            'caption' => 'required|string|max:' . $this->wall->caption_max_characters,
+        ]);
+    
         // Sauvegarde de l'image principale
         $path = $this->photo->store('images', 'public');
 
@@ -62,7 +61,7 @@ new class extends Component {
 ?>   
 
 <div class="h-screen flex items-center justify-center">
-    <x-card class="flex items-center justify-center" title="{{ __('Add Image to') }} {{ $wall->name }}">
+    <x-card class="flex items-center justify-center" title="{{ __('Post an image') }}">
         <x-form wire:submit="save"> 
             <x-file wire:model="photo" label="{{__('Image')}}" hint="{{__('Only image formats allowed')}}" accept="image/png, image/jpeg"/>
             
@@ -73,7 +72,7 @@ new class extends Component {
             @endif
 
             @if ($wall->captions)
-            <x-input label="{{__('Caption')}}" wire:model="caption" hint="{{__('Caption')}}" />
+            <x-input label="{{__('Caption')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" />
             @endif
 
             <x-slot:actions>

@@ -23,9 +23,14 @@ class WallSeeder extends Seeder
             'background_image' => '0yNxkgcnf0vZDabiELyJK8HtvHniN9rmFCklYWTQ.jpg',
             'caption_max_width' => '60',
             'caption_position' => '1',
-            'vertical_borders_width' => '25',
+            'caption_font_size' => '16',
+            'vertical_borders_width' => '20',
             'horizontal_borders_width' => '10',
-            'duration' => '3'
+            'duration' => '3',
+            'caption_font_color' => '#ffffff',
+            'caption_background_color' => '#ab58f6',
+            'caption_background_opacity' => '30',
+            'caption_max_characters' => '255'
         ]);
     }
 }
