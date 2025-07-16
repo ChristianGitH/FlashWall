@@ -56,14 +56,13 @@ new class extends Component {
         }
         //  Émission d’événement Livewire vers le composant archived-images
         $this->dispatch('archived-images-updated');
-        $this->success(__('Image archived successfully.'));
+        $this->success(__('Image successfully archived'));
     }
 
     public function archiveSelected(array $selectedImages)
-    {
-        
+    {      
         if (empty($selectedImages)) {
-            $this->error(__('No image selected.'));
+            $this->error(__('No item selected'));
             return;
         }
 
@@ -77,7 +76,7 @@ new class extends Component {
         }
         //  Émission d’événement Livewire vers le composant archived-images
         $this->dispatch('archived-images-updated');
-        $this->success(__('Selected images archived.'));
+        $this->success(__('Images successfully archived'));
     }
    
 
@@ -90,7 +89,7 @@ new class extends Component {
         $image = Image::where('id', $id)->first(['id', 'name', 'thumb']);
     
         if (!$image) {
-            $this->error(__('Image not found.'));
+            $this->error(__('Image not found'));
             return;
         }
     
@@ -104,14 +103,14 @@ new class extends Component {
         if ($this->approvedImagesPageCount <= 1) {
             $this->resetPage(pageName: 'approved-images');
         }
-        $this->success(__('Photo deleted successfully.'));
+        $this->success(__('Image successfully deleted'));
     }
 
     public function deleteSelected(array $selectedImages)
     {
-       
+      
         if (empty($selectedImages)) {
-            $this->error(__('No images selected.'));
+            $this->error(__('No item selected'));
             return;
         }
     
@@ -137,7 +136,7 @@ new class extends Component {
         if ($this->approvedImagesPageCount <= 1) {
             $this->resetPage(pageName: 'approved-images');
         }
-        $this->success(__('Selected images deleted.'));
+        $this->success(__('Images successfully deleted'));
     }
     
 }; ?>
@@ -152,13 +151,11 @@ new class extends Component {
         showImageZoomModal: false,
         modalImageUrl: '' }" @reset-selection-approved.window="selectedApproved = []; allSelectedApproved = false">
 
-<div class="galery_data">
-    <h2>{{ __( 'Approved images' ) }}</h2>
-</div>
+<x-card title="{{ __('Approved images') }}" subtitle="{{ __('These images are displayed')}}" class="mt-[15px] mb-[15px]" shadow separator>
 
-<div class="bulk-actions flex items-center">
+<div class="bulk-actions flex items-center space-x-2">
     <button class="btn btn-sm" @click="allSelectedApproved = !allSelectedApproved; selectedApproved = allSelectedApproved ? [...document.querySelectorAll('.approved-image-checkbox')].map(cb => cb.value) : []">
-        <label for="approved-select-all-checkbox" @click="allSelectedApproved = !allSelectedApproved; selectedApproved = allSelectedApproved ? [...document.querySelectorAll('.approved-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">Select All</label>
+        <label for="approved-select-all-checkbox" @click="allSelectedApproved = !allSelectedApproved; selectedApproved = allSelectedApproved ? [...document.querySelectorAll('.approved-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">{{__('Select all')}}</label>
         <input 
             type="checkbox"
             id="approved-select-all-checkbox"
@@ -169,13 +166,13 @@ new class extends Component {
 
     <x-button 
         @click="if (selectedApproved.length === 0) { 
-                    errorMessage = '{{ __('No images selected.') }}'; 
+                    errorMessage = '{{ __('No item selected') }}'; 
                     setTimeout(() => errorMessage = '', 1500);
                 } else {
                     let textPlural = selectedApproved.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
                     $dispatch('confirm-action', {
-                        title: '{{ __('Archive images') }}',
-                        message: '{{ __('You are about to archive') }} ' + selectedApproved.length + ' ' + textPlural + '.',
+                        title: '{{ __('Archive') }}',
+                        message: '{!! __('You are about to archive') !!} ' + selectedApproved.length + ' ' + textPlural + '.',
                         confirmText: '{{ __('Yes, archive!') }}',
                         confirmClass: 'bg-blue-600 hover:bg-blue-700',
                         action: () => $wire.call('archiveSelected', selectedApproved)
@@ -184,15 +181,15 @@ new class extends Component {
             "
         icon="o-archive-box"
         class="btn btn-sm"
-        tooltip="{{ __('Archive selected') }}"
-        aria-label="{{ __('Archive selected') }}"
+        tooltip="{{ __('Archive selection') }}"
+        aria-label="{{ __('Archive selection') }}"
         wire:loading.attr="disabled"
         wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
     />
     <x-button     
         @click="
                 if (selectedApproved.length === 0) { 
-                    errorMessage = '{{ __('No images selected.') }}'; 
+                    errorMessage = '{{ __('No item selected') }}'; 
                     setTimeout(() => errorMessage = '', 1500);
                 } else {
                     let textPlural = selectedApproved.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
@@ -206,10 +203,10 @@ new class extends Component {
                 }
             "
         icon="o-trash"
-        class="btn btn-sm btn-danger"
+        class="btn btn-sm"
         wire:click.prevent=""
-        tooltip="{{ __('Delete Selected') }}"
-        aria-label="{{ __('Delete Selected') }}"
+        tooltip="{{ __('Delete selection') }}"
+        aria-label="{{ __('Delete selection') }}"
         wire:loading.attr="disabled"
         wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
     />
@@ -222,7 +219,7 @@ new class extends Component {
 <div class="gallery_wrapper">
 
     @if($this->approvedImages()->isEmpty())
-        <p class="text-center text-gray-500">{{ __('No approved image.') }}</p>
+        <p class="text-center">{{ __('No approved image.') }}</p>
     @else
     @foreach($this->approvedImages() as $image)
         @php
@@ -239,11 +236,11 @@ new class extends Component {
         <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{!! $data2 !!}" wire:key="image-{{ $image->id }}">
             <div class="uper_image_data justify-between">
                 <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->name) }}' })">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                     </svg>
                 </a>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 {{ ( $data3 ) }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $data3 ) }}">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                 </svg>
             <input 
@@ -262,8 +259,8 @@ new class extends Component {
                     wire:click="archiveImage({{ $image->id }})"
                     icon="o-archive-box"
                     class="btn btn-sm"
-                    tooltip="{{ __('Archive Selected') }}"
-                    aria-label="{{ __('Archive Selected') }}"
+                    tooltip="{{ __('Archive') }}"
+                    aria-label="{{ __('Archive') }}"
                     @click="$wire.set('selectedImages', selectedApproved)"
                     wire:loading.attr="disabled"
                     wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
@@ -272,11 +269,11 @@ new class extends Component {
                     wire:click.prevent=""
                     icon="o-trash"
                     class="btn btn-sm btn-danger"
-                    tooltip="{{ __('Delete image') }}"
-                    aria-label="{{ __('Delete image') }}"
+                    tooltip="{{ __('Delete') }}"
+                    aria-label="{{ __('Delete') }}"
                     @click="
                         $dispatch('confirm-action', {
-                            title: '{{ __('Delete image') }}',
+                            title: '{{ __('Delete') }}',
                             message: '{{ __('Are you sure you want to delete this image?') }}',
                             confirmText: '{{ __('Yes, delete!') }}',
                             confirmClass: 'bg-red-600 hover:bg-red-700',
@@ -295,4 +292,5 @@ new class extends Component {
     {{ $this->approvedImages()->links(data: ['scrollTo' => false]) }}
 </div>
 
+</x-card>
 </div>

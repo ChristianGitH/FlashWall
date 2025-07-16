@@ -250,18 +250,18 @@ class extends Component {
 
 ?>
 <div>
-    <h1 class="font-bold text-2xl mb-3 me-3 text-gray-700">
-            Update wall : {{ $wall->name }}
+    <h1 class="text-2xl md:text-3xl lg:text-4xl">
+        {{ __('Settings') }} : {{ $wall->name }}
     </h1>
 
-<div class="flex items-start justify-center gap-7 flex-wrap">
-    <x-card title="{{ __('Update Wall') }}" class="w-96" shadow separator>
+<div class="flex mt-[10px] items-start justify-center gap-7 flex-wrap">
+    <x-card title="{{ __('General settings') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateWall">
             <x-input label="{{ __('Name') }}" wire:model="name" inline />
             <x-input label="{{ __('Description') }}" wire:model="description" inline />
             <x-menu-separator />
-            <x-input type="number" label="{{__('Max images per user')}}" wire:model="max_images_user" inline />
+            <x-input type="number" label="{!! __('Max images per user')!!}" wire:model="max_images_user" inline />
             <x-input type="number" label="{{ __('Time per image') }}" wire:model="duration" hint="{{ __('In seconds') }}" inline />
             
             <div x-data="{ captions: @entangle('captions') }">
@@ -284,10 +284,6 @@ class extends Component {
                 <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWall" />
             </x-slot:actions>
         </x-form>
-
-        <x-button label="Delete" icon="o-trash" class="btn-danger"
-            wire:click="deleteWall" 
-            wire:confirm.prompt="Are you sure?\n\nType DELETE to confirm|DELETE" />
     </x-card>
 
 
@@ -296,7 +292,7 @@ class extends Component {
     <x-card title="{{ __('Share') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateShareOptions">
-            <x-input label="{{ __('Slug') }}" wire:model="slug" icon="o-link" hint="{{ __('Numbers and lower case letters only') }}" inline/>
+            <x-input label="{{ __('Slug') }}" wire:model="slug" icon="o-link" hint="{!! __('Numbers and lower case letters only, no spaces') !!}" inline/>
             <x-menu-separator />
             
             <div x-data="{ copied: false }" class="text-center">
@@ -304,9 +300,9 @@ class extends Component {
                     <x-input 
                         x-bind:value="'{{ $this->displayImageUrl }}'"
                         type="text"
-                        label="Wall display link"
+                        label="{!! __('Wall display link') !!}"
                         readonly 
-                        class="w-full px-3 py-2 border rounded bg-gray-100 text-sm text-gray-800"
+                        class="w-full px-3 py-2 border rounded text-sm"
                     />
                     <x-button 
                         label="{{ __('Copy') }}"
@@ -326,9 +322,9 @@ class extends Component {
                     <x-input 
                         x-bind:value="'{{ $this->CreateImageUrl }}'"
                         type="text"
-                        label="Post image link"
+                        label="{!! __('Link to post image') !!}"
                         readonly 
-                        class="w-full px-3 py-2 border rounded bg-gray-100 text-sm text-gray-800"
+                        class="w-full px-3 py-2 border rounded text-sm"
                     />
                     <x-button 
                         label="{{ __('Copy') }}"
@@ -358,13 +354,13 @@ class extends Component {
 
         <x-form wire:submit="updateWallBackground">
             <div x-data="{ background_color: @entangle('background_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="Background color" x-model="background_color" />
+                <x-input class="w-full" label="{!! __('Background color')!!}" x-model="background_color" />
 
                 <input
                     type="color"
                     x-model="background_color"
                     wire:model="background_color"
-                    class="p-1 h-10 w-14 bg-white border border-gray-200 cursor-pointer rounded-lg"
+                    class="h-8 w-12 mb-[0.46rem] cursor-pointer"
                     title="{{ __('Choose a color') }}"
                 >
             </div>
@@ -373,7 +369,7 @@ class extends Component {
             @enderror
 
             <div class="max-w-full overflow-hidden">
-                <x-file style="max-width: 100% !important" wire:model="new_background_image" label="{{ __('Background image') }}" 
+                <x-file style="max-width: 100% !important" wire:model="new_background_image" label="{!! __('Background image') !!}" 
                     hint="{{ __('Only image formats allowed') }}"
                     accept="image/png, image/jpeg"
                 />
@@ -388,11 +384,11 @@ class extends Component {
             @php
                 $options = [
                     ['custom_key' => 1 , 'name' => 'Image'],
-                    ['custom_key' => 0 , 'name' => 'Color'],
+                    ['custom_key' => 0 , 'name' => __('Color')],
                 ];
             @endphp
             <div class="flex justify-center">
-                <x-radio label="{{ __('Use as background') }}" wire:model="background_choice" :options="$options" option-value="custom_key" inline center />
+                <x-radio label="{{ __('Use as background') }} :" wire:model="background_choice" :options="$options" option-value="custom_key" inline center />
             </div>
 
             <x-slot:actions>
@@ -416,7 +412,7 @@ class extends Component {
                     type="color"
                     x-model="caption_font_color"
                     wire:model="caption_font_color"
-                    class="p-1 h-10 w-14 bg-white border border-gray-200 cursor-pointer rounded-lg"
+                    class="h-8 w-12 mb-[0.46rem] cursor-pointer"
                     title="{{ __('Choose a color') }}"
                 >
             </div>
@@ -425,13 +421,13 @@ class extends Component {
             @enderror
 
             <div x-data="{ caption_background_color: @entangle('caption_background_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{{ __('Background color')}}" x-model="caption_background_color" />
+                <x-input class="w-full" label="{!! __('Background color')!!}" x-model="caption_background_color" />
 
                 <input
                     type="color"
                     x-model="caption_background_color"
                     wire:model="caption_background_color"
-                    class="p-1 h-10 w-14 bg-white border border-gray-200 cursor-pointer rounded-lg"
+                    class="h-8 w-12 mb-[0.46rem] cursor-pointer"
                     title="{{ __('Choose a color') }}"
                 >
             </div>
@@ -445,11 +441,10 @@ class extends Component {
                 min="0"
                 max="100"
                 step="10"
-                label="Opacity level"
-                hint="{{ __('Greater than 20') }}"
+                label="{!! __('Opacity level') !!}"
                 class="range-primary range-xs" />
-                <div class="text-sm text-gray-600 mt-2">
-                    {{ __('Selected :') }} <span x-text="opacity + '%'"></span>
+                <div class="text-center">
+                    <p>{{ __('Selected') }} : <span x-text="opacity + '%'"></span></p>
                 </div>
             </div>
 
@@ -472,16 +467,13 @@ class extends Component {
 
             @php
                 $options = [
-                    ['custom_key' => 1 , 'name' => 'On image'],
-                    ['custom_key' => 0 , 'name' => 'Bellow image'],
+                    ['custom_key' => 1 , 'name' => __('On image')],
+                    ['custom_key' => 0 , 'name' => __('Bellow image')],
                 ];
             @endphp
-            <div class="flex justify-center">
-                <x-radio label="{{__('Captions position') }}" wire:model="caption_position" :options="$options" option-value="custom_key" inline />
+            <div class="flex justify-center text-center">
+                <x-radio label="{{__('Captions position') }} :" class="normal-case" wire:model="caption_position" :options="$options" option-value="custom_key" inline center />
             </div>
-
-            <x-input type="number" label="{{ __('Captions font size') }}" wire:model="caption_font_size" hint="{{ __('In pixels') }}" inline />
-
 
             <x-slot:actions>
                 <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallLayout" />
@@ -490,6 +482,16 @@ class extends Component {
         </x-form>
     </x-card>
 
+
+    <x-card title='Danger Zone' class="w-96 border border-error" shadow separator>
+        <p>{{__('These actions will be irreversible!')}}</p>
+        
+        <x-menu-separator />
+        <x-button label="{{__('Delete this wall')}}" icon="o-trash" class="btn btn-error"
+            wire:click="deleteWall" 
+            wire:confirm.prompt="Are you sure?\n\nType DELETE to confirm|DELETE" />
+
+    </x-card>
     
 </div>
 </div>

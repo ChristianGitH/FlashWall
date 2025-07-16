@@ -18,7 +18,7 @@ new class extends Component {
 
     public Wall $wall; // Stocke le Wall correspondant au token
 
-    public $photo;
+    public $image;
     public string $caption = '';
 
     public function mount(string $slug)
@@ -29,19 +29,19 @@ new class extends Component {
     public function save()
     {
         $data = $this->validate([
-            'photo' => 'required|image|max:5120',
-            'caption' => 'required|string|max:' . $this->wall->caption_max_characters,
+            'image' => 'required|image|max:5120',
+            'caption' => 'nullable|string|max:' . $this->wall->caption_max_characters,
         ]);
     
         // Sauvegarde de l'image principale
-        $path = $this->photo->store('images', 'public');
+        $path = $this->image->store('images', 'public');
 
         // Génération de la miniature
         
         // create new manager instance with desired driver
         $manager = new ImageManager(new Driver());
 
-        $image = $manager->read($this->photo->getRealPath())->scale(width: 500)->encode();
+        $image = $manager->read($this->image->getRealPath())->scale(width: 500)->encode();
         Storage::disk('public')->put('thumbs/' . basename($path), $image);
 
         // Enregistrement en base de données
@@ -54,7 +54,7 @@ new class extends Component {
 
         $this->success(__('Image added successfully!'));
 
-        $this->reset('photo', 'caption');
+        $this->reset('image', 'caption');
     }
 
 }; 
@@ -63,12 +63,12 @@ new class extends Component {
 <div class="h-screen flex items-center justify-center">
     <x-card class="flex items-center justify-center" title="{{ __('Post an image') }}">
         <x-form wire:submit="save"> 
-            <x-file wire:model="photo" label="{{__('Image')}}" hint="{{__('Only image formats allowed')}}" accept="image/png, image/jpeg"/>
+            <x-file wire:model="image" label="{{__('Image')}}" hint="{{__('Only image formats allowed')}}" accept="image/png, image/jpeg"/>
             
-            <x-progress wire:loading wire:target="photo" class="progress-primary h-0.5" indeterminate />
+            <x-progress wire:loading wire:target="image" class="progress-primary h-0.5" indeterminate />
 
-            @if($photo)
-                <img src="{{ $photo->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover " />
+            @if($image)
+                <img src="{{ $image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover " />
             @endif
 
             @if ($wall->captions)
@@ -76,7 +76,7 @@ new class extends Component {
             @endif
 
             <x-slot:actions>
-                <x-button label="{{__('Save')}}" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />
+                <x-button label="{{__('Send')}}" icon="o-paper-airplane" spinner="save" type="submit" class="btn-primary" />
             </x-slot:actions>
         </x-form>
     </x-card>

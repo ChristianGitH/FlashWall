@@ -66,7 +66,8 @@ new class extends Component
         @endif
 
 
-        <x-menu-item title="Create Wall" icon="o-plus" link="{{ route('create-wall') }}" />                   
-
+        <x-menu-item title="Create Wall" icon="o-plus" link="{{ route('create-wall') }}" />
+                    
+        <x-theme-toggle />
     </x-menu>
 </div>

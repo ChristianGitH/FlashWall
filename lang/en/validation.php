@@ -270,6 +270,8 @@ return [
         'user'                     => 'user',
         'username'                 => 'username',
         'value'                    => 'value',
+        'vertical_borders_width'   => 'vertical margins',
+        'horizontal_borders_width' => 'horizontal margins',
         'winner'                   => 'winner',
         'work'                     => 'work',
         'year'                     => 'year',

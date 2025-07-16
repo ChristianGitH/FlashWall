@@ -48,7 +48,7 @@
     width: 100%;
     margin-bottom: -35px;
     position: relative;
-    z-index: 10;
+    z-index: 1;
     text-align: right;
     padding: 0px 5px 0px 5px;
 }

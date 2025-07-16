@@ -48,11 +48,10 @@ $category = $image->category; // La catégorie de cette image
 
 
 DEPLOY :
-Modification de la navigation pour la rendre plus pratique
-Création de la page "display_images", et d'un layout "blank" pour l'affichage sans navigation, et autres. app.blade.php a été modifié.
-Ajouts des paramètres "modération" et "captions" sur les walls.
-Ajouts dans la table Walls, des paramètres pour le paramétrage de "display_walls". 
-Les paramètres sont loadés depuis la bdd sur display_walls. Mais il faut terminer le travail sur setup_walls.
+Dark version
+Translation
+Pagination change for both Translation and dark mode : 
+php artisan livewire:publish --pagination : Text color remove
 
 
 MISE A JOUR LARAVEL : 
