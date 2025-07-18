@@ -44,6 +44,9 @@ new class extends Component {
         // Récupérer directement les données nécessaires en une seule requête
        Image::where('id', $id)->update(['approved' => true, 'archived' => false]);
 
+        // Supprimer l'image de la sélection côté navigateur
+        $this->dispatch('action-on-archived-image', id: $id);
+
         // Reset la pagination uniquement si c'était la dernière image de la page
         if ($this->archivedImagesPageCount <= 1) {
             $this->resetPage(pageName: 'archived-images');
@@ -93,6 +96,9 @@ new class extends Component {
     
         // Supprimer l'image de la base de données
         $image->delete();
+
+        // Supprimer l'image de la sélection côté navigateur
+        $this->dispatch('action-on-archived-image', id: $id);
 
         // Reset la pagination uniquement si c'était la dernière image de la page
         if ($this->archivedImagesPageCount <= 1) {
@@ -145,7 +151,9 @@ new class extends Component {
         modalConfirmClass: 'bg-blue-600 hover:bg-blue-700', 
         confirmAction: null,
         showImageZoomModal: false,
-        modalImageUrl: '' }" @reset-selection-archived.window="selectedArchived = []; allSelected = false,  errorMessage = ''">
+        modalImageUrl: '' }" @reset-selection-archived.window="selectedArchived = []; allSelected = false,  errorMessage = ''"
+        @action-on-archived-image.window="selectedArchived = selectedArchived.filter(id => id != $event.detail.id)"
+>
 
 <x-card title="{{ __( 'Archived images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>
 
@@ -202,7 +210,6 @@ new class extends Component {
             "
         icon="o-trash"
         class="btn btn-sm"
-        wire:click.prevent=""
         tooltip="{{ __('Delete selection') }}"
         aria-label="{{ __('Delete selection') }}"
         wire:loading.attr="disabled"
@@ -265,7 +272,6 @@ new class extends Component {
                     wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
                 />
                 <x-button 
-                    wire:click.prevent=""
                     icon="o-trash"
                     class="btn btn-sm btn-danger"
                     tooltip="{{ __('Delete') }}"

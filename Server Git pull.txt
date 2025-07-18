@@ -1,0 +1,21 @@
+First :
+git reset --hard ?
+Puis :
+git clean -f -d
+
+Ensuite : Git Version Control => Information basiques => Checked-Out Branch => Change to main wich was updated/merge
+
+Update with server versions : .env
+.htaccess
+composer.json ? changes ?
+composer.lock ? changes ?
+index.php
+Then move these from "Public" to root folder "Flashwall"
+
+Move/copy "build" folder from "Public" to root folder "Flashwall"
+Rename or delete old "build" folder wich was in root folder "Flashwall"
+
+Dans public, supprimer "storage" et refaire "php artisan storage:link"
+
+change link to images, add /public/
+Display images, moderation

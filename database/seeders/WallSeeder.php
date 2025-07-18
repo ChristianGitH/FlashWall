@@ -20,7 +20,7 @@ class WallSeeder extends Seeder
             'max_images_user' => '2',
             'background_choice' => '0',
             'background_color' => '#f7a6d5',
-            'background_image' => '0yNxkgcnf0vZDabiELyJK8HtvHniN9rmFCklYWTQ.jpg',
+            'background_image' => 'default_background.jpg',
             'caption_max_width' => '60',
             'caption_position' => '1',
             'caption_font_size' => '16',

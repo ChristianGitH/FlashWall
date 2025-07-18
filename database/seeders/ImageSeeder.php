@@ -16,7 +16,7 @@ class ImageSeeder extends Seeder
                 'wall_id' => 1,
                 'name' => 'images/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
                 'thumb' => 'thumbs/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
-                'caption' => 'La super légende !',
+                'caption' => 'Image : '. $i . '. La super légende !',
             ]);
             $i++;
         }

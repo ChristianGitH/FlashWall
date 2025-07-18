@@ -42,6 +42,9 @@ new class extends Component {
         // Récupérer directement les données nécessaires en une seule requête
        Image::where('id', $id)->update(['approved' => true]);
 
+        // Supprimer l'image de la sélection côté navigateur
+        $this->dispatch('action-on-unprocessed-image', id: $id);
+
         // Reset la pagination uniquement si c'était la dernière image de la page
         if ($this->unprocessedImagesPageCount <= 1) {
             $this->resetPage(pageName: 'unprocessed-images');
@@ -78,6 +81,9 @@ new class extends Component {
     {
         // Récupérer directement les données nécessaires en une seule requête
        Image::where('id', $id)->update(['archived' => true]);
+
+        // Supprimer l'image de la sélection côté navigateur
+        $this->dispatch('action-on-unprocessed-image', id: $id);
 
         // Reset la pagination uniquement si c'était la dernière image de la page
         if ($this->unprocessedImagesPageCount <= 1) {
@@ -127,6 +133,9 @@ new class extends Component {
     
         // Supprimer l'image de la base de données
         $image->delete();
+
+        // Supprimer l'image de la sélection côté navigateur
+        $this->dispatch('action-on-unprocessed-image', id: $id);
 
         // Reset la pagination uniquement si c'était la dernière image de la page
         if ($this->unprocessedImagesPageCount <= 1) {
@@ -179,8 +188,9 @@ new class extends Component {
         confirmAction: null,        
         showImageZoomModal: false,
         modalImageUrl: '' }"
-        
-        @reset-selection.window="selected = []; allSelected = false,  errorMessage = ''">
+        @reset-selection.window="selected = []; allSelected = false,  errorMessage = ''"
+        @action-on-unprocessed-image.window="selected = selected.filter(id => id != $event.detail.id)"
+>
 
 <x-card title="{{ __( 'Pending images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>
 

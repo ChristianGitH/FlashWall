@@ -25,3 +25,10 @@ Volt::route('/{slug}', 'images.create-image')->name('create-image');
 // Autres routes accessibles à tous (si besoin)
 Volt::route('/', 'index')->name('home');
 Volt::route('/display/{slug}', 'walls.display-images')->name('display-images');
+
+// Routes pour le changement de langue
+Route::get('language/{locale}', function ($locale) {
+    app()->setLocale($locale);
+    session()->put('locale', $locale);
+    return redirect()->back();
+});

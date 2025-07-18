@@ -4,7 +4,9 @@ use Livewire\Volt\Component;
 
 new class extends Component {
     //
-}; ?>
+}; 
+
+?>
 
 
 <div class="hero bg-base-200 min-h-[100%]">

@@ -47,11 +47,16 @@ $user = $image->user; // L'utilisateur qui possède cette image
 $category = $image->category; // La catégorie de cette image
 
 
-DEPLOY :
+LAST DEPLOY :
 Dark version
 Translation
 Pagination change for both Translation and dark mode : 
 php artisan livewire:publish --pagination : Text color remove
+
+NEXT TO DO :
+Add QR code : composer require simplesoftwareio/simple-qrcode : Imagick doesn't work on 
+Image display loop
+Select All update when action on selected image which makes it leave the selection
 
 
 MISE A JOUR LARAVEL : 

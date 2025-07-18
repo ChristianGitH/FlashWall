@@ -9,10 +9,13 @@ new class extends Component {
 
     public Wall $wall;
 
+    public $approvedImages = [];
+    public $approvedImageHash = null;
 
     public function mount(string $slug)
     {
         $this->wall = Wall::where('slug', $slug)->firstOrFail();
+        $this->loadApprovedImages(); // ← Important !
     }
 
 public function wallSettingsMount(): array
@@ -37,7 +40,7 @@ public function wallSettingsMount(): array
     if ($this->wall->background_choice == 0) {    
         $background = 'background: ' . $this->wall->background_color . ';';
     } else {
-        $background = 'background:  no-repeat center url(\''. asset('storage/' . $this->wall->background_image) .'\'); background-size: 100% 100%;';
+        $background = 'background:  no-repeat center url(\''. asset('storage/background_images/' . $this->wall->background_image) .'\'); background-size: 100% 100%;';
     }
 
     return [
@@ -52,26 +55,55 @@ public function wallSettingsMount(): array
     ];
 }
 
-public function approvedImages()
+protected function getApprovedImagesQuery()
 {
+    $query = $this->wall->images();
+
     if ($this->wall->moderation) {
-        return $this->wall->images()
-                    ->where('approved', true)
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-    } else {
-        return $this->wall->images()
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+        $query->where('approved', true);
+    }
+
+    return $query
+        ->orderBy('display_count', 'asc')
+        ->orderBy('created_at', 'asc');
+}
+
+public function loadApprovedImages()
+{
+    $images = $this->getApprovedImagesQuery()->get();
+
+    $this->approvedImages = $images;
+
+    // Hash stable basé sur l'ordre
+    $this->approvedImageHash = md5($images->pluck('id')->implode(','));
+}
+
+public function checkForNewImages()
+{
+    $ids = $this->getApprovedImagesQuery()->pluck('id');
+
+    $newHash = md5($ids->implode(','));
+
+    if ($newHash !== $this->approvedImageHash) {
+        $this->loadApprovedImages();
     }
 }
+
+protected $listeners = ['checkNewImages' => 'checkForNewImages'];
+
 
 }; ?>
 
 <div class="w-screen h-screen">
 
+
+<div style="z-index: 100;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
+    IDs affichés :
+    {{ collect($this->approvedImages)->pluck('id')->join(', ') }}
+</div>
+
 @php
-    $approvedImages = $this->approvedImages();
+    $approvedImages = $this->approvedImages;
     $displaySettings = $this->wallSettingsMount();
 @endphp
 
@@ -87,6 +119,9 @@ public function approvedImages()
             setInterval(() => {
                 this.currentSlide = (this.currentSlide + 1) % this.slides;
             }, {{ $displaySettings['duration'] }});
+            setInterval(() => {
+                Livewire.dispatch('checkNewImages');
+            }, 6000);
         }
     }"
     class="relative w-full h-screen flex items-center justify-center" style="{{ $displaySettings['background'] }}"

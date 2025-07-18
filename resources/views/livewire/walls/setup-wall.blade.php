@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Volt\Component;
 use Mary\Traits\Toast;
 
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 new
 #[Title('Setup Wall')]
@@ -84,6 +85,11 @@ class extends Component {
         return route('create-image', ['slug' => $this->lastSavedSlug]);
     }
 
+
+    public function getCreateImageQrCodeProperty(): string
+    {
+        return QrCode::format('svg')->size(200)->generate($this->CreateImageUrl);
+    }
 
 
     public function updateWall()
@@ -338,7 +344,21 @@ class extends Component {
                 </p>
             </div>
 
+            <!-- Display QR Code as png
+            <div class="text-center mt-4">
+                <p class="mb-2 font-semibold">{{ __('QR Code to post image') }}</p>
+                <img src="data:image/png;base64,{{ base64_encode($this->createImageQrCode) }}" alt="QR Code" class="mx-auto w-40 h-40 border border-gray-300 rounded" />
+            </div>
+            -->
 
+            <!-- Display QR Code as svg -->
+            <div class="text-center mt-4">
+                <p class="pt-0 label-text font-semibold mb-3">{{ __('QR Code to post image') }} :</p>
+                <div class="mx-auto w-full flex justify-center">
+                    {!! $this->createImageQrCode !!}
+                </div>
+            </div>
+           
             <x-slot:actions>
                 <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateShareOptions" />
             </x-slot:actions>
@@ -346,8 +366,6 @@ class extends Component {
 
     </x-card>
 
-
-    
 
 
     <x-card title="{{ __('Background') }}" class="w-96" shadow separator>
@@ -378,7 +396,7 @@ class extends Component {
             @if($new_background_image)
                 <img src="{{ $new_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
             @elseif($background_image)
-                <img src="{{ asset('storage/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                <img src="{{ asset('storage/background_images/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
             @endif
 
             @php

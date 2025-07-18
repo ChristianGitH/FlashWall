@@ -51,6 +51,9 @@ new class extends Component {
         // Supprimer l'image de la base de données
         $image->delete();
 
+        // Supprimer l'image de la sélection côté navigateur
+        $this->dispatch('image-deleted', id: $id);
+
         // Reset la pagination uniquement si c'était la dernière image de la page
         if ($this->unprocessedImagesPageCount <= 1) {
             $this->resetPage(pageName: 'unprocessed-images');
@@ -101,7 +104,9 @@ new class extends Component {
         modalConfirmClass: 'bg-blue-600 hover:bg-blue-700', 
         confirmAction: null,        
         showImageZoomModal: false,
-        modalImageUrl: '' }" @reset-selection.window="selected = []; allSelected = false,  errorMessage = ''">
+        modalImageUrl: '' }" @reset-selection.window="selected = []; allSelected = false,  errorMessage = ''"
+        @image-deleted.window="selected = selected.filter(id => id != $event.detail.id)"
+>
 
 
 <x-card title="{{ __( 'All images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>           
@@ -139,7 +144,6 @@ new class extends Component {
             "
         icon="o-trash"
         class="btn btn-sm"
-        wire:click.prevent=""
         tooltip="{{ __('Delete selection') }}"
         aria-label="{{ __('Delete selection') }}"
     />
@@ -189,7 +193,6 @@ new class extends Component {
                 </label>
             <div class="moderation_buttons flex justify-between">
                 <x-button 
-                    wire:click.prevent=""
                     icon="o-trash"
                     class="btn btn-sm btn-danger"
                     tooltip="{{ __('Delete') }}"

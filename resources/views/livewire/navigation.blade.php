@@ -35,7 +35,7 @@ new class extends Component
 }; ?>
 
 
-<div>
+<div class="flex flex-col h-[90%]">
     <x-menu activate-by-route>
 
         {{-- Vérifie si l'utilisateur est connecté --}}
@@ -68,6 +68,11 @@ new class extends Component
 
         <x-menu-item title="Create Wall" icon="o-plus" link="{{ route('create-wall') }}" />
                     
-        <x-theme-toggle />
+    </x-menu>
+    <x-menu class="justify-end grow">
+        @include('partials/language-switcher')
+        <div class="ml-2 pt-8 sm:pt-4">
+            <x-theme-toggle />
+        <div>
     </x-menu>
 </div>

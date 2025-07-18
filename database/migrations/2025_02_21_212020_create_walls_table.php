@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('max_images_user')->nullable();
             $table->integer('background_choice')->default(0);
             $table->string('background_color')->default('#f7a6d5');
-            $table->string('background_image')->default('N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg');
+            $table->string('background_image')->default('default_background.jpg');
             $table->integer('caption_max_width')->default(50);
             $table->integer('caption_position')->default(1);
             $table->integer('caption_font_size')->default(16);;
