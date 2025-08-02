@@ -26,7 +26,7 @@ new class extends Component {
     public function archivedImages()
     {
         $images = Image::where('wall_id', $this->wall->id)
-                    ->where('archived', true)
+                    ->where('status', 2) // 0 = unprocessed. 1 = approved. 2 = archived.
                     ->orderBy('created_at', 'desc')
                     ->paginate(5, pageName: 'archived-images');
 
@@ -42,7 +42,7 @@ new class extends Component {
     public function approveImage(int $id): void
     {
         // Récupérer directement les données nécessaires en une seule requête
-       Image::where('id', $id)->update(['approved' => true, 'archived' => false]);
+       Image::where('id', $id)->update(['status' => 1]);
 
         // Supprimer l'image de la sélection côté navigateur
         $this->dispatch('action-on-archived-image', id: $id);
@@ -64,7 +64,7 @@ new class extends Component {
             return;
         }
 
-        Image::whereIn('id', $selectedImages)->update(['approved' => true, 'archived' => false]);
+        Image::whereIn('id', $selectedImages)->update(['status' => 1]);
 
         // Réinitialiser la sélection
         $this->dispatch('reset-selection-archived');

@@ -15,14 +15,13 @@ class Image extends Model
         'name',
         'thumb',
         'caption',
-        'approved',
-        'archived',
+        'status',
+        'visitor_token',
     ];
 
     protected $hidden = [
         'wall_id',
-        'name',
-        'thumb',
+        'visitor_token',
     ];
 
     // Relations : An image belong to one user.

@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('thumb');
             $table->string('caption')->nullable();
-            $table->boolean('approved')->default(false);
-            $table->boolean('archived')->default(false);
+            $table->integer('status')->default(0); // 0 = unprocessed. 1 = approved. 2 = archived.
+            $table->string('visitor_token');
             $table->integer('display_count')->default(1);
             $table->timestamps();
         });

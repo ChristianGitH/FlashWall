@@ -27,8 +27,7 @@ new class extends Component {
     public function getImagesProperty()
     {
         $images = Image::where('wall_id', $this->wall->id)
-                    ->where('approved', false)
-                    ->where('archived', false)
+                    ->where('status', 0) // 0 = unprocessed. 1 = approved. 2 = archived.
                     ->orderBy('created_at', 'desc')
                     ->paginate(5, pageName: 'unprocessed-images');
 
@@ -40,7 +39,7 @@ new class extends Component {
     public function approveImage(int $id): void
     {
         // Récupérer directement les données nécessaires en une seule requête
-       Image::where('id', $id)->update(['approved' => true]);
+       Image::where('id', $id)->update(['status' => 1]);
 
         // Supprimer l'image de la sélection côté navigateur
         $this->dispatch('action-on-unprocessed-image', id: $id);
@@ -62,7 +61,7 @@ new class extends Component {
             return;
         }
 
-        Image::whereIn('id', $selectedImages)->update(['approved' => true]);
+        Image::whereIn('id', $selectedImages)->update(['status' => 1]);
 
         // Réinitialiser la sélection
         $this->dispatch('reset-selection');
@@ -80,7 +79,7 @@ new class extends Component {
     public function archiveImage(int $id): void
     {
         // Récupérer directement les données nécessaires en une seule requête
-       Image::where('id', $id)->update(['archived' => true]);
+       Image::where('id', $id)->update(['status' => 2]);
 
         // Supprimer l'image de la sélection côté navigateur
         $this->dispatch('action-on-unprocessed-image', id: $id);
@@ -102,7 +101,7 @@ new class extends Component {
             return;
         }
 
-        Image::whereIn('id', $selectedImages)->update(['archived' => true]);
+        Image::whereIn('id', $selectedImages)->update(['status' => 2]);
 
         // Réinitialiser la sélection
         $this->dispatch('reset-selection');

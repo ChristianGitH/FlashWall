@@ -19,3 +19,10 @@ Dans public, supprimer "storage" et refaire "php artisan storage:link"
 
 change link to images, add /public/
 Display images, moderation
+
+
+
+
+On Local VS Code :
+Stage changes = > Commit => Pull and push.
+If local server doesn't show the lastest change that have been push/pulled : php artisan optimize:clear. It clears cache and else.

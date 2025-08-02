@@ -17,6 +17,7 @@ class ImageSeeder extends Seeder
                 'name' => 'images/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
                 'thumb' => 'thumbs/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
                 'caption' => 'Image : '. $i . '. La super légende !',
+                'visitor_token' => '1458-afgd',
             ]);
             $i++;
         }

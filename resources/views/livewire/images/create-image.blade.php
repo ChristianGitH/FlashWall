@@ -20,14 +20,35 @@ new class extends Component {
 
     public $image;
     public string $caption = '';
+    public string $visitorToken = 'azr';
 
     public function mount(string $slug)
     {
         $this->wall = Wall::where('slug', $slug)->firstOrFail();
+        
+        // Get the cookie or generate a new token
+        $this->visitorToken = request()->cookie('visitor_token');
+
+        if (!$this->visitorToken) {
+            $this->visitorToken = (string) \Str::uuid();
+
+            // Save the token in a new cookie
+            cookie()->queue(cookie('visitor_token', $this->visitorToken, 60 * 24 * 31)); // 1 month
+        }
     }
 
     public function save()
     {
+
+        // Check if max image per user is reached
+        $imageCount = Image::where('wall_id', $this->wall->id)
+            ->where('visitor_token', $this->visitorToken)
+            ->count();
+        if ($imageCount >= $this->wall->max_images_user) {
+            $this->error(__('You have reached the maximum number of images allowed'));
+            return;
+        }
+
         $data = $this->validate([
             'image' => 'required|image|max:5120',
             'caption' => 'nullable|string|max:' . $this->wall->caption_max_characters,
@@ -37,7 +58,6 @@ new class extends Component {
         $path = $this->image->store('images', 'public');
 
         // Génération de la miniature
-        
         // create new manager instance with desired driver
         $manager = new ImageManager(new Driver());
 
@@ -50,6 +70,7 @@ new class extends Component {
             'name' => $path,
             'thumb' => 'thumbs/' . basename($path),
             'caption' => $this->caption,
+            'visitor_token' => $this->visitorToken,
         ]);
 
         $this->success(__('Image added successfully!'));
