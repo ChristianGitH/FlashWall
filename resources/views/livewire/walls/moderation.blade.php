@@ -6,8 +6,13 @@ use App\Models\Image;
 use Intervention\Image\ImageManager;
 use Mary\Traits\Toast;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Title;
 
-new class extends Component {
+
+new
+#[Title('Moderation')]
+
+class extends Component {
     use Toast;
 
     public Wall $wall;

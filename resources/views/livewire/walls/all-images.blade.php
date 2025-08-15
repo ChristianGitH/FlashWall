@@ -27,6 +27,7 @@ new class extends Component {
     public function getImagesProperty()
     {
         $images = Image::where('wall_id', $this->wall->id)
+                    ->where('permanent', 1)
                     ->orderBy('created_at', 'desc')
                     ->paginate(20, pageName: 'unprocessed-images');
 
@@ -111,7 +112,7 @@ new class extends Component {
 
 <x-card title="{{ __( 'All images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>           
     <p>{{__('Moderation is desactivated!') }} {!! __('All images sent are displayed') !!}.
-        <a class="link" href="../setup-wall/{{ $wall->id }}">{{__('Check Settings page to activate')}}</a>
+        <a class="link" href="../setup-wall/{{ $wall->slug }}">{{__('Check Settings page to activate')}}</a>
     </p>
     <x-menu-separator />
 

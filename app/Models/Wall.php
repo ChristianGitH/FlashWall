@@ -70,5 +70,10 @@ class Wall extends Model
     {
         return $this->hasMany(Image::class);
     }
+
+    public function getRouteKeyName()
+    {
+        return 'slug';
+    }
 }
 

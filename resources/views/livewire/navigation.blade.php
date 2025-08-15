@@ -51,10 +51,11 @@ new class extends Component
         @if(count($walls) > 0)
                 @foreach($walls as $wall)
                     <x-menu-sub :title="$wall->name" icon="o-sparkles" open>
-                        <x-menu-item title="{{__('Settings')}}" icon="o-cog-6-tooth" link="{{ route('setup-wall', ['wall' => $wall->id]) }}"  />
-                        <x-menu-item title="{{__('Moderation')}}" icon="o-magnifying-glass-circle" link="{{ route('moderation', ['wall' => $wall->id]) }}"  />
-                        <x-menu-item title="{{__('Post image')}}" icon="o-plus" link="{{ route('create-image', ['slug' => $wall->slug]) }}"  />
-                        <x-menu-item title="View" icon="o-tv" link="{{ route('display-images', ['slug' => $wall->slug]) }}"  />
+                        <x-menu-item title="{{__('Settings')}}" icon="o-cog-6-tooth" link="{{ route('setup-wall', ['wall' => $wall->slug]) }}"  />
+                        <x-menu-item title="{{__('Moderation')}}" icon="o-magnifying-glass-circle" link="{{ route('moderation', ['wall' => $wall->slug]) }}"  />
+                        <x-menu-item title="{{__('Post image')}}" icon="o-plus" link="{{ route('create-image', ['wall' => $wall->slug]) }}"  />
+                        <x-menu-item title="View" icon="o-tv" link="{{ route('display-images', ['wall' => $wall->slug]) }}" external />
+                        <x-menu-item title="Dev view" icon="o-tv" link="{{ route('display-images-dev', ['wall' => $wall->slug]) }}" external />
                     </x-menu-sub>
                 @endforeach
 

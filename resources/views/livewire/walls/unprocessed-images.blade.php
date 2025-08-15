@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\WithPagination;
 use Livewire\WithoutUrlPagination;
 
+
+/* For fillForDev functionality */
+use Intervention\Image\Laravel\Facades\Image as InterventionImage;
+use Intervention\Image\Drivers\GD\Driver;
+
 new class extends Component {
     use Toast, WithPagination, WithoutUrlPagination;
 
@@ -28,130 +33,243 @@ new class extends Component {
     {
         $images = Image::where('wall_id', $this->wall->id)
                     ->where('status', 0) // 0 = unprocessed. 1 = approved. 2 = archived.
+                    ->where('permanent', 1)
                     ->orderBy('created_at', 'desc')
-                    ->paginate(5, pageName: 'unprocessed-images');
+                    ->paginate(30, pageName: 'unprocessed-images');
 
         $this->unprocessedImagesPageCount = $images->count();
         return $images;
     }
 
-    // Approving images //
-    public function approveImage(int $id): void
+
+    /* For testing and dev only */
+    public function fillForDev(): void
     {
-        // Récupérer directement les données nécessaires en une seule requête
-       Image::where('id', $id)->update(['status' => 1]);
+        $sourceImage = base_path('public/storage/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg'); // ton image source
 
-        // Supprimer l'image de la sélection côté navigateur
-        $this->dispatch('action-on-unprocessed-image', id: $id);
+        $i = 0;
+        while ($i < 30) {
+            // Générer un nom unique pour l'image
+            $filename = 'image_' . $i . '_' . Str::random(8) . '.' . pathinfo($sourceImage, PATHINFO_EXTENSION);
+            $storedPath = 'images/' . $filename;
 
-        // Reset la pagination uniquement si c'était la dernière image de la page
-        if ($this->unprocessedImagesPageCount <= 1) {
-            $this->resetPage(pageName: 'unprocessed-images');
+            Storage::disk('public')->put($storedPath, file_get_contents($sourceImage));
+           
+
+            // Generating thumbnail
+            // create new manager instance with desired driver
+
+            $thumbFilename = 'thumb_' . $i . '_' . Str::random(8) . '.' . pathinfo($sourceImage, PATHINFO_EXTENSION);
+            $thumbPath = 'thumbs/' . $thumbFilename;
+
+            $manager = new ImageManager(new Driver());
+            $thumb = file_get_contents($sourceImage);
+
+            $image = $manager->read($thumb)->scale(width: 500)->encode();
+            Storage::disk('public')->put('thumbs/' . basename($thumbPath), $image);
+
+            Image::create([
+                'wall_id' => $this->wall->id,
+                'parent_id' => null,
+                'name' => $storedPath,
+                'thumb' => $thumbPath,
+                'caption' => 'Image : '. $i,
+                'visitor_token' => '1458-afgd',
+                'permanent' => true,
+            ]);
+            $i++;
         }
-        //  Émission d’événement Livewire vers le composant approved-images
-        $this->dispatch('approved-images-updated');
-        $this->success(__('Image successfully approved'));
     }
 
+
+
+    // This updates the parent image and creates copies if needed
+    private function approveAndCopy(Image $parent, int $copiesToCreate, array &$copies): void
+    {
+        // Updating image satus
+        $parent->status = 1;
+        $parent->save();
+
+        if ($parent->permanent && $copiesToCreate > 0) {
+            $now = now();
+            for ($k = 0; $k < $copiesToCreate; $k++) {
+                $copies[] = [
+                    'wall_id'    => $parent->wall_id,
+                    'parent_id'  => $parent->id,
+                    'name'       => $parent->name,
+                    'thumb'      => $parent->thumb,
+                    'caption'    => $parent->caption,
+                    'status'     => 1,
+                    'permanent'  => false,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+    }
+
+
+
+    /* Approving images */
+    // The called function by bellow approveImage and approveSelected functions
+    protected function approve(array $imageIds, string $successMessage): void
+    {
+        // Pagination reset if all images were approved
+        if ($this->unprocessedImagesPageCount <= count($imageIds)) {
+            $this->resetPage(pageName: 'unprocessed-images');
+        }
+
+        //  Livewire event to approved-images so it gets refreshed
+        $this->dispatch('approved-images-updated');
+        $this->success(__($successMessage));
+    }
+
+    // Single image approve
+    public function approveImage(int $id): void
+    {
+        $parent = Image::find($id);
+        if (!$parent) return; 
+
+        // Creating copies for image display functionality
+        if ($parent && $parent->permanent) {
+            // Get all parent images (permanent = true) which are not approved (status != 1)
+            $parentsCount = Image::where('wall_id', $parent->wall_id)
+                ->where('permanent', true)
+                ->where('status', 1)
+                ->count();
+
+            $copiesToCreate = (int) round($parentsCount * 0.2);
+            $copies = [];
+            $this->approveAndCopy($parent, $copiesToCreate, $copies);
+
+            // Insert in database, instead of create to limit requests
+            if (!empty($copies)) {
+                Image::insert($copies);
+            }
+        }
+
+        // Removing image from selection browser side
+        $this->dispatch('action-on-unprocessed-image', id: $id);
+
+        $this->approve([$id], 'Image successfully approved');
+    }
+
+    // Multiple images approve
     public function approveSelected(array $selectedImages)
     {
-        
         if (empty($selectedImages)) {
             $this->error(__('No item selected'));
             return;
         }
 
-        Image::whereIn('id', $selectedImages)->update(['status' => 1]);
+        // Get all selected images
+        $images = Image::whereIn('id', $selectedImages)->get();
 
-        // Réinitialiser la sélection
-        $this->dispatch('reset-selection');
-        // Reset la pagination uniquement si c'était la dernière image de la page
-        if ($this->unprocessedImagesPageCount <= 1) {
-            $this->resetPage(pageName: 'unprocessed-images');
+        // Get all parent images (permanent = true) which are not approved (status != 1)
+        $parentsCount = Image::where('wall_id', $this->wall->id)
+            ->where('permanent', true)
+            ->where('status', 1)
+            ->count();
+
+        $copiesToCreate = (int) round($parentsCount * 0.2);
+        $copies = [];
+
+        foreach ($images as $parent) {
+            $this->approveAndCopy($parent, $copiesToCreate, $copies);
         }
-        //  Émission d’événement Livewire vers le composant approved-images
-        $this->dispatch('approved-images-updated');
-        $this->success(__('Images successfully approved'));
+
+        // Insert in database, instead of create to limit requests
+        if (!empty($copies)) {
+            Image::insert($copies);
+        }
+
+        // Reset selection browser side
+        $this->dispatch('reset-selection');
+
+        $this->approve([$selectedImages], 'Images successfully approved');
     }
     
 
-    // Archiving images //
-    public function archiveImage(int $id): void
+    /* Archiving images */
+    // The called function by bellow archiveImage and archiveSelected functions
+    protected function archive(array $imageIds, string $successMessage): void
     {
-        // Récupérer directement les données nécessaires en une seule requête
-       Image::where('id', $id)->update(['status' => 2]);
-
-        // Supprimer l'image de la sélection côté navigateur
-        $this->dispatch('action-on-unprocessed-image', id: $id);
-
-        // Reset la pagination uniquement si c'était la dernière image de la page
-        if ($this->unprocessedImagesPageCount <= 1) {
-            $this->resetPage(pageName: 'unprocessed-images');
-        }
-        //  Émission d’événement Livewire vers le composant archived-images
-        $this->dispatch('archived-images-updated');
-        $this->success(__('Image successfully archived'));
-    }
-
-    public function archiveSelected(array $selectedImages)
-    {
-        
-        if (empty($selectedImages)) {
+        if (empty($imageIds)) {
             $this->error(__('No item selected'));
             return;
         }
 
-        Image::whereIn('id', $selectedImages)->update(['status' => 2]);
+        Image::whereIn('id', $imageIds)->update(['status' => 2]);
 
-        // Réinitialiser la sélection
-        $this->dispatch('reset-selection');
-        // Reset la pagination uniquement si c'était la dernière image de la page
-        if ($this->unprocessedImagesPageCount <= 1) {
+        // Pagination reset if all images were archived
+        if ($this->unprocessedImagesPageCount <= count($imageIds)) {
             $this->resetPage(pageName: 'unprocessed-images');
         }
-        //  Émission d’événement Livewire vers le composant archived-images
+
+        //  Livewire event to archived-images so it gets refreshed
         $this->dispatch('archived-images-updated');
-        $this->success(__('Images successfully archived'));
+        $this->success(__($successMessage));
+    }
+
+    // Single image archive
+    public function archiveImage(int $id): void
+    {
+        // Delete image from selection browser side
+        $this->dispatch('action-on-unprocessed-image', id: $id);
+    
+        $this->archive([$id], 'Image successfully archived');
+    }
+
+    // Multiple images archive
+    public function archiveSelected(array $selectedImages)
+    {
+        // Reset selection browser side
+        $this->dispatch('reset-selection');
+        $this->archive($selectedImages, 'Images successfully archived');
     }
 
 
 
-    // Deleting images //
+    /* Deleting images */
+    // The called function by bellow deleteImage and deleteSelected functions
+    protected function delete(array $imageIds, string $successMessage): void
+    {
+        if (empty($imageIds)) {
+            $this->error(__('No item selected'));
+            return;
+        }
+
+        // Pagination reset if all images were deleted
+        if ($this->unprocessedImagesPageCount <= count($imageIds)) {
+            $this->resetPage(pageName: 'unprocessed-images');
+        }
+
+        $this->success(__($successMessage));
+    }
     public function deleteImage(int $id): void
     {
-        // Récupérer directement les données nécessaires en une seule requête
         $image = Image::where('id', $id)->first(['id', 'name', 'thumb']);
     
         if (!$image) {
             $this->error(__('Image not found.'));
             return;
         }
-    
-        // Supprimer les fichiers
+
+        // Delete files
         Storage::disk('public')->delete([$image->name, $image->thumb]);
     
-        // Supprimer l'image de la base de données
+        // Delete from database
         $image->delete();
 
-        // Supprimer l'image de la sélection côté navigateur
-        $this->dispatch('action-on-unprocessed-image', id: $id);
+        $this->delete([$id], 'Image successfully deleted');
 
-        // Reset la pagination uniquement si c'était la dernière image de la page
-        if ($this->unprocessedImagesPageCount <= 1) {
-            $this->resetPage(pageName: 'unprocessed-images');
-        }
-        $this->success(__('Image successfully deleted'));
+        // Remove from selection browser side
+        $this->dispatch('action-on-unprocessed-image', id: $id);
     }
 
     public function deleteSelected(array $selectedImages)
     {
-       
-        if (empty($selectedImages)) {
-            $this->error(__('No item selected'));
-            return;
-        }
-    
-        // Récupérer directement les chemins sous forme de liste plate
+        // Get paths
         $paths = Image::whereIn('id', $selectedImages)->pluck('name')->merge(
             Image::whereIn('id', $selectedImages)->pluck('thumb')
         )->toArray();
@@ -161,19 +279,16 @@ new class extends Component {
             return;
         }
     
-        // Supprimer les fichiers en une seule requête
+        // Delete files
         Storage::disk('public')->delete($paths);
     
-        // Supprimer les entrées de la base de données
+        // Delete from database
         Image::whereIn('id', $selectedImages)->delete();
 
-        // Réinitialiser la sélection
+        $this->delete($selectedImages, 'Images successfully deleted');
+
+        // Reset selection browser side
         $this->dispatch('reset-selection');
-        // Reset la pagination uniquement si c'était la dernière image de la page
-        if ($this->unprocessedImagesPageCount <= 1) {
-            $this->resetPage(pageName: 'unprocessed-images');
-        }
-        $this->success(__('Images successfully deleted'));
     }
         
 }; ?>
@@ -194,7 +309,26 @@ new class extends Component {
 <x-card title="{{ __( 'Pending images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>
 
 
-<div class="bulk-actions flex items-center space-x-2">
+<div class="bulk-actions flex items-center flex-wrap space-y-2 space-x-2"
+    x-data="{
+        handleSelection(actionType, actionMethod, actionTitle, confirmClass) {
+            if (selected.length === 0) {
+                errorMessage = '{{ __('No item selected') }}';
+                setTimeout(() => errorMessage = '', 1500);
+                return;
+            }
+
+            let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+            $dispatch('confirm-action', {
+                title: actionTitle,
+                message: `{{ __('You are about to') }} ${actionType} ${selected.length} ${textPlural}.`,
+                confirmText: `{{ __('Yes') }}, ${actionType} !`,
+                confirmClass: confirmClass,
+                action: () => $wire.call(actionMethod, selected)
+            });
+        }
+    }"
+>
     <button class="btn btn-sm" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.unprocessed-image-checkbox')].map(cb => cb.value) : []">
         <label for="select-all-checkbox" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.unprocessed-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">{{__('Select all')}}</label>
         <input 
@@ -206,21 +340,7 @@ new class extends Component {
     </button>
 
     <x-button 
-        @click="
-                if (selected.length === 0) { 
-                    errorMessage = '{{ __('No item selected') }}'; 
-                    setTimeout(() => errorMessage = '', 1500);
-                } else {
-                    let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
-                    $dispatch('confirm-action', {
-                        title: '{{ __('Approve') }}',
-                        message: '{{ __('You are about to approve') }} ' + selected.length + ' ' + textPlural + '.',
-                        confirmText: '{{ __('Yes, approve!') }}',
-                        confirmClass: 'bg-green-600 hover:bg-green-700',
-                        action: () => $wire.call('approveSelected', selected)
-                    })
-                }
-            "
+        @click="handleSelection('{{ __('approve') }}', 'approveSelected', '{{ __('Approve') }}', 'bg-green-600 hover:bg-green-700')"
         icon="o-check"
         class="btn btn-sm"
         tooltip="{{ __('Approve selection') }}"
@@ -230,20 +350,7 @@ new class extends Component {
     />
 
     <x-button 
-        @click="if (selected.length === 0) { 
-                    errorMessage = '{{ __('No item selected') }}'; 
-                    setTimeout(() => errorMessage = '', 1500);
-                } else {
-                    let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
-                    $dispatch('confirm-action', {
-                        title: '{{ __('Archive') }}',
-                        message: '{{ __('You are about to archive') }} ' + selected.length + ' ' + textPlural + '.',
-                        confirmText: '{{ __('Yes, archive!') }}',
-                        confirmClass: 'bg-blue-600 hover:bg-blue-700',
-                        action: () => $wire.call('archiveSelected', selected)
-                    })
-                }
-            "
+        @click="handleSelection('{{ __('archive') }}', 'archiveSelected', '{{ __('Archive') }}', 'bg-blue-600 hover:bg-blue-700')"
         icon="o-archive-box"
         class="btn btn-sm"
         tooltip="{{ __('Archive selection') }}"
@@ -251,27 +358,33 @@ new class extends Component {
         wire:loading.attr="disabled"
         wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
     />
-    <x-button     
-        @click="
-                if (selected.length === 0) { 
-                    errorMessage = '{{ __('No item selected') }}'; 
-                    setTimeout(() => errorMessage = '', 1500);
-                } else {
-                    let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
-                    $dispatch('confirm-action', {
-                        title: '{{ __('Delete') }}',
-                        message: '{{ __('You are about to delete') }} ' + selected.length + ' ' + textPlural + '.',
-                        confirmText: '{{ __('Yes, delete!') }}',
-                        confirmClass: 'bg-red-600 hover:bg-red-700',
-                        action: () => $wire.call('deleteSelected', selected)
-                    })
-                }
-            "
+    <x-button
+        @click="handleSelection('{{ __('delete') }}', 'deleteSelected', '{{ __('Delete') }}', 'bg-red-600 hover:bg-red-700')"
         icon="o-trash"
         class="btn btn-sm"
         wire:click.prevent=""
         tooltip="{{ __('Delete selection') }}"
         aria-label="{{ __('Delete selection') }}"
+        wire:loading.attr="disabled"
+        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+    />
+    <x-button
+        @click="$wire.$refresh()"
+        icon="o-arrow-path"
+        class="btn btn-sm"
+        wire:click.prevent=""
+        tooltip="{{ __('Refresh') }}"
+        aria-label="{{ __('Refresh') }}"
+        wire:loading.attr="disabled"
+        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+    />
+    <x-button
+        wire:click="fillForDev()"
+        icon="o-photo"
+        class="btn btn-sm bg-green-600 hover:bg-green-700"
+        wire:click.prevent=""
+        tooltip="{{ __('Fill with dev images') }}"
+        aria-label="{{ __('Fill with dev images') }}"
         wire:loading.attr="disabled"
         wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
     />

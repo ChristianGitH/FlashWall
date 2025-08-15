@@ -14,12 +14,16 @@ return new class extends Migration
         Schema::create('images', function (Blueprint $table) {
             $table->id();
             $table->foreignId('wall_id')->constrained('walls')->onDelete('cascade');
+
+            $table->foreignId('parent_id')->nullable()->constrained('images')->onDelete('cascade');
+            
             $table->string('name');
             $table->string('thumb');
             $table->string('caption')->nullable();
             $table->integer('status')->default(0); // 0 = unprocessed. 1 = approved. 2 = archived.
-            $table->string('visitor_token');
-            $table->integer('display_count')->default(1);
+            $table->string('visitor_token')->nullable();
+            $table->boolean('priority')->default(0);
+            $table->boolean('permanent');
             $table->timestamps();
         });
     }

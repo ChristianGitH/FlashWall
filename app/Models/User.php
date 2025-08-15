@@ -44,12 +44,6 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    // Relations : One user has many images.
-    public function images(): HasMany
-    {
-        return $this->hasMany(Image::class);
-    }
-
     // Relations : One user has many walls.
     public function walls(): HasMany
     {

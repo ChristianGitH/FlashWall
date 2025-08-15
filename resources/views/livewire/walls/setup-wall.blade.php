@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Wall;
+use App\Models\Image;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Rule;
@@ -12,7 +13,7 @@ use Mary\Traits\Toast;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 new
-#[Title('Setup Wall')]
+#[Title('Settings')]
 
 class extends Component {
     use Toast, WithFileUploads;
@@ -78,11 +79,11 @@ class extends Component {
     // Function to get the last saved slug for the copy to clipboard functionality.
     public function getDisplayImageUrlProperty(): string
     {
-        return route('display-images', ['slug' => $this->lastSavedSlug]);
+        return route('display-images', ['wall' => $this->lastSavedSlug]);
     }
     public function getCreateImageUrlProperty(): string
     {
-        return route('create-image', ['slug' => $this->lastSavedSlug]);
+        return route('create-image', ['wall' => $this->lastSavedSlug]);
     }
 
 
@@ -95,15 +96,8 @@ class extends Component {
     public function updateWall()
     {
         $data = $this->validate([
-            'name' => 'required|string|max:255' . $this->wall->id,
-            'slug' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-                'unique:walls,slug,' . $this->wall->id,
-            ],
-            'description' => 'nullable|string|max:255',
+            'name' => 'required|string|max:30',
+            'description' => 'nullable|string|max:100',
             'max_images_user' => 'nullable|integer|max:99',
             'captions' => 'boolean',
             'moderation' => 'boolean',
@@ -120,10 +114,56 @@ class extends Component {
         if ($this->wall->isDirty()) {
             $this->wall->save();
             $this->success(__('Changes saved!'));
+
+            if ($this->wall->wasChanged('moderation')) {
+                // If moderation has changed in database
+                $this->handleModerationChange();
+            }
             // Refresh navigation when a wall name is updated.
             $this->dispatch('refreshNavigation');
         } else {
             $this->warning(__('No change detected!'));
+        }
+    }
+
+
+    protected function handleModerationChange()
+    {
+        if ($this->wall->moderation) {
+        // Moderation has been activated
+        // Delete all images copies (permanent = flase) with a parent not approved (status != 1).
+            $copiesToDelete = Image::where('wall_id', $this->wall->id)
+            ->where('permanent', false)
+            ->whereHas('parent', function ($query) {
+                $query->where('status', '!=', 1);
+            })
+            ->pluck('id');      
+
+            Image::whereIn('id', $copiesToDelete)->delete();
+
+        } else {
+            // Moderation has been desactivated
+             // Get all parent images (permanent = true) which are not approved (status != 1)
+            $parents = Image::where('wall_id', $this->wall->id)
+                ->where('permanent', true)
+                ->where('status', '!=', 1)
+                ->get();
+
+            // Calculate the number of copies to create based on the number of parent image
+            $copiesToCreate = round($parents->count() * 0.2);
+
+            foreach ($parents as $parent) {
+                for ($k = 0; $k < $copiesToCreate; $k++) {
+                    Image::create([
+                        'wall_id' => $this->wall->id,
+                        'parent_id' => $parent->id,
+                        'name' => $parent->name,
+                        'thumb' => $parent->thumb,
+                        'caption' => $parent->caption,
+                        'permanent' => false,
+                    ]);
+                }
+            }
         }
     }
 
@@ -136,7 +176,7 @@ class extends Component {
             'slug' => [
                 'required',
                 'string',
-                'max:255',
+                'max:35',
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
                 'unique:walls,slug,' . $this->wall->id,
             ],
@@ -247,9 +287,11 @@ class extends Component {
         }
 
         $this->wall->delete();
-
-        session()->flash('message', 'Wall deleted!');
-        return redirect()->route('create-wall'); 
+        
+        $this->success(
+            __('Wall successfully deleted!'),
+            redirectTo: '../create-wall'
+        );
     }
 
 };
