@@ -89,7 +89,7 @@ public function approvedImages()
 public function markImageAsDisplayed($imageId, $nextImageId)
 {
     // We keep in cache the next image data in case it will not be in the next load.
-    // If last image, it will keep displaying it.
+    // If last image, will keep displaying it.
     $nextImage = $this->approvedImages->firstWhere('id', $nextImageId);
 
     $deletedCount = Image::where('id', $imageId)->where('permanent', 0)->delete();
@@ -124,7 +124,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
 
             // We filter the images
             $filtered = $currentImagesFromDB
-                ->reject(fn($image) => in_array($image->id, $recentlyDisplayedIds))
+                ->reject(fn($image) => in_array($image->id, $recentlyDisplayedIds) && $image->priority !== 1)
                 ->values();
 
         }
@@ -139,14 +139,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
             $newCollection->push($nextImage);
         }
 
-        // We check if ther is an Image with priority = 1.
-        $priorityImage = $filtered->firstWhere('priority', 1);
-        if ($priorityImage) {
-            $newCollection->push($priorityImage);
-        }
-
         $this->approvedImages = $newCollection->concat($remaining)->values();
-
     }
 
 }
@@ -158,6 +151,18 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
 }; ?>
 
 <div class="w-screen h-screen">
+
+
+<div style="z-index: 100;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
+    <p>IDs to display ({{ count($approvedImages) }}) : 
+    @foreach ($approvedImages as $index => $image)
+        <span style="color: {{ $image->permanent ? 'green' : 'blue' }}; background-color: {{ $image->priority == 1 ? 'orange' : 'transparent' }}">
+            {{ $image->id }}
+        </span>@if (!$loop->last), @endif
+    @endforeach
+    </p>
+    <p>Already displayed IDs : {{ implode(', ', $displayedImageIds) }}</p>
+</div>
 
 @if($approvedImages->isEmpty())
     <p class="text-center text-gray-500">{{ __('No image. Reload the page to start the slideshow.') }}</p>
@@ -197,7 +202,7 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
                     class="object-contain w-full h-full"
                     style="max-height: 100%; max-width: 100%;"
                 />
-
+                
                 @if($image->caption)
                     <!-- CAPTION POSITION = If 1, caption is on the image. If 0, caption is bellow the image. 
                         Bellow the image then outside div class="relative", image wrapper -->
@@ -224,10 +229,8 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
                 @else
                     </div>
                 @endif
-
         </div>
     @endforeach
-
 </div>
 
 @endif

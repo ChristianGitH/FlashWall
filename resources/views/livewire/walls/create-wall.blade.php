@@ -7,55 +7,53 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Volt\Component;
+use Mary\Traits\Toast;
 
 new
 #[Title('Create a Wall')]
 
 class extends Component {
+    use Toast;
  
-    #[Rule('required|string|max:255')]
+    #[Rule('required|string|max:30')]
     public string $name = '';
-    #[Rule('string|max:255')]
+    #[Rule('string|max:100')]
     public string $description = '';
-    #[Rule('boolean')]
-    public bool  $allow_captions = false;
-    #[Rule('boolean')]
-    public bool $activate_moderation = false;
-
 
     public function createWall()
     {
         $data = $this->validate();
 
+        // Generate a base slug from the name
+        $slug = Str::slug($data['name']);
+
+        // Ensure uniqueness by appending a random string if the slug already exists
+        while (Wall::where('slug', $slug)->exists()) {
+            $slug = Str::slug($data['name']) . '-' . Str::random(5);
+        }
+
         Wall::create([
             'name' => $data['name'],
-            'slug' => Str::slug($data['name']),
+            'slug' => $slug,
             'description' => $data['description'],
             'user_id' => Auth::id(),
-            'captions' => $data['allow_captions'],
-            'moderation' => $data['activate_moderation'],
         ]);
 
-    
-        session()->flash('message', __('Wall created successfully.'));
-        return redirect('/'); 
+        $link = 'setup-wall/'.$slug;
+
+        $this->success(
+            __('Wall successfully created!'),
+            redirectTo: '/'.$link
+        );
     }
 
 }; ?>
 
 <div>
-    <x-card class="h-screen flex items-center justify-center" title="{{__('Create a Wall')}}" shadow separator>
-
-        @if (session()->has('message'))
-            <x-alert color="success">{{ session('message') }}</x-alert>
-        @endif
-
+    <x-card class="lg:h-screen flex items-center justify-center" title="{{__('Create a Wall')}}" shadow separator>
         <x-form wire:submit="createWall">
             <x-input label="{{__('Name')}}" wire:model="name"  inline />
             <x-input label="{{__('Description')}}" wire:model="description" inline separator />
-            <x-menu-separator />
-            <x-toggle label="{{__('Allow captions?')}}" wire:model="allow_captions" right inline/>
-            <x-toggle label="{{__('Activate moderation?')}}" wire:model="activate_moderation" right inline/>
 
             <x-slot:actions>
                 <x-button label="{{__('Créer')}}" type="submit" icon="o-plus" class="btn-primary" spinner="createWall" />

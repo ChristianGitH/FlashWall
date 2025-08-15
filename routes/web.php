@@ -20,11 +20,12 @@ Route::middleware('auth')->group(function () {
 
 });
 
-Volt::route('/{slug}', 'images.create-image')->name('create-image');
+Volt::route('/{wall}', 'images.create-image')->name('create-image');
 
 // Autres routes accessibles à tous (si besoin)
 Volt::route('/', 'index')->name('home');
-Volt::route('/display/{slug}', 'walls.display-images')->name('display-images');
+Volt::route('/display/{wall}', 'walls.display-images')->name('display-images');
+Volt::route('/display-dev/{wall}', 'walls.display-images-dev')->name('display-images-dev');
 
 // Routes pour le changement de langue
 Route::get('language/{locale}', function ($locale) {

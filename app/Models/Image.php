@@ -17,22 +17,31 @@ class Image extends Model
         'caption',
         'status',
         'visitor_token',
+        'priority',
+        'permanent',
+        'parent_id',
     ];
 
     protected $hidden = [
         'wall_id',
         'visitor_token',
+        'priority',
+        'permanent',
     ];
 
-    // Relations : An image belong to one user.
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // Relations : A wall belong to one user.
+    // Relations : An image belong to a wall.
     public function wall(): BelongsTo
     {
         return $this->belongsTo(Wall::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Image::class, 'parent_id');
+    }
+
+    public function copies()
+    {
+        return $this->hasMany(Image::class, 'parent_id');
     }
 }

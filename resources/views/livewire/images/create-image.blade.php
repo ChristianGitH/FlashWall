@@ -11,8 +11,12 @@ use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 use App\Models\Wall;
 use App\Models\Image;
+use Livewire\Attributes\Title;
 
-new class extends Component {
+new 
+#[Title('Post an image')]
+
+class extends Component {
 
     use WithFileUploads, Toast;
 
@@ -20,11 +24,11 @@ new class extends Component {
 
     public $image;
     public string $caption = '';
-    public string $visitorToken = 'azr';
+    public string $visitorToken = '';
 
-    public function mount(string $slug)
+    public function mount(wall $wall)
     {
-        $this->wall = Wall::where('slug', $slug)->firstOrFail();
+        $this->wall = $wall;
         
         // Get the cookie or generate a new token
         $this->visitorToken = request()->cookie('visitor_token');
@@ -40,13 +44,22 @@ new class extends Component {
     public function save()
     {
 
-        // Check if max image per user is reached
-        $imageCount = Image::where('wall_id', $this->wall->id)
-            ->where('visitor_token', $this->visitorToken)
-            ->count();
-        if ($imageCount >= $this->wall->max_images_user) {
-            $this->error(__('You have reached the maximum number of images allowed'));
+        if (is_numeric($this->wall->max_images_user) && $this->wall->max_images_user == 0) {
+            $this->error(__('Posting is blocked by the admin'));
             return;
+        }
+
+        // Check if limit exists
+        if (is_numeric($this->wall->max_images_user) && $this->wall->max_images_user > 0) {
+            // Check if max image per user is reached
+            $imageCount = Image::where('wall_id', $this->wall->id)
+                ->where('permanent', true)
+                ->where('visitor_token', $this->visitorToken)
+                ->count();
+            if ($imageCount >= $this->wall->max_images_user) {
+                $this->error(__('You have reached the maximum number of images allowed'));
+                return;
+            }   
         }
 
         $data = $this->validate([
@@ -54,24 +67,45 @@ new class extends Component {
             'caption' => 'nullable|string|max:' . $this->wall->caption_max_characters,
         ]);
     
-        // Sauvegarde de l'image principale
+        // Saving full size image
         $path = $this->image->store('images', 'public');
 
-        // Génération de la miniature
+        // Generating thumbnail
         // create new manager instance with desired driver
         $manager = new ImageManager(new Driver());
 
         $image = $manager->read($this->image->getRealPath())->scale(width: 500)->encode();
         Storage::disk('public')->put('thumbs/' . basename($path), $image);
 
-        // Enregistrement en base de données
-        Image::create([
+        // Saving in database
+        $parent = Image::create([
             'wall_id' => $this->wall->id,
             'name' => $path,
             'thumb' => 'thumbs/' . basename($path),
             'caption' => $this->caption,
             'visitor_token' => $this->visitorToken,
+            'permanent' => true,
         ]);
+
+        
+        if (!$this->wall->moderation) {
+            // Calculating the number of iterence of non-permanent image we need to add
+            $wallImagesCount = Image::where('wall_id', $this->wall->id)->where('permanent', true)->count();
+            $j = round($wallImagesCount*0.2);
+            for ($k = 0; $k < $j; $k++) {
+                // Saving in database
+                Image::create([
+                    'wall_id' => $this->wall->id,
+                    'parent_id' => $parent->id,
+                    'name' => $path,
+                    'thumb' => 'thumbs/' . basename($path),
+                    'caption' => $this->caption,
+                    'status' => 1,
+                    'visitor_token' => $this->visitorToken,
+                    'permanent' => false,
+                ]);
+            }
+        }
 
         $this->success(__('Image added successfully!'));
 
@@ -81,7 +115,7 @@ new class extends Component {
 }; 
 ?>   
 
-<div class="h-screen flex items-center justify-center">
+<div class="lg:h-screen flex items-center justify-center">
     <x-card class="flex items-center justify-center" title="{{ __('Post an image') }}">
         <x-form wire:submit="save"> 
             <x-file wire:model="image" label="{{__('Image')}}" hint="{{__('Only image formats allowed')}}" accept="image/png, image/jpeg"/>
