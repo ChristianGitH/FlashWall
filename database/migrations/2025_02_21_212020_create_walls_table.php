@@ -26,8 +26,10 @@ return new class extends Migration
             $table->integer('caption_max_width')->default(50);
             $table->integer('caption_position')->default(1);
             $table->integer('caption_font_size')->default(16);;
-            $table->integer('vertical_borders_width')->default(20);
-            $table->integer('horizontal_borders_width')->default(10);
+            $table->integer('margin_top')->default(20);
+            $table->integer('margin_bottom')->default(10);
+            $table->integer('margin_left')->default(10);
+            $table->integer('margin_right')->default(10);
             $table->integer('duration')->default(2);
             $table->string('caption_font_color')->default('#000000');
             $table->string('caption_background_color')->default('#ffffff');

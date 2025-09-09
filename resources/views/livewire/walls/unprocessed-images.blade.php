@@ -304,6 +304,19 @@ new class extends Component {
         modalImageUrl: '' }"
         @reset-selection.window="selected = []; allSelected = false,  errorMessage = ''"
         @action-on-unprocessed-image.window="selected = selected.filter(id => id != $event.detail.id)"
+        tabindex="0"
+        @keydown.prevent.stop="if ($event.key === 'Delete' || $event.key === 'Backspace') { 
+            if(selected.length > 0) {
+                let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+                $dispatch('confirm-action', {
+                    title: '{{ __('Delete') }}',
+                    message: `{{ __('You are about to') }} {{ __('delete')  }} ${selected.length} ${textPlural}.`,
+                    confirmText: '{{ __('Yes') }}, {{ __('delete')  }} !',
+                    confirmClass: 'bg-red-600 hover:bg-red-700',
+                    action: () => $wire.call('deleteSelected', selected)
+                })
+            }
+        }"
 >
 
 <x-card title="{{ __( 'Pending images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>

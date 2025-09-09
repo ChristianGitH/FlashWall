@@ -217,6 +217,19 @@ new class extends Component {
         showImageZoomModal: false,
         modalImageUrl: '' }" @reset-selection-archived.window="selectedArchived = []; allSelected = false,  errorMessage = ''"
         @action-on-archived-image.window="selectedArchived = selectedArchived.filter(id => id != $event.detail.id)"
+        tabindex="0"
+        @keydown.prevent.stop="if ($event.key === 'Delete' || $event.key === 'Backspace') { 
+            if(selectedArchived.length > 0) {
+                let textPlural = selectedArchived.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+                $dispatch('confirm-action', {
+                    title: '{{ __('Delete') }}',
+                    message: `{{ __('You are about to') }} {{ __('delete')  }} ${selectedArchived.length} ${textPlural}.`,
+                    confirmText: '{{ __('Yes') }}, {{ __('delete')  }} !',
+                    confirmClass: 'bg-red-600 hover:bg-red-700',
+                    action: () => $wire.call('deleteSelected', selectedArchived)
+                })
+            }
+        }"
 >
 
 <x-card title="{{ __( 'Archived images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>

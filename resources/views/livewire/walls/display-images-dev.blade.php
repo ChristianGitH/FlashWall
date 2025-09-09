@@ -37,14 +37,33 @@ public function loadApprovedImages()
 
 public function computeWallSettings(): array
 {
-    $image_max_height = 100 - $this->wall->horizontal_borders_width * 2;
-    $image_max_width = 100 - $this->wall->vertical_borders_width * 2;
     $caption_max_width = $this->wall->caption_max_width;
     $caption_font_size = $this->wall->caption_font_size;
     $duration = $this->wall->duration*1000;
     $caption_font_color = $this->wall->caption_font_color;
     $caption_background_color = $this->wall->caption_background_color;
     $caption_background_opacity = $this->wall->caption_background_opacity;
+
+    // Marges en pourcentage (à stocker en BDD comme int ou float)
+    $marginTop = $this->wall->margin_top;
+    $marginBottom = $this->wall->margin_bottom;
+    $marginLeft = $this->wall->margin_left;
+    $marginRight = $this->wall->margin_right;
+
+    // Hauteur/largeur disponibles après marges
+    $image_height = 100 - $marginTop - $marginBottom;
+    $image_width  = 100 - $marginLeft - $marginRight;
+
+    $image_container_style = "
+        position: absolute;
+        top: {$marginTop}%;
+        bottom: {$marginBottom}%;
+        left: {$marginLeft}%;
+        right: {$marginRight}%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    ";
 
     // BACKGROUND COLOR AND OPACITY. Change the pourcentage of opacity from 0-100 to 0-255
     $caption_background_opacity = (int) round(($caption_background_opacity / 100) * 255);
@@ -57,18 +76,19 @@ public function computeWallSettings(): array
     if ($this->wall->background_choice == 0) {    
         $background = 'background: ' . $this->wall->background_color . ';';
     } else {
-        $background = 'background:  no-repeat center url(\''. asset('storage/background_images/' . $this->wall->background_image) .'\'); background-size: 100% 100%;';
+        $background = 'background:  no-repeat center url(\''. asset('storage/' . $this->wall->background_image) .'\'); background-size: 100% 100%;';
     }
 
     return [
-        'image_max_height' => $image_max_height,
-        'image_max_width' => $image_max_width,
         'caption_max_width' => $caption_max_width,
         'caption_font_size' => $caption_font_size,
         'background' => $background,
         'duration' => $duration,
         'caption_font_color' => $caption_font_color,
         'caption_background' => $caption_background,
+        'image_container_style' => $image_container_style,
+        'image_height' => $image_height,
+        'image_width'  => $image_width,
     ];
 }
 
@@ -153,7 +173,7 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
 <div class="w-screen h-screen">
 
 
-<div style="z-index: 100;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
+<div style="z-index: 100; opacity: 0.7;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
     <p>IDs to display ({{ count($approvedImages) }}) : 
     @foreach ($approvedImages as $index => $image)
         <span style="color: {{ $image->permanent ? 'green' : 'blue' }}; background-color: {{ $image->priority == 1 ? 'orange' : 'transparent' }}">
@@ -195,11 +215,12 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
             data-image-id="{{ $image->id }}"
             class="absolute inset-0 flex items-center flex-col justify-center text-center"
             wire:key="image-{{ $image->id }}"
+            style="{{ $displaySettings['image_container_style'] }}"
         >
-            <div class="relative" style="max-height: {{ $displaySettings['image_max_height'] }}%; max-width: {{ $displaySettings['image_max_width'] }}%;">
+            <div class="relative" style="max-height: 100%; max-width: 100%;">
                 <img
                     src="{{ asset('storage/' . $image->name) }}"
-                    class="object-contain w-full h-full"
+                    class="object-contain"
                     style="max-height: 100%; max-width: 100%;"
                 />
                 

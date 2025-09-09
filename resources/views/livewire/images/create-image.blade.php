@@ -24,7 +24,7 @@ class extends Component {
 
     public $image;
     public string $caption = '';
-    public string $visitorToken = '';
+    public ?string $visitorToken = '';
 
     public function mount(wall $wall)
     {

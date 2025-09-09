@@ -34,8 +34,10 @@ class extends Component {
     public int $caption_max_width;
     public int $caption_position;
     public int $caption_font_size;
-    public int $vertical_borders_width;
-    public int $horizontal_borders_width;
+    public int $margin_top;
+    public int $margin_bottom;
+    public int $margin_left;
+    public int $margin_right;
     public string $caption_font_color;
     public string $caption_background_color;
     public int $caption_background_opacity;
@@ -64,8 +66,10 @@ class extends Component {
         $this->caption_max_width = $wall->caption_max_width;
         $this->caption_position = $wall->caption_position;
         $this->caption_font_size = $wall->caption_font_size;
-        $this->vertical_borders_width = $wall->vertical_borders_width;
-        $this->horizontal_borders_width = $wall->horizontal_borders_width;
+        $this->margin_top = $wall->margin_top;
+        $this->margin_bottom = $wall->margin_bottom;
+        $this->margin_left = $wall->margin_left;
+        $this->margin_right = $wall->margin_right;
         $this->caption_font_color = $wall->caption_font_color;
         $this->caption_background_color = $wall->caption_background_color;
         $this->caption_background_opacity = $wall->caption_background_opacity;
@@ -89,7 +93,9 @@ class extends Component {
 
     public function getCreateImageQrCodeProperty(): string
     {
-        return QrCode::format('svg')->size(200)->generate($this->CreateImageUrl);
+        $pngData = QrCode::format('svg')->size(200)->generate($this->CreateImageUrl);
+        // for png : return base64_encode($pngData);
+        return $pngData;
     }
 
 
@@ -206,13 +212,15 @@ class extends Component {
     {
         $data = $this->validate([
             'background_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'new_background_image' => 'nullable|image|max:5120',
+            'new_background_image' => 'nullable|image|max:20480',
             'background_choice' => 'required|integer|max:2',
         ]);
 
         if ($this->new_background_image) {
-            // Suppression de l'ancienne image puis sauvegarde de la nouevlle image
-            \Storage::disk('public')->delete($this->wall->background_image);
+            // Suppression de l'ancienne image puis sauvegarde de la nouvelle image
+            if ($this->wall->background_image !== 'background_images/default_background.jpg' && $this->wall->background_image !== 'background_images/grid_background.jpg') {
+                Storage::disk('public')->delete($this->wall->background_image);
+            }
             $background_image_path = $this->new_background_image->store('background_images', 'public');
             $this->wall->background_image = $background_image_path;
         }
@@ -262,8 +270,10 @@ class extends Component {
         $data = $this->validate([
             'caption_max_width' => 'required|integer|max:100',
             'caption_position' => 'required|integer|max:3',
-            'vertical_borders_width' => 'required|integer|max:40',
-            'horizontal_borders_width' => 'required|integer|max:40',
+            'margin_top' => 'required|integer|max:90',
+            'margin_bottom' => 'required|integer|max:90',
+            'margin_left' => 'required|integer|max:90',
+            'margin_right' => 'required|integer|max:90',
         ]);
 
         // Filtrer uniquement les champs modifiés
@@ -389,10 +399,10 @@ class extends Component {
             <!-- Display QR Code as png
             <div class="text-center mt-4">
                 <p class="mb-2 font-semibold">{{ __('QR Code to post image') }}</p>
-                <img src="data:image/png;base64,{{ base64_encode($this->createImageQrCode) }}" alt="QR Code" class="mx-auto w-40 h-40 border border-gray-300 rounded" />
-            </div>
-            -->
-
+                <img src="data:image/png;base64,{{ $this->createImageQrCode }}" 
+                alt="QR Code" class="mx-auto w-40 h-40 border border-gray-300 rounded" />
+            </div>-->
+            
             <!-- Display QR Code as svg -->
             <div class="text-center mt-4">
                 <p class="pt-0 label-text font-semibold mb-3">{{ __('QR Code to post image') }} :</p>
@@ -438,7 +448,7 @@ class extends Component {
             @if($new_background_image)
                 <img src="{{ $new_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
             @elseif($background_image)
-                <img src="{{ asset('storage/background_images/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                <img src="{{ asset('storage/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
             @endif
 
             @php
@@ -450,7 +460,15 @@ class extends Component {
             <div class="flex justify-center">
                 <x-radio label="{{ __('Use as background') }} :" wire:model="background_choice" :options="$options" option-value="custom_key" inline center />
             </div>
-
+            
+            <!-- For dev and testing ! -->
+            </br>
+            <p style="width: 100%;">Background exemples for testing. Right click to download.</p>
+            <div style="width: 100%; display: flex; justify-content: space-around;">
+                <img src="{{ asset('storage/background_images/grid_background.jpg') }}" style="width: 45%; height: auto; border: 2px solid #4a00ff;" inline />
+                <img src="{{ asset('storage/background_images/default_background.jpg') }}" style="width: 45%; height: auto; border: 2px solid #4a00ff;" inline />
+            </div>
+            
             <x-slot:actions>
                 <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallBackground" />
             </x-slot:actions>
@@ -520,8 +538,10 @@ class extends Component {
     <x-card title="{{ __('Layout') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateWallLayout">
-            <x-input type="number" label="{{ __('Vertical margins') }}" wire:model="vertical_borders_width" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{__('Horizontal margins') }}" wire:model="horizontal_borders_width" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{ __('Top margin') }}" wire:model="margin_top" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{__('Bottom margin') }}" wire:model="margin_bottom" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{ __('Left margin') }}" wire:model="margin_left" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{__('Right margin') }}" wire:model="margin_right" hint="{{ __('As a percentage') }}" inline />
             <x-menu-separator />
             <x-input type="number" label="{{ __('Captions max width') }}" wire:model="caption_max_width" hint="{{ __('As a percentage') }}" inline />
 

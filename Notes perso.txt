@@ -24,24 +24,10 @@ $category = $image->category; // La catégorie de cette image
 
 
 TO DEPLOY :
-Change image status system // 0 = unprocessed. 1 = approved. 2 = archived.
-Fixed error on label for cechckbox Select All on archived-images moderation component.
-User image post limitation
-Delete all non-permanent images when permanent image is deleted.
-Gestion de la création des copies lors du changement de status des images : 
-    Delete copies when approved image is archived.
-    Create copies when archived or unprocessed image is approved.
-Image display loop :
-    When an image is approved, or added with moderation off, we calculate the number of copies we have to create.
-    Number of permanent approved image x 0.2, rounded, gives us the number of copies needed.
-    When multiple image are approved at the same time, we calculate only once for all images.
-Pagination fixed: when multiple images are updated, we count and compare to check if it's the last images on the page.
-Added Propel functionality to approvedImages component
-Select All js functions and functions on moderation component optimised, to avoid repetition.
-Pages titles and their translation
-Add an automation to add images to a wall for testing
-Change routes to use slug everywhere instead of using id on some pages
-Added toast and redirection to create-wall, and delete Wall function on setup-wall 
+Changed image thumbnail creation, use InterventionImage without new manager instance
+Added possibility to set all four margins separatly (top, bottom, left, right)
+Keaboard shortcuts (deleteSelected) for moderation
+
 
 
 NEXT TO DO :
@@ -51,6 +37,12 @@ Bug sur display-image lors de l'archivage ou Suppression d'image.
 Trouver une solution pour supprimer les copies d'images avec status = 5 à un moment
 Name and mail in create-image
 Possibility to remove caption from an image
+Add download button for QR Code
+Smaller Image Preview - create images
+Add possibility to display QR code on display-image
+Full sreen zoom in Moderation needs change
+Make sure image is loaded before trying to display it, if not loaded, skip it or keep displaying previous image.
+Add tip alert for keaboard shortcuts on moderation
 
 
 MISE A JOUR LARAVEL : 

@@ -171,6 +171,19 @@ new class extends Component {
         showImageZoomModal: false,
         modalImageUrl: '' }" @reset-selection-approved.window="selectedApproved = []; allSelectedApproved = false"
         @action-on-approved-image.window="selectedApproved = selectedApproved.filter(id => id != $event.detail.id)"
+        tabindex="0"
+        @keydown.prevent.stop="if ($event.key === 'Delete' || $event.key === 'Backspace') { 
+            if(selectedApproved.length > 0) {
+                let textPlural = selectedApproved.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+                $dispatch('confirm-action', {
+                    title: '{{ __('Delete') }}',
+                    message: `{{ __('You are about to') }} {{ __('delete')  }} ${selectedApproved.length} ${textPlural}.`,
+                    confirmText: '{{ __('Yes') }}, {{ __('delete')  }} !',
+                    confirmClass: 'bg-red-600 hover:bg-red-700',
+                    action: () => $wire.call('deleteSelected', selectedApproved)
+                })
+            }
+        }"
     >
 
 <x-card title="{{ __('Approved images') }}" subtitle="{{ __('These images are displayed')}}" class="mt-[15px] mb-[15px]" shadow separator>
