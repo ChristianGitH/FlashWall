@@ -16,7 +16,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Volt::route('/create-wall', 'walls.create-wall')->name('create-wall');
     Volt::route('/setup-wall/{wall}', 'walls.setup-wall')->name('setup-wall');
-    Volt::route('/moderation/{wall}', 'walls.moderation')->name('moderation');
+    Volt::route('/moderation/{wall}', 'moderation.moderation')->name('moderation');
 
 });
 
@@ -24,8 +24,9 @@ Volt::route('/{wall}', 'images.create-image')->name('create-image');
 
 // Autres routes accessibles à tous (si besoin)
 Volt::route('/', 'index')->name('home');
-Volt::route('/display/{wall}', 'walls.display-images')->name('display-images');
-Volt::route('/display-dev/{wall}', 'walls.display-images-dev')->name('display-images-dev');
+Volt::route('/display/{wall}', 'displaywalls.display-images')->name('display-images');
+Volt::route('/display-dev/{wall}', 'displaywalls.slideshow-wrapper')->name('slideshow');
+
 
 // Routes pour le changement de langue
 Route::get('language/{locale}', function ($locale) {

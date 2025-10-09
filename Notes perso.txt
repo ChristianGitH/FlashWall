@@ -24,16 +24,29 @@ $category = $image->category; // La catégorie de cette image
 
 
 TO DEPLOY :
+Added GITIGNORE, and cleaned git
 Changed image thumbnail creation, use InterventionImage without new manager instance
 Added possibility to set all four margins separatly (top, bottom, left, right)
-Keaboard shortcuts (deleteSelected) for moderation
-
+Keaboard shortcuts (for deleteSelected) on moderation components
+Keyboard shortcuts for modals (Cancel, confirm) on moderation parent/wrapper
+Updated the deleteImage(s) functionalities on moderation's "all-images" component, so it updates status to 5 instead of instant delete (it was forgoten on this componenent)
+Updated the "Images copies creation", "permanent = 0" code on setup-wall component, so it doesn't count the status=5 images when it calculates the number of copies to create.
+Changed the tree organisation in livewire wall folder. Now Moderation and Display components are in different folders.
+Changed display image component, now slideshow-wrapper haddles the slideshow container, and slideshow the slideshow and images.
+Changed the propelled image research, so it's now working separatly with the "new image" research. 
+    Now possible to change the number of "new image research" and keep a high rate of "propel image research".
+Added transition 1ms to avoid blip/flick when changing slides.
+Changed the copies deletion in markImageAsDisplay : status update instead of delete
+Changed slideshow images update from database system :
+    We check if there's a difference between the used list by the slidehow, and the database, if yes, re render.
+    When we reach the end of the slideshow, we start again with the complete list
+Added a cleanDeletedImages / Empty the bin function to the moderation component (deletes images with status = 5)
 
 
 NEXT TO DO :
 Bug sur display-image lors de l'archivage ou Suppression d'image.
     Lié à la Suppression des copies lors de l'archivage d'une image.
-    Solution trouvée : Changer le status '>2' puis supprimer la copie ulterieurement.
+    Solution trouvée : Changer le status '5' puis supprimer la copie ulterieurement.
 Trouver une solution pour supprimer les copies d'images avec status = 5 à un moment
 Name and mail in create-image
 Possibility to remove caption from an image
@@ -41,9 +54,11 @@ Add download button for QR Code
 Smaller Image Preview - create images
 Add possibility to display QR code on display-image
 Full sreen zoom in Moderation needs change
-Make sure image is loaded before trying to display it, if not loaded, skip it or keep displaying previous image.
-Add tip alert for keaboard shortcuts on moderation
-
+Polices personnalisées
+Personnalisation page "create-image"
+Video as background on wall display
+Options de transition dans slideshow
+Définir la fréqence d'actualisation du slideshow par rapport à la bdd
 
 MISE A JOUR LARAVEL : 
 Modifier composer.json

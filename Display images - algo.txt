@@ -1,0 +1,61 @@
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                               📄 Page Web                                   │
+│                      (HTML + Blade + Alpine.js)                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+              │
+              ▼
+┌────────────────────────────┐
+│ 1. Page chargée            │
+│    → Composant Livewire    │
+│    → mount(Wall $wall)     │
+└────────────────────────────┘
+              │
+              ▼
+┌────────────────────────────────────────────────────────────┐
+│ 2. Chargement des images approuvées                        │
+│    → loadApprovedImages()                                  │
+│    → images liées au Wall                                  │
+│    → filtrées par modération + status                      │
+│    → triées par priorité + ordre aléatoire                 │
+└────────────────────────────────────────────────────────────┘
+              │
+              ▼
+┌────────────────────────────────────────────────────┐
+│ 3. Calcul des réglages d'affichage                 │
+│    → computeWallSettings()                         │
+│       - marges (top, left, etc.)                   │
+│       - durée du slide                             │
+│       - couleurs / opacité                         │
+│       - fond (couleur ou image)                    │
+└────────────────────────────────────────────────────┘
+              │
+              ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│ 4. Affichage des images sur la page (Alpine.js)                            │
+│    → currentSlide = 0                                                      │
+│    → setInterval toutes les X secondes                                     │
+│       - change d’image (nextSlide)                                         │
+│       - récupère imageId et nextImageId                                    │
+│       - appelle $wire.markImageAsDisplayed(imageId, nextImageId)          │
+└────────────────────────────────────────────────────────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ 5. Traitement de l’image affichée (côté Livewire)                  │
+│    → markImageAsDisplayed()                                        │
+│       - Supprime image si permanente = false                       │
+│       - Sinon : stocke son ID comme déjà vue                       │
+│       - Si priorité = 1, remet à 0                                 │
+└─────────────────────────────────────────────────────────────────────┘
+              │
+              ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│ 6. Toutes les 2 images affichées :                                    │
+│    → Recharge la liste d'images approuvées depuis la base             │
+│    → Filtre pour éviter de réafficher les dernières vues              │
+│    → Si image `nextImage` existe, elle est priorisée en 1re position │
+│    → Si une image avec priority=1 est trouvée, elle est priorisée     │
+└───────────────────────────────────────────────────────────────────────┘
+              │
+              ▼
+           Retour au point 4 🔁 (boucle continue)

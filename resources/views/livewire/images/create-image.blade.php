@@ -74,8 +74,13 @@ class extends Component {
         // create new manager instance with desired driver
         $manager = new ImageManager(new Driver());
 
-        $image = $manager->read($this->image->getRealPath())->scale(width: 500)->encode();
+        // Generating thumbnail         
+        // Save thumb         
+        $image = InterventionImage::read($this->image->getRealPath())->scale(width: 500)->encode();
         Storage::disk('public')->put('thumbs/' . basename($path), $image);
+        /* Older version with image manager
+        $image = $manager->read($this->image->getRealPath())->scale(width: 500)->encode();
+        Storage::disk('public')->put('thumbs/' . basename($path), $image);*/
 
         // Saving in database
         $parent = Image::create([

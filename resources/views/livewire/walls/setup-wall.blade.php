@@ -145,14 +145,14 @@ class extends Component {
             })
             ->pluck('id');      
 
-            Image::whereIn('id', $copiesToDelete)->delete();
+            Image::whereIn('id', $copiesToDelete)->update(['status' => 5]);
 
         } else {
             // Moderation has been desactivated
-             // Get all parent images (permanent = true) which are not approved (status != 1)
+             // Get all parent images (permanent = true) which are not approved (status != 1) and not deleted (status != 5)
             $parents = Image::where('wall_id', $this->wall->id)
                 ->where('permanent', true)
-                ->where('status', '!=', 1)
+                ->whereNotIn('status', [1, 5])
                 ->get();
 
             // Calculate the number of copies to create based on the number of parent image
