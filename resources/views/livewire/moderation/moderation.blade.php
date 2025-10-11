@@ -68,12 +68,12 @@ class extends Component {
         class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
     >
         <div class="shadow-lg overflow-auto relative">
-            <div class="close-button-wrapper">
-                <x-button @click="showImageZoomModal = false" class="btn btn-sm" icon="o-x-mark" />
+                <div class="close-button-wrapper">
+                    <x-button @click="showImageZoomModal = false" class="btn btn-sm" icon="o-x-mark" />
+                </div>
+                <img :src="modalImageUrl" alt="Image Preview" class="w-full h-auto mt-4 max-w-[80vw] et max-h-[80vh]" />
             </div>
-            <img :src="modalImageUrl" alt="Image Preview" class="w-full h-auto mt-4" />
         </div>
-    </div>
 
     <!-- Confirmation Modal -->
     <div 

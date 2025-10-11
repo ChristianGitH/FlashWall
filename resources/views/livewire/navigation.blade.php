@@ -75,5 +75,6 @@ new class extends Component
         <div class="ml-2 pt-8 sm:pt-4">
             <x-theme-toggle />
         <div>
+        <span>Version: {{ 'v' . trim(shell_exec('git rev-list --count HEAD')) }}</span>
     </x-menu>
 </div>
