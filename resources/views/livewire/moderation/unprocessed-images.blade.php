@@ -355,7 +355,7 @@ new class extends Component {
 <x-card title="{{ __( 'Pending images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>
 
 
-<div class="bulk-actions flex items-center flex-wrap space-y-2 space-x-2"
+<div class="bulk-actions flex items-center flex-wrap space-x-2"
     x-data="{
         handleSelection(actionType, actionMethod, actionTitle, confirmClass) {
             if (selected.length === 0) {
@@ -446,7 +446,7 @@ new class extends Component {
     />
     <!-- Message d'erreur affiché dynamiquement -->
     <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
-    <p wire:loading>Please wait...</p>
+    <p wire:loading class="text-primary font-bold">Please wait <x-loading class="loading-dots relative -bottom-2.5 text-primary" /></p>
     
 </div>
 
