@@ -24,7 +24,11 @@ class Wall extends Model
         'user_id',
         'captions',
         'moderation',
-        'max_images_user',
+        'max_images_submitter',
+        'ask_name_submitter',
+        'ask_email_submitter',
+        'require_name_submitter',
+        'require_email_submitter',
         'background_choice',
         'background_color',
         'background_image',
@@ -39,7 +43,15 @@ class Wall extends Model
         'caption_font_color',
         'caption_background_color',
         'caption_background_opacity',
-        'caption_max_characters'
+        'caption_max_characters',
+        'posting_page_text',
+        'posting_page_buttons_color',
+        'posting_page_buttons_font_color',
+        'posting_page_logo',
+        'posting_page_logo_visibility',
+        'posting_page_background_color',
+        'posting_page_background_image',
+        'posting_page_background_choice'
     ];
 
 

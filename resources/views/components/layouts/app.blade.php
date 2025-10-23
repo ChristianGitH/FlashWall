@@ -11,8 +11,8 @@
 <body class="min-h-screen font-sans antialiased bg-base-200/50 dark:bg-base-200">
 
 
-<!-- If it's not the display-images or display-images-dev page we use the normal layout -->
-@if (!Request::is('display/*') && !Request::is('display-dev/*'))
+<!-- NO MENU : If it's not one of these pages we use the normal layout -->
+@if (!Request::is('display/*') && !Request::is('display-dev/*') && !Route::is('create-image'))
     {{-- NAVBAR mobile only --}}
     <x-nav sticky class="lg:hidden">
         <x-slot:brand>
@@ -49,13 +49,16 @@
     <x-toast />
 @else
 
-<!-- If it's the display-images page then we use a blank layout which was created for this page (app/view/components/Blank.php)-->
+<!-- NO MENU : If it's one of the page, we use a blank layout which was created for this page (app/view/components/Blank.php)-->
 <x-blank full-width>
     {{-- The `$slot` goes here --}}
     <x-slot:content>
         {{ $slot }}
     </x-slot:content>
 </x-blank>
+
+    {{--  TOAST area --}}
+    <x-toast />
 
 @endif
 

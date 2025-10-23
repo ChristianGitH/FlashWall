@@ -27,7 +27,11 @@ TO DEPLOY :
 Added version number to menu (counts number of commit).
 moderation components : Added a spinner to "Please wait..." in moderation components.
 moderation : added max heigh and width to image on zoom modal.
-
+app.blade.php : Removed side menu for create-Image
+create-image : Added custom page style : text, font, btn color, logo, bg-image, bg-color, bg-choice.
+create-image : Added max width and height for image preview.
+create-image : Added the possibility to ask for name and email to submitters.
+create-image : Added language switcher on the page.
 
 
 NEXT TO DO :
@@ -35,17 +39,21 @@ Bug sur display-image lors de l'archivage ou Suppression d'image.
     Lié à la Suppression des copies lors de l'archivage d'une image.
     Solution trouvée : Changer le status '5' puis supprimer la copie ulterieurement.
 Trouver une solution pour supprimer les copies d'images avec status = 5 à un moment
-create-image : Name and mail in create-image 
-create-image : Smaller Image Preview - create images
-create-image : Remove side menu from create-image (same than for display-iamge)
+
 setup-wall + display-wall : Possibility to remove caption from an image
+setup-wall + display-wall : Possibility to display submitter name
 setup-wall : Add download button for QR Code
 setup-wall + display-wall : Polices personnalisées
-setup-wall + create-image : Personnalisation page "create-image"
 setup-wall + display-wall : Video as background on wall display
 setup-wall + display-wall : Options de transition dans slideshow
 display-image : Add possibility to display QR code on display-image
 Définir la fréqence d'actualisation du slideshow par rapport à la bdd
+Maybe change possibility of using copies system only if slideshow started playing, 
+    or add a option to use slideshow without the copies creations.
+    copies usage on page : setup-wall, moderation:all components, displaywall:slideshow
+Check if webp format is better for usage
+Keep language switch button on create-image page
+
 
 MISE A JOUR LARAVEL : 
 Modifier composer.json
