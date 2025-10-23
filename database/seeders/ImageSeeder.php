@@ -19,6 +19,7 @@ class ImageSeeder extends Seeder
                 'thumb' => 'thumbs/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
                 'caption' => 'Image : '. $i,
                 'visitor_token' => '1458-afgd',
+                'submitter_name' => 'John '. $i,
                 'permanent' => true,
             ]);
             $i++;

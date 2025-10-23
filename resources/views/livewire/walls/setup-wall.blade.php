@@ -11,6 +11,7 @@ use Livewire\Volt\Component;
 use Mary\Traits\Toast;
 
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Cache;
 
 new
 #[Title('Settings')]
@@ -23,7 +24,11 @@ class extends Component {
     public string $name = '';
     public string $slug = '';
     public string $description = '';
-    public string $max_images_user;
+    public string $max_images_submitter;
+    public bool $ask_name_submitter = false;
+    public bool $require_name_submitter = false;
+    public bool $ask_email_submitter = false;
+    public bool $require_email_submitter = false;
     public bool $captions = false;
     public bool $moderation = false;
     public string $background_color;
@@ -42,9 +47,23 @@ class extends Component {
     public string $caption_background_color;
     public int $caption_background_opacity;
     public int $caption_max_characters;
+
+    public string $posting_page_text;
+    public string $posting_page_font;
+    public string $posting_page_buttons_color;
+    public string $posting_page_buttons_font_color;
+    public string $posting_page_logo;
+    public $new_posting_page_logo;
+    public bool $posting_page_logo_visibility;
+    public string $posting_page_background_color;
+    public string $posting_page_background_image;
+    public $new_posting_page_background_image;
+    public string $posting_page_background_choice;
    
     public string $lastSavedSlug;
-
+    public array $background_choice_options = [];
+    
+    public array $googleFonts = [];
 
     public function mount(Wall $wall)
     {
@@ -54,9 +73,13 @@ class extends Component {
         if($wall->description) {
             $this->description = $wall->description;
         }
-        if($wall->max_images_user) {
-            $this->max_images_user = $wall->max_images_user;
+        if($wall->max_images_submitter) {
+            $this->max_images_submitter = $wall->max_images_submitter;
         }
+        $this->ask_name_submitter = $wall->ask_name_submitter;
+        $this->require_name_submitter = $wall->require_name_submitter;
+        $this->ask_email_submitter = $wall->ask_email_submitter;
+        $this->require_email_submitter = $wall->require_email_submitter;
         $this->captions = $wall->captions;
         $this->moderation = $wall->moderation;
         $this->duration = $wall->duration;
@@ -75,8 +98,56 @@ class extends Component {
         $this->caption_background_opacity = $wall->caption_background_opacity;
         $this->caption_max_characters = $wall->caption_max_characters;
 
+        // Custom style and images for create-image page
+        $this->posting_page_text = $wall->posting_page_text;
+        $this->posting_page_font = $wall->posting_page_font;
+        $this->posting_page_buttons_color = $wall->posting_page_buttons_color;
+        $this->posting_page_buttons_font_color = $wall->posting_page_buttons_font_color;
+        $this->posting_page_logo = $wall->posting_page_logo;
+        $this->posting_page_logo_visibility = (bool) $wall->posting_page_logo_visibility;
+        $this->posting_page_background_color = $wall->posting_page_background_color;
+        $this->posting_page_background_image = $wall->posting_page_background_image;
+        $this->posting_page_background_choice = $wall->posting_page_background_choice;
+
         // Var for the Sharing card, copy to clipboard. 
         $this->lastSavedSlug = $wall->slug;
+
+        // Options for background choice radio input 
+        $this->background_choice_options = [
+            ['custom_key' => 1 , 'name' => 'Image'],
+            ['custom_key' => 0 , 'name' => __('Color')],
+        ];
+
+        $this->loadGoogleFonts();
+    }
+
+    public function loadGoogleFonts(): void
+    {
+        Cache::forget('google_fonts');
+        $this->googleFonts = Cache::remember('google_fonts', 60, function () {
+            $apiKey = env('GOOGLE_FONTS_API_KEY');
+            $url = "https://www.googleapis.com/webfonts/v1/webfonts?key=$apiKey&sort=popularity";
+
+            $response = @file_get_contents($url);
+            if (!$response) {
+                return []; // fallback vide si l'API échoue
+            }
+
+            $data = json_decode($response, true);
+
+        // Trier par popularité et ne garder que les 100 premières
+        $topFonts = collect($data['items'] ?? [])
+            ->sortBy(fn($font) => $font['family']) // trie par ordre alphabétique
+            ->take(100)
+            ->map(fn($font) => [
+                'custom_key' => $font['family'], // valeur sélectionnée
+                'name' => $font['family'],       // texte affiché
+                'style' => "font-family:'{$font['family']}',sans-serif;", // style inline
+                'google_url' => "https://fonts.googleapis.com/css2?family=" . str_replace(' ', '+', $font['family']) . "&display=swap"
+            ])->toArray();
+
+            return $topFonts;
+        });
     }
 
 
@@ -104,7 +175,11 @@ class extends Component {
         $data = $this->validate([
             'name' => 'required|string|max:30',
             'description' => 'nullable|string|max:100',
-            'max_images_user' => 'nullable|integer|max:99',
+            'max_images_submitter' => 'integer|max:99',
+            'ask_name_submitter' => 'boolean',
+            'ask_email_submitter' => 'boolean',
+            'require_name_submitter' => 'boolean',
+            'require_email_submitter' => 'boolean',
             'captions' => 'boolean',
             'moderation' => 'boolean',
             'duration' => 'required|integer|max:99',
@@ -170,6 +245,62 @@ class extends Component {
                     ]);
                 }
             }
+        }
+    }
+
+
+
+
+    public function updatePostingPageStyle()
+    {
+        $data = $this->validate([
+            'posting_page_text' => 'string|max:155',
+            'posting_page_font' => 'string|max:155',
+            'posting_page_buttons_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'posting_page_buttons_font_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'new_posting_page_logo' => 'nullable|image|max:1024',
+            'posting_page_logo_visibility' => 'required|boolean',
+            'posting_page_background_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'new_posting_page_background_image' => 'nullable|image|max:20480',
+            'posting_page_background_choice' => 'required|integer|max:2',
+        ]);
+
+        if ($this->new_posting_page_logo) {
+            // Deleting old image, then saving the new one.
+            if ($this->wall->posting_page_logo !== 'posting_page_default_logo.png') {
+                Storage::disk('public')->delete('posting_page_images/logos/' .$this->wall->posting_page_logo);
+            }
+            $logo_path = $this->new_posting_page_logo->store('posting_page_images/logos', 'public');
+            $logo_filename = basename($logo_path);
+            $this->wall->posting_page_logo = $logo_filename;
+        }
+
+        if ($this->new_posting_page_background_image) {
+            // Deleting old image, then saving the new one.
+            if ($this->wall->posting_page_background_image !== 'posting_page_default_background.png') {
+                Storage::disk('public')->delete('posting_page_images/background_images/' .$this->wall->posting_page_background_image);
+            }
+            $background_path = $this->new_posting_page_background_image->store('posting_page_images/background_images', 'public');
+            $background_filename = basename($background_path);
+            $this->wall->posting_page_background_image = $background_filename;
+        }
+        
+        // On prépare les changements sur le modèle (sauf l'image)
+        // Remplit le modèle avec les données validées
+        $this->wall->posting_page_text = $this->posting_page_text;
+        $this->wall->posting_page_font = $this->posting_page_font;
+        $this->wall->posting_page_buttons_color = $this->posting_page_buttons_color;
+        $this->wall->posting_page_buttons_font_color = $this->posting_page_buttons_font_color;
+        $this->wall->posting_page_logo_visibility = $this->posting_page_logo_visibility;
+        $this->wall->posting_page_background_color = $this->posting_page_background_color;
+        $this->wall->posting_page_background_choice = $this->posting_page_background_choice;
+    
+        // Vérifie s'il y a des modifications
+        if ($this->wall->isDirty()) {
+            $this->wall->save();
+            $this->success(__('Changes saved!'));
+        } else {
+            $this->warning(__('No change detected!'));
         }
     }
 
@@ -319,9 +450,30 @@ class extends Component {
             <x-input label="{{ __('Name') }}" wire:model="name" inline />
             <x-input label="{{ __('Description') }}" wire:model="description" inline />
             <x-menu-separator />
-            <x-input type="number" label="{!! __('Max images per user')!!}" wire:model="max_images_user" inline />
-            <x-input type="number" label="{{ __('Time per image') }}" wire:model="duration" hint="{{ __('In seconds') }}" inline />
-            
+            <x-input type="number" label="{!! __('Max images per user')!!}" wire:model="max_images_submitter" max="99" inline required />
+
+            <p class="pb-0 label label-text font-semibold">Requested user information</p>
+            <div x-data="{
+                ask_name_submitter: @entangle('ask_name_submitter'),
+                ask_email_submitter: @entangle('ask_email_submitter'),
+                require_name_submitter: @entangle('require_name_submitter'),
+                require_email_submitter: @entangle('require_email_submitter'),
+                init() {
+                    this.$watch('ask_name_submitter', value => { if (!value) this.require_name_submitter = false })
+                    this.$watch('ask_email_submitter', value => { if (!value) this.require_email_submitter = false })
+                }
+            }" class="space-y-2">
+                <div class="flex items-center gap-4">
+                    <x-checkbox label="Name" wire:model="ask_name_submitter" />
+                    <x-checkbox label="Required" wire:model="require_name_submitter" x-bind:disabled="!ask_name_submitter" />
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <x-checkbox label="Mail" wire:model="ask_email_submitter" />
+                    <x-checkbox label="Required" wire:model="require_email_submitter" x-bind:disabled="!ask_email_submitter"  />
+                </div>
+            </div>
+
             <div x-data="{ captions: @entangle('captions') }">
                 <x-toggle label="{{__('Allow captions?')}}" x-model="captions" wire:model="captions" class="mb-[10px]" right inline/>
                 <template x-if="captions">
@@ -336,7 +488,9 @@ class extends Component {
                     />
                 </template>
             </div>
+
             <x-toggle label="{{__('Activate moderation?')}}" wire:model="moderation" right inline/>
+            <x-input type="number" label="{{ __('Time per image') }}" wire:model="duration" hint="{{ __('In seconds') }}" inline />
 
             <x-slot:actions>
                 <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWall" />
@@ -344,6 +498,169 @@ class extends Component {
         </x-form>
     </x-card>
 
+
+
+    <x-card title="{{ __('Posting page style') }}" class="w-96" shadow separator>
+
+        <x-form wire:submit="updatePostingPageStyle">
+
+            <x-input label="{{ __('Welcome text') }}" wire:model="posting_page_text" inline />
+
+            <div x-data="{
+                open: false,
+                selectedFont: @entangle('posting_page_font'),
+                fonts: @js($googleFonts),
+                selectFont(font) {
+                    this.selectedFont = font.name;
+                    this.open = false;
+                },
+                clearSelection() {
+                    this.selectedFont = '';
+                }
+            }" class="relative w-full">
+
+                <!-- Clickable fake input -->
+                <label class="pt-0 label label-text font-semibold">{{ __('Welcome text font') }}</label>
+                <div tabindex="0" @click="open = !open"
+                    :class="open ? 'border-primary ring ring-primary ring-opacity-30' : ''"
+                    class="flex items-center justify-between input input-primary cursor-pointer"
+                >
+                    <span x-text="selectedFont || '{{ __('Select a font') }}'" 
+                        class="truncate"
+                        :class="selectedFont ? 'text-black dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'"  
+                        :style="`font-family: ${selectedFont}, sans-serif;`">
+                    </span>
+                    
+                    <div class="flex"> <!-- Clear selection button and arrow -->
+                        <template x-if="selectedFont">
+                            <button
+                                @click.stop="clearSelection()"
+                                type="button"
+                                class="text-gray-500 hover:text-gray-black focus:outline-none"
+                                title="{{ __('Clear selection') }}"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </template>
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Dropdown menu -->
+                <ul x-show="open" @click.outside="open = false"
+                    class="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto 
+            bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
+            rounded-lg shadow-lg">
+                    <template x-for="font in fonts" :key="font.custom_key">
+                        <li @click="selectFont(font)"
+                            class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm"
+                            :style="font.style">
+                            <link rel="stylesheet" :href="font.google_url" />
+                            <span x-text="font.name"></span>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+
+
+                <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }"class="flex flex-row items-end justify-evenly">
+                    <x-input class="w-full" label="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" />
+
+                    <input
+                        type="color"
+                        x-model="posting_page_buttons_color"
+                        wire:model="posting_page_buttons_color"
+                        class="h-8 w-12 mb-[0.46rem] cursor-pointer"
+                        title="{{ __('Choose a color') }}"
+                    >
+                @error('posting_page_buttons_color')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+                </div>
+                
+                <div x-data="{ posting_page_buttons_font_color: @entangle('posting_page_buttons_font_color') }" class="flex flex-row items-end justify-evenly">
+                    <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" />
+
+                    <input
+                        type="color"
+                        x-model="posting_page_buttons_font_color"
+                        wire:model="posting_page_buttons_font_color"
+                        class="h-8 w-12 mb-[0.46rem] cursor-pointer"
+                        title="{{ __('Choose a color') }}"
+                    >
+                @error('posting_page_buttons_font_color')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+                </div>
+            </div>
+
+        <x-menu-separator />
+
+
+            <div class="max-w-full overflow-hidden" x-data="{ posting_page_logo_visibility: @entangle('posting_page_logo_visibility') }">
+                <x-toggle label="{{__('Display logo?')}}" x-model="posting_page_logo_visibility" wire:model="posting_page_logo_visibility" right inline/>
+
+                <div x-show="posting_page_logo_visibility == true">
+                    <x-file style="max-width: 100% !important" wire:model="new_posting_page_logo" 
+                        hint="{{ __('Only image formats allowed') }}"
+                        accept="image/png, image/jpeg"
+                    />
+                    <x-progress wire:loading wire:target="new_posting_page_logo" class="progress-primary h-0.5" indeterminate />
+                    @if($new_posting_page_logo)
+                        <img src="{{ $new_posting_page_logo->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                    @elseif($posting_page_logo)
+                        <img src="{{ asset('storage/posting_page_images/logos/' . $wall->posting_page_logo) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                    @endif
+                </div>
+            </div>
+
+        <x-menu-separator />
+        
+        <div class="max-w-full overflow-hidden" x-data="{ posting_page_choice: @entangle('posting_page_background_choice') }">
+            <div class="flex justify-center text-center mb-1">
+                <x-radio label="{{ __('Use as background') }} :" wire:model="posting_page_background_choice" :options="$background_choice_options" option-value="custom_key" inline center class="btn-sm" />
+            </div>
+        
+            <div x-show="posting_page_choice == 0"  x-data="{ posting_page_background_color: @entangle('posting_page_background_color') }"class="flex flex-row items-end justify-evenly">
+                <x-input class="w-full" label="{!! __('Page background color')!!}" x-model="posting_page_background_color" />
+
+                <input
+                    type="color"
+                    x-model="posting_page_background_color"
+                    wire:model="posting_page_background_color"
+                    class="h-8 w-12 mb-[0.46rem] cursor-pointer"
+                    title="{{ __('Choose a color') }}"
+                >
+
+                @error('posting_page_background_color')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+        
+            <div x-show="posting_page_choice == 1"  class="max-w-full overflow-hidden">
+                <x-file style="max-width: 100% !important" wire:model="new_posting_page_background_image" label="{!! __('Page background image') !!}" 
+                    hint="{{ __('Only image formats allowed') }}"
+                    accept="image/png, image/jpeg"
+                />
+                <x-progress wire:loading wire:target="new_posting_page_background_image" class="progress-primary h-0.5" indeterminate />
+                @if($new_posting_page_background_image)
+                    <img src="{{ $new_posting_page_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                @elseif($posting_page_background_image)
+                    <img src="{{ asset('storage/posting_page_images/background_images/' . $wall->posting_page_background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                @endif
+            </div>
+            
+            <x-slot:actions>
+                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updatePostingPageStyle" />
+            </x-slot:actions>
+        </x-form>
+    </x-card>
 
 
 
@@ -420,10 +737,16 @@ class extends Component {
 
 
 
-    <x-card title="{{ __('Background') }}" class="w-96" shadow separator>
+    <x-card title="{{ __('Wall background') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateWallBackground">
-            <div x-data="{ background_color: @entangle('background_color') }"class="flex flex-row items-end justify-evenly">
+
+        <div class="max-w-full overflow-hidden" x-data="{ wall_background_choice: @entangle('background_choice') }">
+            <div class="flex justify-center text-center mb-1">
+                <x-radio label="{{ __('Use as background') }} :" wire:model="background_choice" :options="$background_choice_options" option-value="custom_key" inline center class="btn-sm"/>
+            </div>
+
+            <div x-show="wall_background_choice == 0" x-data="{ background_color: @entangle('background_color') }"class="flex flex-row items-end justify-evenly">
                 <x-input class="w-full" label="{!! __('Background color')!!}" x-model="background_color" />
 
                 <input
@@ -438,7 +761,7 @@ class extends Component {
                 <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
             @enderror
 
-            <div class="max-w-full overflow-hidden">
+            <div x-show="wall_background_choice == 1" class="max-w-full overflow-hidden">
                 <x-file style="max-width: 100% !important" wire:model="new_background_image" label="{!! __('Background image') !!}" 
                     hint="{{ __('Only image formats allowed') }}"
                     accept="image/png, image/jpeg"
@@ -450,16 +773,7 @@ class extends Component {
             @elseif($background_image)
                 <img src="{{ asset('storage/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
             @endif
-
-            @php
-                $options = [
-                    ['custom_key' => 1 , 'name' => 'Image'],
-                    ['custom_key' => 0 , 'name' => __('Color')],
-                ];
-            @endphp
-            <div class="flex justify-center">
-                <x-radio label="{{ __('Use as background') }} :" wire:model="background_choice" :options="$options" option-value="custom_key" inline center />
-            </div>
+        </div>
             
             <!-- For dev and testing ! -->
             </br>
@@ -535,7 +849,7 @@ class extends Component {
 
 
 
-    <x-card title="{{ __('Layout') }}" class="w-96" shadow separator>
+    <x-card title="{{ __('Wall layout') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateWallLayout">
             <x-input type="number" label="{{ __('Top margin') }}" wire:model="margin_top" hint="{{ __('As a percentage') }}" inline />
@@ -552,7 +866,7 @@ class extends Component {
                 ];
             @endphp
             <div class="flex justify-center text-center">
-                <x-radio label="{{__('Captions position') }} :" class="normal-case" wire:model="caption_position" :options="$options" option-value="custom_key" inline center />
+                <x-radio label="{{__('Captions position') }} :" class="normal-case" wire:model="caption_position" :options="$options" option-value="custom_key" inline center class="btn-sm"/>
             </div>
 
             <x-slot:actions>

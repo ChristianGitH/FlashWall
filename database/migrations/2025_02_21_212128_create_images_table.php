@@ -22,6 +22,11 @@ return new class extends Migration
             $table->string('caption')->nullable();
             $table->integer('status')->default(0); // 0 = unprocessed. 1 = approved. 2 = archived.
             $table->string('visitor_token')->nullable();
+            $table->foreignId('submitter_id')
+                ->nullable()
+                ->constrained('submitters')
+                ->nullOnDelete(); // If the submitter is deleted, image stays with null id.
+            $table->string('submitter_name')->nullable();
             $table->boolean('priority')->default(0);
             $table->boolean('permanent');
             $table->timestamps();

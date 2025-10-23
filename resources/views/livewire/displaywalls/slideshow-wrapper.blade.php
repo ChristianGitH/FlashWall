@@ -76,7 +76,7 @@ public function computeWallSettings(): array
 
 <div x-data="{ ready: false }" x-init="ready = true" class="w-screen h-screen">
     <!-- Loading spinner -->
-    <div x-show="!ready" class="absolute inset-0 flex items-center justify-center bg-black z-50">
+    <div x-show="!ready" class="absolute inset-0 flex items-center justify-center z-50">
         <x-loading class="loading-ring" />
     </div>
 

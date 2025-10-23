@@ -17,6 +17,8 @@ class Image extends Model
         'caption',
         'status',
         'visitor_token',
+        'submitter_id',
+        'submitter_name',
         'priority',
         'permanent',
         'parent_id',
@@ -43,5 +45,10 @@ class Image extends Model
     public function copies()
     {
         return $this->hasMany(Image::class, 'parent_id');
+    }
+    
+    public function submitter()
+    {
+        return $this->belongsTo(Submitter::class);
     }
 }
