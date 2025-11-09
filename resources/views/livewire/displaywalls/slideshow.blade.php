@@ -14,6 +14,9 @@ new class extends Component {
     public int $countImageDisplay = 0;
     public int $countImageDisplayBeforeRefresh = 0;
 
+    /* For dev and testing */
+    public $lastDBCheckAt = '';
+    public $refreshEvery = '';
 
     public function mount(Wall $wall, array $displaySettings)
     {
@@ -23,51 +26,66 @@ new class extends Component {
     }
 
 
+/**
+ * Get approved images from database 
+ */
 public function loadApprovedImages()
 {
     $query = $this->wall->images();
 
     if ($this->wall->moderation) {
-        $query->select('id','name','permanent','priority','caption')->where('status', 1);  // 0 = unprocessed. 1 = approved. 2 = archived.
+        $query->where('status', 1);  // 0 = unprocessed. 1 = approved. 2 = archived.
     }
 
     return $query
-        ->where('status', '!=', 5)->inRandomOrder()->get();
+        ->where('status', '!=', 5)->where('permanent', 1)->orderBy('updated_at', 'asc')->get();
         // For priority : ->orderBy('priority', 'desc') For exemple priority = 1 : push forward
 }
 
 
+
+/**
+ * Called when an image has finished displaying.
+ */
 public function markImageAsDisplayed($imageId, $nextImageId)
 {
     $this->countImageDisplay++;
     
-    // We keep in cache the next image data in case it will not be in the next load.
+    // We keep the next image data in case it will not be in the next load.
     // If last image, will keep displaying it.
     $nextImage = $this->approvedImages->firstWhere('id', $nextImageId);
 
-    // If it's a image copie and not a permanent image, we ad it to the image to delete by updating status
-    $deletedCount = Image::where('id', $imageId)->where('permanent', 0)->update(['status' => 5]);
-
-    if ($deletedCount === 0) {
-        // Image not deleted so we keep it in displayedImageIds, unique id and at the end of array 
+    // We add the image id in displayedImageIds, unique id and at the end of array 
         $this->displayedImageIds = [...array_filter($this->displayedImageIds, fn($id) => $id !== $imageId), $imageId];
         // If priority = 1, we change it back to 0
         Image::where('id', $imageId)->where('priority', 1)->update(['priority' => 0]);
-    } else {
-        // Image deleted, so we remove it from the slideshow
-        $this->dispatch('removeSlide', id: $imageId);
-    }
+
 
     // We check is there's a propelled image
     if ($this->checkForPropelledImage($nextImage)) {
         return;
     }
 
-    // Eveery X image display, we compare the images in the slideshow with the database to se if there's some changes
-    $this->countImageDisplayBeforeRefresh++;
-    if ($this->countImageDisplayBeforeRefresh==5) {
-        $this->countImageDisplayBeforeRefresh = 0;
 
+    // Refresh the image list every totalImages ÷ 4 images displayed, but never more frequently than every 2 images.
+    $totalImages = $this->approvedImages->count();
+    $refreshEvery = max(2, (int) floor($totalImages / 4));
+
+    // For dev front
+    $this->refreshEvery = max(2, (int) floor($totalImages / 4));
+
+    if ($this->countImageDisplay % $refreshEvery == 0 || $this->countImageDisplay >= $totalImages) {
+            // For dev front
+            $this->lastDBCheckAt = now()->format('H:i:s'); // stocke l'heure pour l'affichage front
+        
+        $this->checkForChangesInDatabase($nextImage);
+    }
+
+}
+
+
+    private function checkForChangesInDatabase($nextImage)
+    {
         // We get the updated approved Images from database
         $currentImagesFromDB = $this->loadApprovedImages();
         $currentIdsFromDB = $currentImagesFromDB->pluck('id');
@@ -80,60 +98,88 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         // And if there's deleted images
         $removedImages = $oldIds->diff($currentIdsFromDB);
 
+
         // If there's somes changes in the DB :
         if ($newImages->isNotEmpty() || $removedImages->isNotEmpty()) {
-            $filtered = $currentImagesFromDB;
-            // If we have more than 3 images, we get 1/3 of the number of images
-            if (count($currentImagesFromDB) >= 3 && !empty($this->displayedImageIds)) {
-                $numberOfImages = max(1, (int) round(count($currentImagesFromDB) / 3));
 
-                // We get the 1/3 latest IDs added to displayedImageIds (last image displayed)
-                $this->displayedImageIds  = array_slice($this->displayedImageIds, -$numberOfImages);
-                
-                // We filter, new image, without the last displayed ones
-                $filtered = $currentImagesFromDB
-                    ->reject(fn($image) => in_array($image->id, $this->displayedImageIds) && $image->priority !== 1)
-                    ->values();
+            // If there's some deleted image we take them out of the array displayedImageIds
+            if ($removedImages->isNotEmpty()) {
+                $this->displayedImageIds = array_values(
+                    array_filter($this->displayedImageIds, fn($id) => !in_array($id, $removedImages->toArray()))
+                );
             }
 
-
-            // If exist, push nextImageId in first position
-            // Remove nextImageId from the list
-            $remaining = $filtered->reject(fn($image) => $image->id === $nextImageId)->values();
-            $newCollection = collect();
-            // Push nextImage in first place
-            if ($nextImage) {
-                $newCollection->push($nextImage);
+            // We limit the number of new image to add to slideshow
+            $maxNewImagesPerCycle = 20;
+            if ($newImages->count() > $maxNewImagesPerCycle) {
+                $newImages = $newImages->take($maxNewImagesPerCycle);
             }
 
-            $this->approvedImages = $newCollection->concat($remaining)->values();
-            $this->countImageDisplay = 1;
+            // We filter, new image without nextImage, to avoid having nextImage twice
+            $filtered_items = $currentImagesFromDB
+                ->whereIn('id', $newImages)
+                ->reject(fn($image) => $image->id === $nextImage?->id)
+                ->values();
+
+            // If there less than X images, we push back in the allready displayed images.
+           if ($filtered_items->count() < 20) {
+                $this->updateApprovedImagesWithNextImageAndDisplayedImages($nextImage, $filtered_items, $currentImagesFromDB);
+            }
+            else {
+                // If exist, push nextImageId in first position
+                $this->approvedImages = collect($nextImage ? [$nextImage] : [])
+                ->concat($filtered_items)
+                ->values();
+            }
+            $this->countImageDisplay = 0;
         }
-        // AND IF there's no change in the DB but we reached the end of the slideshow :
+        /*  AND IF there's no change in the DB but we reached the end of the slideshow :
+            then we push the allready displayed images back in the slideshow. */
         elseif ($this->countImageDisplay >= $this->approvedImages->count()) {
-            $this->countImageDisplay = 1;
+            $this->countImageDisplay = 0;
 
             $recentIds = collect($this->displayedImageIds); // Convert array to collection
             $approvedIds = $this->approvedImages->pluck('id');
 
             if ($recentIds->diff($approvedIds)->isNotEmpty()) {
                 // If array not empty, we remove the images from the list
-                $remaining = $this->approvedImages
+                $filtered_items = $this->approvedImages
                 ->reject(fn($image) => in_array($image->id, $this->displayedImageIds))
+                ->reject(fn($image) => $image->id === $nextImage?->id)->values()
                 ->values();
 
-                // And we get the image 
-                $recentlyDisplayed = $currentImagesFromDB
-                    ->whereIn('id', $this->displayedImageIds)
-                    ->values();
+                $this->updateApprovedImagesWithNextImageAndDisplayedImages($nextImage, $filtered_items, $currentImagesFromDB);
 
-                // And push them at the back of the list again
-                $this->approvedImages = $recentlyDisplayed->concat($remaining)->values();
-            }
-        }        
-
+            }        
+        }
     }
-}
+
+
+
+    private function updateApprovedImagesWithNextImageAndDisplayedImages($nextImage, $filtered_items, $currentImagesFromDB)
+    {
+        // Remove nextImage from displayed IDs
+        $this->displayedImageIds = array_values(
+            array_filter($this->displayedImageIds, fn($id) => $id !== $nextImage?->id)
+        );
+
+        // Get recently displayed images content
+        $recentlyDisplayed = $currentImagesFromDB
+            ->whereIn('id', $this->displayedImageIds)
+            ->values();
+
+        // Add nextImage, images from DB and push recentlyDisplayed image and the end
+        $this->approvedImages = collect($nextImage ? [$nextImage] : [])
+            ->concat($filtered_items)
+            ->concat($recentlyDisplayed)
+            ->values();
+    }
+
+
+
+
+
+
 
     public function checkForPropelledImage($nextImage): bool
     {
@@ -164,14 +210,24 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         return false;
     }
 
-protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
-
 
 }; ?>
 
-<div>
-<!-- For dev and testing -->
-<div style="z-index: 100; opacity: 0.7;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
+<div x-data="{
+    showDebug: false, // FOR DEV ONLY
+    }">
+
+<!-- DEV TOGGLE BUTTON -->
+<div class="fixed top-5 left-5" style="z-index: 100;">
+    <x-button 
+        @click="showDebug = !showDebug"
+        class="btn btn-xs"
+        x-text="showDebug ? 'Masquer debug' : 'Afficher debug'"
+    />
+</div>
+
+<!-- For DEV and testing -->
+<div x-show="showDebug" style="z-index: 100; opacity: 0.7;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
     <p>Displayed : {{ $countImageDisplay }}. IDs to display ({{ count($approvedImages) }}) : 
     @foreach ($approvedImages as $index => $image)
         <span style="color: {{ $image->permanent ? 'green' : 'blue' }}; background-color: {{ $image->priority == 1 ? 'orange' : 'transparent' }}">
@@ -180,6 +236,7 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
     @endforeach
     </p>
     <p>Already displayed IDs : {{ implode(', ', $displayedImageIds) }}</p>
+    <p>Refresh every : {{ $refreshEvery }}. Last DB check: {{ $lastDBCheckAt ?? 'Never' }}</p>
 </div>
 <!-- For dev and testing -->
 
@@ -191,25 +248,98 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
     x-data="{
         currentSlide: 0,
         slides: {{ $approvedImages->count() }},
-        init() {
-            setInterval(() => {                
-                // On récupère l'ID de l'image affichée
-                let imageId = parseInt(this.$refs['image-' + this.currentSlide]?.dataset?.imageId);
-                this.currentSlide = (this.currentSlide + 1) % this.slides;
-                let nextImageId = parseInt(this.$refs['image-' + this.currentSlide]?.dataset?.imageId);
-                if (imageId) {
-                    //Livewire.dispatch('imageDisplayed', { imageId: parseInt(imageId) });
-                    $wire.markImageAsDisplayed(imageId, nextImageId)
+        isUpdating: false,
+        lastTime: performance.now(),
+        isFullscreen: false,
+        wakeLock: null,
+
+        // WAKE LOCK : Keep screen active !
+        async requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    if (this.wakeLock) return; // évite les doublons
+
+                    this.wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('✅ Wake Lock activé');
+
+                    this.wakeLock.addEventListener('release', async () => {
+                        console.log('⚠️ Wake Lock relâché, tentative de réactivation...');
+                        try {
+                            this.wakeLock = await navigator.wakeLock.request('screen');
+                            console.log('🔁 Wake Lock réactivé');
+                        } catch (e) {
+                            console.warn('Impossible de relancer le Wake Lock:', e);
+                        }
+                    });
+                } else {
+                    console.warn('Wake Lock API non supportée sur ce navigateur.');
                 }
-            }, {{ $displaySettings['duration'] }});
+            } catch (err) {
+                console.error('Erreur activation Wake Lock:', err);
+            }
+        },
 
-            // Écoute de l'événement Livewire pour retirer une slide
-            Livewire.on('removeSlide', (data) => {
-                this.slides = this.slides.filter(id => id !== data.id);
+        async nextFrame(now) {
+            const duration = {{ $displaySettings['duration'] }};
+            if (!this.lastTime) this.lastTime = now;
 
-                // Si l'image supprimée était la currentSlide → avancer
-                if (!this.slides.includes(this.slides[this.currentSlide])) {
-                    this.currentSlide = 0;
+            if (now - this.lastTime >= duration) {
+                if (!this.isUpdating) {
+                    this.isUpdating = true;
+
+                    // On récupère l'ID de l'image affichée
+                    let imageId = parseInt(this.$refs['image-' + this.currentSlide]?.dataset?.imageId);
+                    let nextIndex  = (this.currentSlide + 1) % this.slides;
+                    let nextImageId = parseInt(this.$refs['image-' + nextIndex]?.dataset?.imageId);
+
+                    if (imageId) {
+                        try {
+                            await $wire.markImageAsDisplayed(imageId, nextImageId);
+                        } catch (e) {
+                            console.error('Erreur markImageAsDisplayed:', e);
+                        }
+                    }
+
+                    // On passe à la diapo suivante
+                    this.currentSlide = nextIndex;
+                    this.isUpdating = false;
+                }
+
+                this.lastTime = now;
+            }
+
+            requestAnimationFrame(this.nextFrame.bind(this));
+        },
+
+        // FULLSCREEN BUTTON
+        async toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+                this.isFullscreen = true;
+                document.body.style.cursor = 'none';
+            } else {
+                await document.exitFullscreen();
+                this.isFullscreen = false;
+                document.body.style.cursor = 'default';
+            }
+        },
+
+        init() {
+            this.requestWakeLock();
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    this.requestWakeLock(); // Réactive dès que la page devient visible
+                }
+            });
+
+            requestAnimationFrame(this.nextFrame.bind(this));
+                
+            document.addEventListener('fullscreenchange', () => {
+                // Quand on quitte le fullscreen (ex: touche Échap)
+                if (!document.fullscreenElement) {
+                    this.isFullscreen = false;
+                    document.body.style.cursor = 'default';
                 }
             });
         }
@@ -217,24 +347,74 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
     wire:key="slideshow-{{ implode(',', $approvedImages->pluck('id')->toArray()) }}"
     class="relative w-full h-screen flex items-center justify-center" style="{{ $displaySettings['background'] }}"
 >
+
+
+    <!-- FULLSCREEN BUTTON -->
+    <div class="fixed top-2 right-2" x-show="!isFullscreen">
+        <x-button 
+            @click="toggleFullscreen"
+            icon="o-arrows-pointing-out"
+            class="btn btn-s"
+            label="{{ __('Full screen') }}"
+        />
+    </div>
+
+@php
+    $transition = $displaySettings['transition'] ?? 'fade';
+
+    $transitions = [
+        'fade' => [
+            'enter' => 'transition ease-out duration-300',
+            'enterStart' => 'opacity-0',
+            'enterEnd' => 'opacity-100',
+            'leave' => 'transition ease-in duration-300',
+            'leaveStart' => 'opacity-100',
+            'leaveEnd' => 'opacity-0',
+        ],
+        'zoom' => [
+            'enter' => 'transition ease-out duration-100',
+            'enterStart' => 'transform opacity-0 scale-75',
+            'enterEnd' => 'transform opacity-100 scale-100',
+            'leave' => 'transition ease-in duration-75',
+            'leaveStart' => 'transform opacity-100 scale-100',
+            'leaveEnd' => 'transform opacity-0 scale-75',
+        ],
+        'none' => [
+            'enter' => 'transition duration-[1ms]',
+            'enterStart' => 'opacity-0',
+            'enterEnd' => 'opacity-100',
+            'leave' => 'transition duration-[1ms]',
+            'leaveStart' => 'opacity-100',
+            'leaveEnd' => 'opacity-0',
+        ],
+    ];
+
+    $t = $transitions[$transition] ?? $transitions['fade'];
+@endphp
+
     @foreach($approvedImages as $index => $image)
-        <div
-        x-transition:leave="transition duration-[1ms]"
+    <div
         x-show="currentSlide === {{ $index }}"
-            x-ref="image-{{ $index }}"
-            data-image-id="{{ $image->id }}"
-            class="absolute inset-0 flex items-center flex-col justify-center text-center"
-            wire:key="image-{{ $image->id }}"
-            style="{{ $displaySettings['image_container_style'] }}"
-        >
+        x-transition:enter="{{ $t['enter'] }}"
+        x-transition:enter-start="{{ $t['enterStart'] }}"
+        x-transition:enter-end="{{ $t['enterEnd'] }}"
+        x-transition:leave="{{ $t['leave'] }}"
+        x-transition:leave-start="{{ $t['leaveStart'] }}"
+        x-transition:leave-end="{{ $t['leaveEnd'] }}"
+        x-ref="image-{{ $index }}"
+        data-image-id="{{ $image->id }}"
+        class="absolute inset-0 flex items-center flex-col justify-center text-center"
+        wire:key="image-{{ $image->id }}"
+        style="{{ $displaySettings['image_container_style'] }}"
+    >
             <div class="relative" style="max-height: 100%; max-width: 100%;">
                 <img
-                    src="{{ asset('storage/' . $image->name) }}"
+                    src="{{ asset('storage/' . $image->webp_full_path) }}"
                     class="object-contain"
                     style="max-height: 100%; max-width: 100%;"
                 />
                 
-                @if($image->caption)
+                @if(($image->caption && $wall->caption_on_wall) || ($image->submitter_name && $wall->submitter_name_on_wall))
                     <!-- CAPTION POSITION = If 1, caption is on the image. If 0, caption is bellow the image. 
                         Bellow the image then outside div class="relative", image wrapper -->
                     @if($this->wall->caption_position == 0)
@@ -248,7 +428,18 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
                             background-color: {{ $displaySettings['caption_background'] }};
                             max-width: {{ $displaySettings['caption_max_width'] }}%;
                             display: inline-block;">
-                                {{ $image->id }}
+                                @if($wall->submitter_name_on_wall && $image->submitter_name)
+                                    {{ $image->submitter_name }}
+                                @endif
+
+                                @if($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name)
+                                    :
+                                @endif
+
+                                @if($wall->caption_on_wall && $image->caption)
+                                    {{ $image->caption }}
+                                @endif
+                                | Id : {{ $image->id }}
                             </span>
                         </div>
 
@@ -264,7 +455,7 @@ protected $listeners = ['imageDisplayed' => 'markImageAsDisplayed',];
     @endforeach
 
         <!-- Debug panel -->
-    <div class="fixed bottom-2 right-2 bg-white text-xs text-gray-700 shadow p-2 rounded max-w-xs z-50">
+    <div x-show="showDebug" style="z-index: 150;" class="fixed bottom-2 right-2 bg-white text-xs text-gray-700 shadow p-2 rounded max-w-xs z-50">
         <p><strong>currentSlide:</strong> <span x-text="currentSlide"></span></p>
         <p><strong>slides:</strong> <span x-text="JSON.stringify(slides)"></span></p>
     </div>

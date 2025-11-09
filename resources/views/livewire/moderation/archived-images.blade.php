@@ -52,6 +52,7 @@ new class extends Component {
                     'wall_id'    => $parent->wall_id,
                     'parent_id'  => $parent->id,
                     'name'       => $parent->name,
+                    'webp_name'       => $parent->webp_name,
                     'thumb'      => $parent->thumb,
                     'caption'    => $parent->caption,
                     'status'     => 1,
@@ -161,16 +162,20 @@ new class extends Component {
     // Single image delete
     public function deleteImage(int $id): void
     {
-        $image = Image::where('id', $id)->first(['id', 'name', 'thumb']);
+        $image = Image::where('id', $id)->first(['id', 'name', 'webp_name', 'thumb']);
     
         if (!$image) {
             $this->error(__('Image not found.'));
             return;
         }
 
-        // Delete files
-        Storage::disk('public')->delete([$image->name, $image->thumb]);
-    
+        // Delete files using accessors
+        Storage::disk('public')->delete([
+            $image->original_full_path,
+            $image->webp_full_path,
+            $image->thumb_full_path,
+        ]);
+
         // Delete from database
         $image->delete();
 
@@ -182,19 +187,23 @@ new class extends Component {
     // Multiple image delete
     public function deleteSelected(array $selectedImages)
     {
-        // Get paths
-        $paths = Image::whereIn('id', $selectedImages)->pluck('name')->merge(
-            Image::whereIn('id', $selectedImages)->pluck('thumb')
-        )->toArray();
-    
-        if (empty($paths)) {
+        // Retrieve all concerned images
+        $images = Image::whereIn('id', $selectedImages)->get(['id', 'name', 'webp_name', 'thumb']);
+
+        if ($images->isEmpty()) {
             $this->error(__('No valid images found.'));
             return;
         }
-    
+
+        // Build all file paths using accessors
+        $paths = $images->flatMap(fn($image) => [
+            $image->original_full_path,
+            $image->webp_full_path,
+            $image->thumb_full_path,
+        ])->toArray();
+
         // Delete files
         Storage::disk('public')->delete($paths);
-    
         // Delete from database
         Image::whereIn('id', $selectedImages)->delete();
 
@@ -310,7 +319,7 @@ new class extends Component {
         @endphp
         <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{!! $data2 !!}" wire:key="image-{{ $image->id }}">
             <div class="uper_image_data justify-between">
-                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->name) }}' })">
+                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                     </svg>
@@ -327,7 +336,7 @@ new class extends Component {
             />
             </div>
                 <label for="checkbox-{{ $image->id }}" display="block">
-                    <img src="{{ asset('storage/' . $image->thumb) }}" />
+                    <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
                 </label>
             <div class="moderation_buttons flex justify-between">
                 <x-button 

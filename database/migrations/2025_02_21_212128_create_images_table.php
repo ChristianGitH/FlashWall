@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('parent_id')->nullable()->constrained('images')->onDelete('cascade');
             
             $table->string('name');
+            $table->string('webp_name');
             $table->string('thumb');
             $table->string('caption')->nullable();
             $table->integer('status')->default(0); // 0 = unprocessed. 1 = approved. 2 = archived.

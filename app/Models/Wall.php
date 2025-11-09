@@ -22,13 +22,15 @@ class Wall extends Model
         'slug',
         'description',
         'user_id',
-        'captions',
+        'allow_captions',
         'moderation',
         'max_images_submitter',
         'ask_name_submitter',
         'ask_email_submitter',
         'require_name_submitter',
         'require_email_submitter',
+        'submitter_name_on_wall',
+        'caption_on_wall',
         'background_choice',
         'background_color',
         'background_image',
@@ -40,6 +42,7 @@ class Wall extends Model
         'margin_left',
         'margin_right',
         'duration',
+        'transition',
         'caption_font_color',
         'caption_background_color',
         'caption_background_opacity',
@@ -61,6 +64,12 @@ class Wall extends Model
     protected $casts = [
         'captions' => 'boolean',
         'moderation' => 'boolean',
+        'ask_name_submitter',
+        'ask_email_submitter',
+        'require_name_submitter',
+        'require_email_submitter',
+        'submitter_name_on_wall',
+        'caption_on_wall',
     ];
 
 

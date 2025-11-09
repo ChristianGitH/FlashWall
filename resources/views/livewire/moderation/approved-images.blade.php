@@ -158,6 +158,26 @@ new class extends Component {
         }
         $this->success(__('Image successfully propelled : will be displayed asap'));
     }
+
+
+
+
+    
+    // Deleting caption of an image //
+    public function deleteCaption(int $id): void
+    {
+        $image = Image::find($id);
+        if (!$image) {
+            $this->error(__('Image not found'));
+            return;
+        }
+
+        // Removing caption of the image
+        $image->update(['caption' => null]);
+
+        $this->success(__('Caption successfully deleted'));
+    }
+    
     
 }; ?>
 
@@ -256,27 +276,54 @@ new class extends Component {
         <p class="text-center">{{ __('No approved image.') }}</p>
     @else
     @foreach($this->approvedImages() as $image)
-        @php
-        if ($image->caption) {
-            $data1 = "tooltip tooltip-bottom";
-            $data2 = "$image->caption";
-            $data3 = "";
-        } else {
-            $data1 = "";
-            $data2 = "";
-            $data3 = "hidden";
+
+    <!-- Building caption tooltip with Submitter Name and Caption -->
+    @php
+        $caption_tooltip_classes = "tooltip tooltip-bottom"; // tooltip classes
+        $caption_tooltip_icon_visibility = "hidden"; // default = hidden
+
+        // Building tooltip content
+        $caption_tooltip_content = '';
+        if ($wall->submitter_name_on_wall && $image->submitter_name) {
+            $caption_tooltip_content .= $image->submitter_name;
+        }
+
+        if ($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name) {
+            $caption_tooltip_content .= ' : ';
+        }
+
+        if ($wall->caption_on_wall && $image->caption) {
+            $caption_tooltip_content .= $image->caption;
+            $caption_tooltip_icon_visibility = '';
+        }
+
+        // Si rien à afficher, cacher le tooltip
+        if (empty($caption_tooltip_content)) {
+            $caption_tooltip_classes = '';
+            $caption_tooltip_icon_visibility = 'hidden';
         }
     @endphp
-        <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{!! $data2 !!}" wire:key="image-{{ $image->id }}">
+        <div class="image_wrapper {{ ( $caption_tooltip_classes ) }}" data-tip="{!! $caption_tooltip_content !!}" wire:key="image-{{ $image->id }}">
             <div class="uper_image_data justify-between">
-                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->name) }}' })">
+                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                     </svg>
                 </a>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $data3 ) }}">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                </svg>
+                
+                <a role="button" 
+                    @click="$dispatch('confirm-action', {
+                            title: '{{ __('Delete caption') }}',
+                            message: '{{ __('Are you sure you want to delete the caption attached to this image?') }}',
+                            confirmText: '{{ __('Yes') }}',
+                            confirmClass: 'bg-orange-600 hover:bg-orange-700',
+                            action: () => $wire.call('deleteCaption', {{ $image->id }})
+                        })"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $caption_tooltip_icon_visibility ) }}">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                    </svg>
+                </a>
             <input 
                 type="checkbox" 
                 class="checkbox checkbox-sm approved-image-checkbox"
@@ -286,7 +333,7 @@ new class extends Component {
             />
             </div>
                 <label for="checkbox-{{ $image->id }}" display="block">
-                    <img src="{{ asset('storage/' . $image->thumb) }}" />
+                    <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
                 </label>
             <div class="moderation_buttons flex justify-between">
                 <x-button 
