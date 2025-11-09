@@ -162,7 +162,7 @@ class extends Component {
     // Function to get the last saved slug for the copy to clipboard functionality.
     public function getDisplayImageUrlProperty(): string
     {
-        return route('display-images', ['wall' => $this->lastSavedSlug]);
+        return route('slideshow', ['wall' => $this->lastSavedSlug]);
     }
     public function getCreateImageUrlProperty(): string
     {
