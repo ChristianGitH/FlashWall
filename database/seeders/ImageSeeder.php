@@ -15,8 +15,9 @@ class ImageSeeder extends Seeder
             Image::create([
                 'wall_id' => 1,
                 'parent_id' => null,
-                'name' => 'images/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
-                'thumb' => 'thumbs/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
+                'name' => 'N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
+                'webp_name' => 'N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
+                'thumb' => 'N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
                 'caption' => 'Image : '. $i,
                 'visitor_token' => '1458-afgd',
                 'submitter_name' => 'John '. $i,

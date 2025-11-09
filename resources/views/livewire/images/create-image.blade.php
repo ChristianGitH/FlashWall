@@ -193,24 +193,19 @@ private function getSubmitterRequirements(): void
         ]);
     
         // Saving full size image
-        $path = $this->image->store('images', 'public');
+        $path = $this->image->store('walls_images/images_submitters', 'public');
+        $originalFilename = basename($path);
 
-        // Generating thumbnail         
-        // Save thumb         
-        $image = InterventionImage::read($this->image->getRealPath())->scale(width: 500)->encode();
-        Storage::disk('public')->put('thumbs/' . basename($path), $image);
-        /* Older version with image manager
-        // Generating thumbnail
-        // create new manager instance with desired driver
-        $manager = new ImageManager(new Driver());
-        $image = $manager->read($this->image->getRealPath())->scale(width: 500)->encode();
-        Storage::disk('public')->put('thumbs/' . basename($path), $image);*/
+         // Creating file names for WebP and thumbnail
+        $baseName = pathinfo($originalFilename, PATHINFO_FILENAME);
+        $webpFilename = $baseName . '.webp';
 
-        // Saving in database
+        // Saving in database first, to get the $parent model
         $parent = Image::create([
             'wall_id' => $this->wall->id,
-            'name' => $path,
-            'thumb' => 'thumbs/' . basename($path),
+            'name' => $originalFilename,
+            'webp_name' => $webpFilename,
+            'thumb' => $webpFilename,
             'caption' => $this->caption,
             'visitor_token' => $this->visitorToken,
             'submitter_id' => $this->submitter->id ?? null,
@@ -218,7 +213,22 @@ private function getSubmitterRequirements(): void
             'permanent' => true,
         ]);
 
-        
+        // Generate and save WebP version
+        $webpImage = InterventionImage::read($this->image->getRealPath())->encodeByExtension('webp', 80); // 80 : quality (0 to 100)
+        Storage::disk('public')->put($parent->webp_full_path, $webpImage);
+
+        // Generating thumbnail         
+        // Save thumb         
+        $thumbImage = InterventionImage::read($this->image->getRealPath())->scale(width: 500)->encodeByExtension('webp', 80);
+        Storage::disk('public')->put($parent->thumb_full_path, $thumbImage);
+        /* Older version with image manager
+        // Generating thumbnail
+        // create new manager instance with desired driver
+        $manager = new ImageManager(new Driver());
+        $image = $manager->read($this->image->getRealPath())->scale(width: 500)->encode();
+        Storage::disk('public')->put('thumbs/' . basename($path), $image);*/
+
+
         if (!$this->wall->moderation) {
             // Calculating the number of iterence of non-permanent image we need to add
             $wallImagesCount = Image::where('wall_id', $this->wall->id)->where('permanent', true)->count();
@@ -228,8 +238,9 @@ private function getSubmitterRequirements(): void
                 Image::create([
                     'wall_id' => $this->wall->id,
                     'parent_id' => $parent->id,
-                    'name' => $path,
-                    'thumb' => 'thumbs/' . basename($path),
+                    'name' => $originalFilename,
+                    'webp_name' => $webpFilename,
+                    'thumb' => $webpFilename,
                     'caption' => $this->caption,
                     'status' => 1,
                     'visitor_token' => $this->visitorToken,
@@ -274,7 +285,7 @@ private function getSubmitterRequirements(): void
     <x-card x-show="currentCard === 'submitter'" x-cloak class="flex items-center justify-center">
         <h1 class="mb-2 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
         @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-            <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mx-auto shadow-md object-cover " />
+            <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto shadow-md object-cover " />
         @endif
 
         <x-form wire:submit="saveSubmitterData"> 
@@ -332,7 +343,7 @@ private function getSubmitterRequirements(): void
                 <img src="{{ $image->temporaryUrl() }}" class="max-w-[30vw] max-h-[30vh] mx-auto shadow-md object-cover " />
             @endif
 
-            @if ($wall->captions)
+            @if ($wall->allow_captions)
             <x-input label="{{__('Caption')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" inline />
             @endif
 

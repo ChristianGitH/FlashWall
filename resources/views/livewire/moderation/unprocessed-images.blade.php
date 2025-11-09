@@ -13,6 +13,7 @@ use Livewire\WithoutUrlPagination;
 
 
 /* For fillForDev functionality */
+use Illuminate\Support\Str;
 use Intervention\Image\Laravel\Facades\Image as InterventionImage;
 use Intervention\Image\Drivers\GD\Driver;
 
@@ -47,40 +48,43 @@ new class extends Component {
     {
         $sourceImage = base_path('public/storage/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg'); // ton image source
 
-        $i = 0;
-        while ($i < 30) {
-            // Générer un nom unique pour l'image
-            $filename = 'image_' . $i . '_' . Str::random(8) . '.' . pathinfo($sourceImage, PATHINFO_EXTENSION);
-            $storedPath = 'images/' . $filename;
+        for ($i = 0; $i < 30; $i++) {
+            // Générer un nom unique pour l'image originale
+            $ext = pathinfo($sourceImage, PATHINFO_EXTENSION); // jpg
+            $filename = 'image_' . $i . '_' . Str::random(8) . '.' . $ext;
 
-            Storage::disk('public')->put($storedPath, file_get_contents($sourceImage));
-           
+            // Copier l'image originale
+            Storage::disk('public')->put('walls_images/images_submitters/' . $filename, file_get_contents($sourceImage));
 
-            // Generating thumbnail
-            $thumbFilename = 'thumb_' . $i . '_' . Str::random(8) . '.' . pathinfo($sourceImage, PATHINFO_EXTENSION);
-            $thumbPath = 'thumbs/' . $thumbFilename;
+            // Generate file names
+            $thumbFilename = 'thumb_' . $i . '_' . Str::random(8) . '.webp';
+            $webpFilename = 'webp_' . $i . '_' . Str::random(8) . '.webp';
 
-            $thumb = file_get_contents($sourceImage);
+            // Generate and save WebP version
+            $webpImage = InterventionImage::read($sourceImage)->encodeByExtension('webp', 80); // 80 : quality (0 to 100)
+            Storage::disk('public')->put('walls_images/webp_images_submitters/' . $webpFilename, $webpImage);
 
-            $image = InterventionImage::read($thumb)->scale(width: 500)->encode();
-            /* Older version with image manager :
-            $manager = new ImageManager(new Driver());
-            $image = $manager->read($thumb)->scale(width: 500)->encode();*/
+            // Generate and save thumbnail
+            $thumb = InterventionImage::read($sourceImage)
+                ->scale(width: 500)
+                ->encodeByExtension('webp', 80);
 
-            Storage::disk('public')->put('thumbs/' . basename($thumbPath), $image);
+            Storage::disk('public')->put('walls_images/thumbs_submitters/' . $thumbFilename, $thumb);
 
+            // Créer l'entrée en base
             Image::create([
                 'wall_id' => $this->wall->id,
                 'parent_id' => null,
-                'name' => $storedPath,
-                'thumb' => $thumbPath,
+                'name' => $filename,       // original
+                'webp_name' => $webpFilename,       // webp
+                'thumb' => $thumbFilename, // miniature WebP
                 'caption' => 'Image : '. $i,
                 'visitor_token' => '1458-afgd',
                 'permanent' => true,
             ]);
-            $i++;
         }
     }
+
 
 
     // Deletes all images with status = 5.
@@ -130,6 +134,7 @@ new class extends Component {
                     'wall_id'    => $parent->wall_id,
                     'parent_id'  => $parent->id,
                     'name'       => $parent->name,
+                    'webp_name'       => $parent->webp_name,
                     'thumb'      => $parent->thumb,
                     'caption'    => $parent->caption,
                     'status'     => 1,
@@ -281,7 +286,7 @@ new class extends Component {
     }
     public function deleteImage(int $id): void
     {
-        $image = Image::where('id', $id)->first(['id', 'name', 'thumb']);
+        $image = Image::where('id', $id)->first(['id', 'name', 'webp_name', 'thumb']);
     
         if (!$image) {
             $this->error(__('Image not found.'));
@@ -289,8 +294,8 @@ new class extends Component {
         }
 
         // Delete files
-        Storage::disk('public')->delete([$image->name, $image->thumb]);
-    
+        Storage::disk('public')->delete([$image->original_full_path, $image->thumb_full_path, $image->webp_full_path]);
+
         // Delete from database
         $image->delete();
 
@@ -302,15 +307,21 @@ new class extends Component {
 
     public function deleteSelected(array $selectedImages)
     {
-        // Get paths
-        $paths = Image::whereIn('id', $selectedImages)->pluck('name')->merge(
-            Image::whereIn('id', $selectedImages)->pluck('thumb')
-        )->toArray();
-    
-        if (empty($paths)) {
+
+        // Retrieve all concerned images
+        $images = Image::whereIn('id', $selectedImages)->get(['id', 'name', 'webp_name', 'thumb']);
+
+        if ($images->isEmpty()) {
             $this->error(__('No valid images found.'));
             return;
         }
+
+        // Build all file paths using accessors
+        $paths = $images->flatMap(fn($image) => [
+            $image->original_full_path,
+            $image->webp_full_path,
+            $image->thumb_full_path,
+        ])->toArray();
     
         // Delete files
         Storage::disk('public')->delete($paths);
@@ -322,6 +333,22 @@ new class extends Component {
 
         // Reset selection browser side
         $this->dispatch('reset-selection');
+    }
+
+
+    // Deleting caption of an image //
+    public function deleteCaption(int $id): void
+    {
+        $image = Image::find($id);
+        if (!$image) {
+            $this->error(__('Image not found'));
+            return;
+        }
+
+        // Removing caption of the image
+        $image->update(['caption' => null]);
+
+        $this->success(__('Caption successfully deleted'));
     }
         
 }; ?>
@@ -456,27 +483,55 @@ new class extends Component {
         <p class="text-center text-gray-500">{{ __('No image pending.') }}</p>
     @else
         @foreach($this->images as $image)
-        @php
-        if ($image->caption) {
-            $data1 = "tooltip tooltip-bottom";
-            $data2 = "$image->caption";
-            $data3 = "";
-        } else {
-            $data1 = "";
-            $data2 = "";
-            $data3 = "hidden";
-        }
-    @endphp
-        <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{{ $data2 }}" wire:key="image-{{ $image->id }}">
+    
+            <!-- Building caption tooltip with Submitter Name and Caption -->
+            @php
+                $caption_tooltip_classes = "tooltip tooltip-bottom"; // tooltip classes
+                $caption_tooltip_icon_visibility = "hidden"; // default = hidden
+
+                // Building tooltip content
+                $caption_tooltip_content = '';
+                if ($wall->submitter_name_on_wall && $image->submitter_name) {
+                    $caption_tooltip_content .= $image->submitter_name;
+                }
+
+                if ($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name) {
+                    $caption_tooltip_content .= ' : ';
+                }
+
+                if ($wall->caption_on_wall && $image->caption) {
+                    $caption_tooltip_content .= $image->caption;
+                    $caption_tooltip_icon_visibility = '';
+                }
+
+                // Si rien à afficher, cacher le tooltip
+                if (empty($caption_tooltip_content)) {
+                    $caption_tooltip_classes = '';
+                    $caption_tooltip_icon_visibility = 'hidden';
+                }
+            @endphp
+            
+        <div class="image_wrapper {{ ( $caption_tooltip_classes ) }}" data-tip="{{ $caption_tooltip_content }}" wire:key="image-{{ $image->id }}">
             <div class="uper_image_data justify-between">
-                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->name) }}' })">
+                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                     </svg>
                 </a>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $data3 ) }}">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                </svg>
+
+                <a role="button" 
+                    @click="$dispatch('confirm-action', {
+                            title: '{{ __('Delete caption') }}',
+                            message: '{{ __('Are you sure you want to delete the caption attached to this image?') }}',
+                            confirmText: '{{ __('Yes') }}',
+                            confirmClass: 'bg-orange-600 hover:bg-orange-700',
+                            action: () => $wire.call('deleteCaption', {{ $image->id }})
+                        })"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $caption_tooltip_icon_visibility ) }}">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                    </svg>
+                </a>
             <input 
                 type="checkbox" 
                 class="checkbox checkbox-sm unprocessed-image-checkbox"
@@ -486,7 +541,7 @@ new class extends Component {
             />
             </div>
                 <label for="checkbox-{{ $image->id }}" display="block">
-                    <img src="{{ asset('storage/' . $image->thumb) }}" />
+                    <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
                 </label>
             <div class="moderation_buttons flex justify-between">
                 <x-button 

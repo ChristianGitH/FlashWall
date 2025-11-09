@@ -17,13 +17,15 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->string('description')->nullable();
-            $table->boolean('captions')->default(false);
+            $table->boolean('allow_captions')->default(false);
             $table->boolean('moderation')->default(false);
             $table->integer('max_images_submitter')->default(2);
-            $table->boolean('ask_name_submitter')->nullable();
-            $table->boolean('require_name_submitter')->nullable();
-            $table->boolean('ask_email_submitter')->nullable();
-            $table->boolean('require_email_submitter')->nullable();
+            $table->boolean('ask_name_submitter')->default(false);
+            $table->boolean('require_name_submitter')->default(false);
+            $table->boolean('ask_email_submitter')->default(false);
+            $table->boolean('require_email_submitter')->default(false);
+            $table->boolean('submitter_name_on_wall')->default(false);
+            $table->boolean('caption_on_wall')->default(false);
             $table->integer('background_choice')->default(0); // 0=color, 1=image
             $table->string('background_color')->default('#f7a6d5');
             $table->string('background_image')->default('default_background.jpg');
@@ -36,6 +38,7 @@ return new class extends Migration
             $table->integer('margin_left')->default(10);
             $table->integer('margin_right')->default(10);
             $table->integer('duration')->default(2);
+            $table->string('transition')->default('fade');
             $table->string('caption_font_color')->default('#000000');
             $table->string('caption_background_color')->default('#ffffff');
             $table->integer('caption_background_opacity')->default(70);

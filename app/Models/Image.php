@@ -13,6 +13,7 @@ class Image extends Model
     protected $fillable = [
         'wall_id',
         'name',
+        'webp_name',
         'thumb',
         'caption',
         'status',
@@ -50,5 +51,21 @@ class Image extends Model
     public function submitter()
     {
         return $this->belongsTo(Submitter::class);
+    }
+
+
+    // ACCESSOR to get full path with $image->original_full_path, $image->wepb_full_path and $image->thumb_full_path.
+    public function getOriginalFullPathAttribute()
+    {
+        return 'walls_images/images_submitters/' . $this->name;
+    }
+    public function getWebpFullPathAttribute()
+    {
+        return 'walls_images/webp_images_submitters/' . $this->webp_name;
+    }
+
+    public function getThumbFullPathAttribute()
+    {
+        return 'walls_images/thumbs_submitters/' . $this->thumb;
     }
 }

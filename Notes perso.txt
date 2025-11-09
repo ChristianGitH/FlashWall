@@ -1,37 +1,18 @@
-6. Utilisation des Relations en Eloquent
-
-Tu peux maintenant utiliser tes relations ainsi :
-🔹 Récupérer les images d’un utilisateur
-
-$user = User::find(1);
-$images = $user->images; // Liste des images de l'utilisateur
-
-🔹 Récupérer les catégories d’un utilisateur
-
-$user = User::find(1);
-$categories = $user->categories; // Liste des catégories créées par l'utilisateur
-
-🔹 Récupérer toutes les images d’une catégorie
-
-$category = Category::find(1);
-$images = $category->images; // Liste des images de cette catégorie
-
-🔹 Récupérer l’utilisateur et la catégorie d’une image
-
-$image = Image::find(10);
-$user = $image->user; // L'utilisateur qui possède cette image
-$category = $image->category; // La catégorie de cette image
-
-
 TO DEPLOY :
-Added version number to menu (counts number of commit).
-moderation components : Added a spinner to "Please wait..." in moderation components.
-moderation : added max heigh and width to image on zoom modal.
-app.blade.php : Removed side menu for create-Image
-create-image : Added custom page style : text, font, btn color, logo, bg-image, bg-color, bg-choice.
-create-image : Added max width and height for image preview.
-create-image : Added the possibility to ask for name and email to submitters.
-create-image : Added language switcher on the page.
+setup-wall : Added download button for QR Code (needs imagick, not tested on local server)
+    New display of settings cards
+setup-wall + display-wall : Now possible to toggle submitter_name display and caption display.
+Small bug fixed on setup-wall and create-image (form input names, logo margin, trad).
+Create-image : Added WEBP format for submitters images.
+    Changed folder organisation.
+    Added Accessors to image Model, to make the access to images path easier.
+slideshow : Removed the copies system.
+slideshow : Now AlpineJS waits for Livewire to respond (end of funtion markImageAsDisplay) before movving to the next slide.
+    Added Fullscreen button and Screen Wake Lock, now using requestAnimationFrame instead of set interval.
+    Now refeshing slideshow every (nb images/4), and limit of new images added in one tile from DB is 20.
+    Added transitions choice to setup-wall and slideshow.
+moderation: added deleteCaption button and function.
+    Added submitter name before caption in tooltip, when name is displayed on wall.
 
 
 NEXT TO DO :
@@ -39,20 +20,14 @@ Bug sur display-image lors de l'archivage ou Suppression d'image.
     Lié à la Suppression des copies lors de l'archivage d'une image.
     Solution trouvée : Changer le status '5' puis supprimer la copie ulterieurement.
 Trouver une solution pour supprimer les copies d'images avec status = 5 à un moment
-
-setup-wall + display-wall : Possibility to remove caption from an image
-setup-wall + display-wall : Possibility to display submitter name
-setup-wall : Add download button for QR Code
-setup-wall + display-wall : Polices personnalisées
+moderation : refactor moderation components, DRY, uper_image_data, mayby also bulk_actions
+    create a trait to not repete php functions, and maybe a child component for the buttons
 setup-wall + display-wall : Video as background on wall display
-setup-wall + display-wall : Options de transition dans slideshow
 display-image : Add possibility to display QR code on display-image
-Définir la fréqence d'actualisation du slideshow par rapport à la bdd
 Maybe change possibility of using copies system only if slideshow started playing, 
     or add a option to use slideshow without the copies creations.
     copies usage on page : setup-wall, moderation:all components, displaywall:slideshow
-Check if webp format is better for usage
-Keep language switch button on create-image page
+Models : Vérifier les champs qui doivent être protected / hidden
 
 
 MISE A JOUR LARAVEL : 
@@ -95,3 +70,21 @@ Pas de copies créées
 
 Si ajout d'image avec modération OFF
 Copies crées lors de l'ajout. status = 1 OK
+
+
+
+
+
+On récupère au max X images, qu'on affiche dans l'ordre d'envoi,
+On garde en mémoire les dernières images envoyées.
+Une fois qu'on arrive à la fin du diaporama, on récupère les x nouvelles images. 
+Si nombre d'images inférieur à X images, on ajoute les images gardées en mémoire à la fin du diaporama.
+Si nombre d'images supérieur à X images, on garde les images affichées en mémoire.
+Si pas de nouvelles images, on remet les images gardées en mémoire dans le diaporama.
+Faire un reload quand on arrive à la fin des images affichées pour la première fois, si pas de nouvelles images, on continue le diaporama
+
+
+1 2 3 4, reloard : +4
+
+5 6 7 8 reload : null, 1 2 3 4 reload : + 4
+9 10 11 12 reload : null, 5 6 7 8 1 2 3 4

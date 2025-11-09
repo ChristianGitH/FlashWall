@@ -20,6 +20,7 @@ public function computeWallSettings(): array
     $caption_max_width = $this->wall->caption_max_width;
     $caption_font_size = $this->wall->caption_font_size;
     $duration = $this->wall->duration*1000;
+    $transition = $this->wall->transition;
     $caption_font_color = $this->wall->caption_font_color;
     $caption_background_color = $this->wall->caption_background_color;
     $caption_background_opacity = $this->wall->caption_background_opacity;
@@ -56,7 +57,7 @@ public function computeWallSettings(): array
     if ($this->wall->background_choice == 0) {    
         $background = 'background: ' . $this->wall->background_color . ';';
     } else {
-        $background = 'background:  no-repeat center url(\''. asset('storage/' . $this->wall->background_image) .'\'); background-size: 100% 100%;';
+        $background = 'background:  no-repeat center url(\''. asset('storage/walls_images/background_images/' . $this->wall->background_image) .'\'); background-size: 100% 100%;';
     }
 
     return [
@@ -64,6 +65,7 @@ public function computeWallSettings(): array
         'caption_font_size' => $caption_font_size,
         'background' => $background,
         'duration' => $duration,
+        'transition' => $transition,
         'caption_font_color' => $caption_font_color,
         'caption_background' => $caption_background,
         'image_container_style' => $image_container_style,
