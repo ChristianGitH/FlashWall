@@ -291,19 +291,24 @@ private function getSubmitterRequirements(): void
         <x-form wire:submit="saveSubmitterData"> 
 
             @if ($this->wall->ask_name_submitter && !$this->wall->require_name_submitter)
-                <x-input label="{{__('Name')}}" wire:model="name" maxlength="50" inline />
+                <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline />
             @elseif ($this->wall->ask_name_submitter && $this->wall->require_name_submitter)
-                <x-input label="{{__('Name')}} *" wire:model="name" maxlength="50" inline required />
+                <x-input label="{{__('Name')}} *" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline required />
             @endif
 
             @if ($this->wall->ask_email_submitter && !$this->wall->require_email_submitter)
-                <x-input label="{{__('Email')}}" wire:model="email" maxlength="150" inline />
+                <x-input label="{{__('Email')}}" placeholder="{{__('Email')}}" wire:model="email" maxlength="150" inline />
             @elseif ($this->wall->ask_email_submitter && $this->wall->require_email_submitter)
-                <x-input label="{{__('Email')}} *" wire:model="email" maxlength="150" inline required />
+                <x-input label="{{__('Email')}} *" placeholder="{{__('Email')}}" wire:model="email" maxlength="150" inline required />
             @endif
             
             <x-slot:actions>
-                <x-button label="{{__('Next')}}" icon="o-paper-airplane" spinner="saveSubmitterData" type="submit" class="btn-primary"/>
+                <x-button label="{{__('Next')}}" icon="o-paper-airplane" spinner="saveSubmitterData" type="submit"
+                class="{{ $this->wall->posting_page_buttons_color ? '' : 'btn-primary' }}"
+                style="{{ $this->wall->posting_page_buttons_color ? '
+                border-color: ' .$this->wall->posting_page_buttons_color. '; 
+                color:' .$this->wall->posting_page_buttons_font_color. '; 
+                background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
             </x-slot:actions>
         </x-form>
     </x-card>
@@ -344,7 +349,7 @@ private function getSubmitterRequirements(): void
             @endif
 
             @if ($wall->allow_captions)
-            <x-input label="{{__('Caption')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" inline />
+            <x-input label="{{__('Caption')}}" placeholder="{{__('Caption')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" inline />
             @endif
 
             <x-checkbox label="{{__('I agree with terms')}}" wire:model="terms" required />
