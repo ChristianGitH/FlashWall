@@ -40,7 +40,7 @@ new class extends Component
 
         {{-- Vérifie si l'utilisateur est connecté --}}
         @if($user = auth()->user())
-                <x-list-item :item="$user" value="name" sub-value="email" no-separator no-hover class="-mx-2 !-my-2 rounded">
+                <x-list-item :item="$user" value="name" sub-value="email" no-separator no-hover class="-mx-2 -my-2! rounded">
                     <x-slot:actions>
                         <x-button icon="o-power" wire:click="logout" class="btn-circle btn-ghost btn-xs" tooltip-left="{{__('Logout')}}" no-wire-navigate />
                     </x-slot:actions>

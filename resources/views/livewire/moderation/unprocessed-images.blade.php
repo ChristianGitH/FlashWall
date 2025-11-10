@@ -435,7 +435,6 @@ new class extends Component {
         @click="handleSelection('{{ __('delete') }}', 'deleteSelected', '{{ __('Delete') }}', 'bg-red-600 hover:bg-red-700')"
         icon="o-trash"
         class="btn btn-sm"
-        wire:click.prevent=""
         tooltip="{{ __('Delete selection') }}"
         aria-label="{{ __('Delete selection') }}"
         wire:loading.attr="disabled"

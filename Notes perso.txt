@@ -1,21 +1,18 @@
 TO DEPLOY :
-setup-wall : Added download button for QR Code (needs imagick, not tested on local server)
-    New display of settings cards
-setup-wall + display-wall : Now possible to toggle submitter_name display and caption display.
-Small bug fixed on setup-wall and create-image (form input names, logo margin, trad).
-Create-image : Added WEBP format for submitters images.
-    Changed folder organisation.
-    Added Accessors to image Model, to make the access to images path easier.
-slideshow : Removed the copies system.
-slideshow : Now AlpineJS waits for Livewire to respond (end of funtion markImageAsDisplay) before movving to the next slide.
-    Added Fullscreen button and Screen Wake Lock, now using requestAnimationFrame instead of set interval.
-    Now refeshing slideshow every (nb images/4), and limit of new images added in one tile from DB is 20.
-    Added transitions choice to setup-wall and slideshow.
-moderation: added deleteCaption button and function.
-    Added submitter name before caption in tooltip, when name is displayed on wall.
+UPGRADE to Daisy UI 5, Tailwind CSS 4, Laravel 12, Mary 2.
+    UPGRADE also with composer, for phpunit and packages
 
+setup-wall: AFTER UPGRADE: had to add placeholders on inputs, change radio input to group and change custom input styles to match new Tailwind CSS
+setup-wall : Change QR Code file name when downloaded.
+auth: AFTER UPGRADE: added placeholders on inputs.
+moderation : AFTER UPGRADE: changed background opacity format for modals
 
 NEXT TO DO :
+create-image : Check submitter requirement again when trying to submit image.
+    Allow submitter to logout and change data.
+
+composer.json : updated Lavavel to v12, and Mary to v2
+
 Bug sur display-image lors de l'archivage ou Suppression d'image.
     Lié à la Suppression des copies lors de l'archivage d'une image.
     Solution trouvée : Changer le status '5' puis supprimer la copie ulterieurement.

@@ -187,7 +187,7 @@ class extends Component {
 
         return Response::streamDownload(function () use ($png) {
             echo $png;
-        }, 'qr-code.png', [
+        }, 'Flashwall_QR_Code_'.$this->lastSavedSlug.'.png', [
             'Content-Type' => 'image/png',
         ]);
     }
@@ -501,10 +501,10 @@ class extends Component {
     <x-card title="{{ __('General settings') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateWall">
-            <x-input label="{{ __('Name') }}" wire:model="name" inline />
-            <x-input label="{{ __('Description') }}" wire:model="description" inline />
+            <x-input label="{{ __('Name') }}" placeholder="{{ __('Name') }}" wire:model="name" inline />
+            <x-input label="{{ __('Description') }}" placeholder="{{ __('Description') }}" wire:model="description" inline />
                 <x-menu-separator />
-            <x-input type="number" label="{!! __('Max images per user')!!}" wire:model="max_images_submitter" max="99" inline required />
+            <x-input type="number" label="{!! __('Max images per user')!!}" placeholder="{!! __('Max images per user')!!}" wire:model="max_images_submitter" max="99" inline required />
 
             <p class="pb-0 label label-text font-semibold">Requested user information</p>
             <div x-data="{
@@ -533,7 +533,6 @@ class extends Component {
                 <x-menu-separator />
 
             <x-toggle label="{{__('Activate moderation?')}}" wire:model="moderation" right inline/>
-            <x-input type="number" label="{{ __('Time per image') }}" wire:model="duration" hint="{{ __('In seconds') }}" inline />
 
             <x-slot:actions>
                 <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWall" />
@@ -547,8 +546,9 @@ class extends Component {
 
         <x-form wire:submit="updatePostingPageStyle">
 
-            <x-input label="{{ __('Welcome text') }}" wire:model="posting_page_text" inline />
+            <x-input label="{{ __('Welcome text') }}" placeholder="{{ __('Welcome text') }}" wire:model="posting_page_text" inline />
 
+            <!-- CUSTOM FONT SELECTOR INPUT -->
             <div x-data="{
                 open: false,
                 selectedFont: @entangle('posting_page_font'),
@@ -560,13 +560,13 @@ class extends Component {
                 clearSelection() {
                     this.selectedFont = '';
                 }
-            }" class="relative w-full">
+            }" class="relative">
 
                 <!-- Clickable fake input -->
                 <label class="pt-0 label label-text font-semibold">{{ __('Welcome text font') }}</label>
                 <div tabindex="0" @click="open = !open"
-                    :class="open ? 'border-primary ring ring-primary ring-opacity-30' : ''"
-                    class="flex items-center justify-between input input-primary cursor-pointer"
+                    :class="open ? 'ring ring-primary ring-opacity-30' : ''"
+                    class="flex items-center justify-between w-full input cursor-pointer"
                 >
                     <span x-text="selectedFont || '{{ __('Select a font') }}'" 
                         class="truncate"
@@ -613,7 +613,7 @@ class extends Component {
 
 
                 <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }"class="flex flex-row items-end justify-evenly">
-                    <x-input class="w-full" label="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" />
+                    <x-input class="w-full" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" />
 
                     <input
                         type="color"
@@ -628,7 +628,7 @@ class extends Component {
                 </div>
                 
                 <div x-data="{ posting_page_buttons_font_color: @entangle('posting_page_buttons_font_color') }" class="flex flex-row items-end justify-evenly">
-                    <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" />
+                    <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" placeholder="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" />
 
                     <input
                         type="color"
@@ -667,7 +667,12 @@ class extends Component {
         
         <div class="max-w-full overflow-hidden" x-data="{ posting_page_choice: @entangle('posting_page_background_choice') }">
             <div class="flex justify-center text-center mb-1">
-                <x-radio label="{{ __('Use as background') }} :" wire:model="posting_page_background_choice" :options="$background_choice_options" option-value="custom_key" inline center class="btn-sm" />
+                <x-group
+                label="{{ __('Use as background') }} :"
+                :options="$background_choice_options"
+                wire:model="posting_page_background_choice"
+                option-value="custom_key"
+                class="[&:checked]:!btn-primary btn-sm" />
             </div>
         
             <div x-show="posting_page_choice == 0"  x-data="{ posting_page_background_color: @entangle('posting_page_background_color') }"class="flex flex-row items-end justify-evenly">
@@ -710,7 +715,7 @@ class extends Component {
     <x-card title="{{ __('Share') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateShareOptions">
-            <x-input label="{{ __('Slug') }}" wire:model="slug" icon="o-link" hint="{!! __('Numbers and lower case letters only, no spaces') !!}" inline/>
+            <x-input label="{{ __('Slug') }}" placeholder="{{ __('Slug') }}" wire:model="slug" icon="o-link" hint="{!! __('Numbers and lower case letters only, no spaces') !!}" inline/>
             <x-menu-separator />
             
             <div x-data="{ copied: false }" class="text-center">
@@ -720,7 +725,7 @@ class extends Component {
                         type="text"
                         label="{!! __('Wall display link') !!}"
                         readonly 
-                        class="w-full px-3 py-2 border rounded text-sm"
+                        class="w-full px-3 py-2 text-sm"
                     />
                     <x-button 
                         label="{{ __('Copy') }}"
@@ -742,7 +747,7 @@ class extends Component {
                         type="text"
                         label="{!! __('Link to post image') !!}"
                         readonly 
-                        class="w-full px-3 py-2 border rounded text-sm"
+                        class="w-full px-3 py-2 text-sm"
                     />
                     <x-button 
                         label="{{ __('Copy') }}"
@@ -773,7 +778,7 @@ class extends Component {
 
             <x-button
                 wire:click="downloadQrCode"
-                class="btn btn-primary flex items-center gap-2"
+                class="btn-primary flex items-center gap-2"
                 icon="o-arrow-down-tray"
                 hint="png"
                 label="{{ __('Download QR code') }}"
@@ -794,13 +799,18 @@ class extends Component {
 
         <x-form wire:submit="updateWallBackground">
 
-        <div class="max-w-full overflow-hidden" x-data="{ wall_background_choice: @entangle('background_choice') }">
+        <div class="max-w-full overflow-hidden pb-1" x-data="{ wall_background_choice: @entangle('background_choice') }">
             <div class="flex justify-center text-center mb-1">
-                <x-radio label="{{ __('Use as background') }} :" wire:model="background_choice" :options="$background_choice_options" option-value="custom_key" inline center class="btn-sm"/>
+                <x-group
+                    label="{{ __('Use as background') }} :"
+                    :options="$background_choice_options"
+                    wire:model="background_choice"
+                    option-value="custom_key"
+                    class="[&:checked]:!btn-primary btn-sm" />
             </div>
 
             <div x-show="wall_background_choice == 0" x-data="{ background_color: @entangle('background_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{!! __('Background color')!!}" x-model="background_color" />
+                <x-input class="w-full" label="{!! __('Background color')!!}" placeholder="{!! __('Background color')!!}" x-model="background_color" />
 
                 <input
                     type="color"
@@ -819,13 +829,14 @@ class extends Component {
                     hint="{{ __('Only image formats allowed') }}"
                     accept="image/png, image/jpeg"
                 />
+
+                <x-progress wire:loading wire:target="new_background_image" class="progress-primary h-0.5" indeterminate />
+                @if($new_background_image)
+                    <img src="{{ $new_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                @elseif($background_image)
+                    <img src="{{ asset('storage/walls_images/background_images/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                @endif
             </div>
-            <x-progress wire:loading wire:target="new_background_image" class="progress-primary h-0.5" indeterminate />
-            @if($new_background_image)
-                <img src="{{ $new_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
-            @elseif($background_image)
-                <img src="{{ asset('storage/walls_images/background_images/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
-            @endif
         </div>
             
             <!-- For dev and testing ! -->
@@ -848,10 +859,10 @@ class extends Component {
     <x-card title="{{ __('Wall layout') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateWallLayout">
-            <x-input type="number" label="{{ __('Top margin') }}" wire:model="margin_top" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{__('Bottom margin') }}" wire:model="margin_bottom" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{ __('Left margin') }}" wire:model="margin_left" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{__('Right margin') }}" wire:model="margin_right" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{ __('Top margin') }}" placeholder="{{ __('Top margin') }}" wire:model="margin_top" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{__('Bottom margin') }}" placeholder="{{__('Bottom margin') }}" wire:model="margin_bottom" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{ __('Left margin') }}" placeholder="{{ __('Left margin') }}" wire:model="margin_left" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{__('Right margin') }}" placeholder="{{__('Right margin') }}" wire:model="margin_right" hint="{{ __('As a percentage') }}" inline />
 
             <x-slot:actions>
                 <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallLayout" />
@@ -865,7 +876,7 @@ class extends Component {
     <x-card title="{{ __('Images display') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateImagesDisplay">
-            <x-input type="number" label="{{ __('Time per image') }}" wire:model="duration" hint="{{ __('In seconds') }}" inline />
+            <x-input type="number" label="{{ __('Time per image') }}" placeholder="{{ __('Time per image') }}" wire:model="duration" hint="{{ __('In seconds') }}" inline />
 
             @php
                 $transition_names = [
@@ -897,6 +908,7 @@ class extends Component {
                     <div>
                         <x-input 
                             label="{{ __('Max captions characters') }}" 
+                            placeholder="{{ __('Max captions characters') }}" 
                             wire:model="caption_max_characters" 
                             type="number" 
                             min="10" 
@@ -912,9 +924,9 @@ class extends Component {
             
             <x-menu-separator />
 
-            <p>{{ __('Captions styles also applies to names display') }}</p>
+            <x-badge value="{{ __('Captions styles also applies to names display') }}" class="badge-primary badge-soft badge-dash mb-1" />
 
-            <x-input type="number" label="{{ __('Captions max width') }}" wire:model="caption_max_width" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{ __('Captions max width') }}" placeholder="{{ __('Captions max width') }}" wire:model="caption_max_width" hint="{{ __('As a percentage') }}" inline />
             @php
                 $options = [
                     ['custom_key' => 1 , 'name' => __('On image')],
@@ -922,17 +934,22 @@ class extends Component {
                 ];
             @endphp
             <div class="flex justify-center text-center">
-                <x-radio label="{{__('Captions position') }} :" class="normal-case" wire:model="caption_position" :options="$options" option-value="custom_key" inline center class="btn-sm"/>
+                <x-group
+                    label="{{__('Captions position') }} :"
+                    :options="$options"
+                    wire:model="caption_position"
+                    option-value="custom_key"
+                    class="[&:checked]:!btn-primary btn-sm normal-case" />
             </div>
 
 
 
             <x-menu-separator />
             
-            <x-input type="number" label="{{ __('Captions font size') }}" wire:model="caption_font_size" hint="{{ __('In pixels') }}" inline />
+            <x-input type="number" label="{{ __('Captions font size') }}" placeholder="{{ __('Captions font size') }}" wire:model="caption_font_size" hint="{{ __('In pixels') }}" inline />
 
             <div x-data="{ caption_font_color: @entangle('caption_font_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{{ __('Font color')}}" x-model="caption_font_color" />
+                <x-input class="w-full" label="{{ __('Font color')}}" placeholder="{{ __('Font color')}}" x-model="caption_font_color" />
 
                 <input
                     type="color"
@@ -947,7 +964,7 @@ class extends Component {
             @enderror
 
             <div x-data="{ caption_background_color: @entangle('caption_background_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{!! __('Background color')!!}" x-model="caption_background_color" />
+                <x-input class="w-full" label="{!! __('Background color')!!}" placeholder="{!! __('Background color')!!}" x-model="caption_background_color" />
 
                 <input
                     type="color"

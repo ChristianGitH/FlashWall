@@ -65,7 +65,7 @@ class extends Component {
         x-show="showImageZoomModal"
         @click="showImageZoomModal = false"
         x-transition 
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-gray-900/70 flex items-center justify-center z-50"
     >
         <div class="shadow-lg overflow-auto relative">
                 <div class="close-button-wrapper">
@@ -80,7 +80,7 @@ class extends Component {
         x-show="showConfirmModal"
         x-transition
         x-init="$watch('showConfirmModal', value => { if(value) $nextTick(() => $refs.confirmButton.focus()) })"
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-gray-900/70 flex items-center justify-center z-50"
     >
         <div class="bg-white p-6 rounded-lg shadow-lg w-96 overflow-auto relative">
             <h2 class="text-lg font-semibold" x-text="modalTitle"></h2>

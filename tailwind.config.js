@@ -18,6 +18,4 @@ export default {
         extend: {},
     },
 
-    // Add daisyUI
-    plugins: [require("daisyui")]
 }
