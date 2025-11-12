@@ -213,6 +213,8 @@ public function markImageAsDisplayed($imageId, $nextImageId)
 
 }; ?>
 
+@section('title', 'Display ' . $wall->name)
+
 <div x-data="{
     showDebug: false, // FOR DEV ONLY
     }">

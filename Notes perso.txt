@@ -1,12 +1,8 @@
 TO DEPLOY :
-moderation : scaled down gallery image moderation buttons to XS and image width back to 10em.
-    Added "User name displayed" status to Wall Settings Quick View
-    Replaced some "hints" by input prefix
-create-image + create-wall + auth: updated design for small screen, cards centered
-create-image : lang switcher now at the bottom with no overlay on form
-    Page title is now set by Posting Page Welcome Text
-    Changed file upload, to accept capture.
-setup-wall : now possible to hide Posting Page Welcome Text
+setup-wall : upgraded color selectors for the nullable ones.
+    Small UI change
+slideshow : Added page title
+
 
 
 NEXT TO DO :

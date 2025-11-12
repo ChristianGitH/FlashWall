@@ -56,8 +56,8 @@ class extends Component {
     public ?string $posting_page_text;
     public bool $posting_page_text_visibility;
     public ?string $posting_page_font;
-    public ?string $posting_page_buttons_color;
-    public ?string $posting_page_buttons_font_color;
+    public ?string $posting_page_buttons_color = null;
+    public ?string $posting_page_buttons_font_color = null;
     public string $posting_page_logo;
     public $new_posting_page_logo;
     public bool $posting_page_logo_visibility;
@@ -283,12 +283,12 @@ class extends Component {
         $data = $this->validate([
             'posting_page_text' => 'string|max:155',
             'posting_page_text_visibility' => 'required|boolean',
-            'posting_page_font' => 'string|max:155',
-            'posting_page_buttons_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'posting_page_buttons_font_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'posting_page_font' => 'nullable|string|max:155',
+            'posting_page_buttons_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'posting_page_buttons_font_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'new_posting_page_logo' => 'nullable|image|max:1024',
             'posting_page_logo_visibility' => 'required|boolean',
-            'posting_page_background_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'posting_page_background_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'new_posting_page_background_image' => 'nullable|image|max:20480',
             'posting_page_background_choice' => 'required|integer|max:2',
         ]);
@@ -623,39 +623,64 @@ class extends Component {
 
             <hr>
 
-                <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }"class="flex flex-row items-end justify-evenly">
-                    <x-input class="w-full" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" >
+                <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }"class="flex flex-row gap-x-3 items-end justify-between">
+                    <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" >
                         <x-slot:prefix>Hex</x-slot:prefix>
+                        <x-slot:suffix>
+                            <button
+                                type="button"
+                                class="text-gray-500 hover:text-gray-black focus:outline-none"
+                                title="{{ __('Clear color') }}"
+                                wire:click="$set('posting_page_buttons_color', null)">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </x-slot:suffix>
                     </x-input>
                     
                     <input
                         type="color"
-                        x-model="posting_page_buttons_color"
+                        x-bind:value="posting_page_buttons_color || '#cccccc'"
+                        @input="posting_page_buttons_color = $event.target.value"
                         wire:model="posting_page_buttons_color"
                         class="h-8 w-12 mb-[0.46rem] cursor-pointer"
                         title="{{ __('Choose a color') }}"
                     >
+                </div>
                 @error('posting_page_buttons_color')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
-                </div>
                 
-                <div x-data="{ posting_page_buttons_font_color: @entangle('posting_page_buttons_font_color') }" class="flex flex-row items-end justify-evenly">
+                <div x-data="{ posting_page_buttons_font_color: @entangle('posting_page_buttons_font_color') }" class="flex flex-row gap-x-3 items-end justify-evenly">
                     <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" placeholder="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" >
                         <x-slot:prefix>Hex</x-slot:prefix>
+                        <x-slot:suffix>
+                            <button
+                                type="button"
+                                class="text-gray-500 hover:text-gray-black focus:outline-none"
+                                title="{{ __('Clear color') }}"
+                                wire:click="$set('posting_page_buttons_font_color', null)">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </x-slot:suffix>
                     </x-input>
 
                     <input
                         type="color"
-                        x-model="posting_page_buttons_font_color"
+                        x-bind:value="posting_page_buttons_font_color || '#cccccc'"
+                        @input="posting_page_buttons_font_color = $event.target.value"
                         wire:model="posting_page_buttons_font_color"
                         class="h-8 w-12 mb-[0.46rem] cursor-pointer"
                         title="{{ __('Choose a color') }}"
                     >
+                </div>
                 @error('posting_page_buttons_font_color')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
-                </div>
+
             </div>
 
         <x-menu-separator />
@@ -702,11 +727,10 @@ class extends Component {
                     class="h-8 w-12 mb-[0.46rem] cursor-pointer"
                     title="{{ __('Choose a color') }}"
                 >
-
-                @error('posting_page_background_color')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
             </div>
+            @error('posting_page_background_color')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
         
             <div x-show="posting_page_choice == 1"  class="max-w-full overflow-hidden">
                 <x-file style="max-width: 100% !important" wire:model="new_posting_page_background_image" label="{!! __('Page background image') !!}" 
@@ -795,7 +819,7 @@ class extends Component {
 
             <x-button
                 wire:click="downloadQrCode"
-                class="btn-primary flex items-center gap-2"
+                class="btn flex items-center gap-2"
                 icon="o-arrow-down-tray"
                 hint="png"
                 label="{{ __('Download QR code') }}"
