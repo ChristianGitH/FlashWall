@@ -546,7 +546,7 @@ new class extends Component {
                         <x-button 
                             wire:click="approveImage({{ $image->id }})"
                             icon="o-check"
-                            class="btn btn-sm"
+                            class="btn btn-xs"
                             tooltip="{{ __('Approve') }}"
                             aria-label="{{ __('Approve') }}"
                             @click="$wire.set('selectedImages', selected)"
@@ -556,7 +556,7 @@ new class extends Component {
                         <x-button 
                             wire:click="archiveImage({{ $image->id }})"
                             icon="o-archive-box"
-                            class="btn btn-sm"
+                            class="btn btn-xs"
                             tooltip="{{ __('Archive') }}"
                             aria-label="{{ __('Archive') }}"
                             @click="$wire.set('selectedImages', selected)"
@@ -566,7 +566,7 @@ new class extends Component {
                         <x-button 
                             wire:click.prevent=""
                             icon="o-trash"
-                            class="btn btn-sm btn-danger"
+                            class="btn btn-xs btn-danger"
                             tooltip="{{ __('Delete') }}"
                             aria-label="{{ __('Delete') }}"
                             @click="

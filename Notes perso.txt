@@ -1,13 +1,12 @@
 TO DEPLOY :
-setup-wall : added possibility for some vars to be nullable like in database.
-    Removed/commented copies creation from setup-wall
-create-wall : AFTER UPGRADE Laravel 12 : added placeholders on inputs.
-moderation : Added collapse/tabs elements to components
-    Refactor of the function that loads image, to use a computed property, on archived-image and approved-image components
-    Added a tooltip for Wall Settings Quick View
-create-image : now allow user to go back and change data.
-Models->Wall : Updated protected and fillable fields.
-
+moderation : scaled down gallery image moderation buttons to XS and image width back to 10em.
+    Added "User name displayed" status to Wall Settings Quick View
+    Replaced some "hints" by input prefix
+create-image + create-wall + auth: updated design for small screen, cards centered
+create-image : lang switcher now at the bottom with no overlay on form
+    Page title is now set by Posting Page Welcome Text
+    Changed file upload, to accept capture.
+setup-wall : now possible to hide Posting Page Welcome Text
 
 
 NEXT TO DO :
@@ -22,9 +21,12 @@ display-image : Add possibility to display QR code on display-image
 Maybe change possibility of using copies system only if slideshow started playing, 
     or add a option to use slideshow without the copies creations.
     copies usage on page : setup-wall, moderation:all components, displaywall:slideshow
-Models : Vérifier les champs qui doivent être protected / hidden
 
 !!!! Copies creation déjà retirée/commenté de setup-wall, à faire dans moderation. !!!!
+
+Check for possibility to "Rogner" image to a square shape
+A faire : rediger les Terms
+Video as background on wall display
 
 
 /*\ COMMAND LINES /*\

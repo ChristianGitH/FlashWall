@@ -54,6 +54,7 @@ class extends Component {
     public int $caption_max_characters;
 
     public ?string $posting_page_text;
+    public bool $posting_page_text_visibility;
     public ?string $posting_page_font;
     public ?string $posting_page_buttons_color;
     public ?string $posting_page_buttons_font_color;
@@ -108,6 +109,7 @@ class extends Component {
 
         // Custom style and images for create-image page
         $this->posting_page_text = $wall->posting_page_text;
+        $this->posting_page_text_visibility = $wall->posting_page_text_visibility;
         $this->posting_page_font = $wall->posting_page_font;
         $this->posting_page_buttons_color = $wall->posting_page_buttons_color;
         $this->posting_page_buttons_font_color = $wall->posting_page_buttons_font_color;
@@ -280,6 +282,7 @@ class extends Component {
     {
         $data = $this->validate([
             'posting_page_text' => 'string|max:155',
+            'posting_page_text_visibility' => 'required|boolean',
             'posting_page_font' => 'string|max:155',
             'posting_page_buttons_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'posting_page_buttons_font_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
@@ -313,6 +316,7 @@ class extends Component {
         // On prépare les changements sur le modèle (sauf l'image)
         // Remplit le modèle avec les données validées
         $this->wall->posting_page_text = $this->posting_page_text;
+        $this->wall->posting_page_text_visibility = $this->posting_page_text_visibility;
         $this->wall->posting_page_font = $this->posting_page_font;
         $this->wall->posting_page_buttons_color = $this->posting_page_buttons_color;
         $this->wall->posting_page_buttons_font_color = $this->posting_page_buttons_font_color;
@@ -548,7 +552,8 @@ class extends Component {
 
         <x-form wire:submit="updatePostingPageStyle">
 
-            <x-input label="{{ __('Welcome text') }}" placeholder="{{ __('Welcome text') }}" wire:model="posting_page_text" inline />
+            <x-input label="{{ __('Welcome text') }}" hint="{{ __('It will also be the page title, even if the Welcome text is hidden') }}"
+            placeholder="{{ __('Welcome text') }}" wire:model="posting_page_text" inline />
 
             <!-- CUSTOM FONT SELECTOR INPUT -->
             <div x-data="{
@@ -565,7 +570,7 @@ class extends Component {
             }" class="relative">
 
                 <!-- Clickable fake input -->
-                <label class="pt-0 label label-text font-semibold">{{ __('Welcome text font') }}</label>
+                <label class="fieldset-legend text-sm font-medium">{{ __('Welcome text font') }}</label>
                 <div tabindex="0" @click="open = !open"
                     :class="open ? 'ring ring-primary ring-opacity-30' : ''"
                     class="flex items-center justify-between w-full input cursor-pointer"
@@ -612,11 +617,17 @@ class extends Component {
                     </template>
                 </ul>
             </div>
+            <!-- END CUSTOM FONT SELECTOR INPUT -->
 
+            <x-toggle label="{{__('Display welcome text?')}}" wire:model="posting_page_text_visibility" right inline/>
+
+            <hr>
 
                 <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }"class="flex flex-row items-end justify-evenly">
-                    <x-input class="w-full" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" />
-
+                    <x-input class="w-full" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" >
+                        <x-slot:prefix>Hex</x-slot:prefix>
+                    </x-input>
+                    
                     <input
                         type="color"
                         x-model="posting_page_buttons_color"
@@ -630,7 +641,9 @@ class extends Component {
                 </div>
                 
                 <div x-data="{ posting_page_buttons_font_color: @entangle('posting_page_buttons_font_color') }" class="flex flex-row items-end justify-evenly">
-                    <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" placeholder="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" />
+                    <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" placeholder="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" >
+                        <x-slot:prefix>Hex</x-slot:prefix>
+                    </x-input>
 
                     <input
                         type="color"
@@ -678,7 +691,9 @@ class extends Component {
             </div>
         
             <div x-show="posting_page_choice == 0"  x-data="{ posting_page_background_color: @entangle('posting_page_background_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{!! __('Page background color')!!}" x-model="posting_page_background_color" />
+                <x-input class="w-full" label="{!! __('Page background color')!!}" x-model="posting_page_background_color">
+                    <x-slot:prefix>Hex</x-slot:prefix>
+                </x-input>
 
                 <input
                     type="color"
@@ -812,7 +827,9 @@ class extends Component {
             </div>
 
             <div x-show="wall_background_choice == 0" x-data="{ background_color: @entangle('background_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{!! __('Background color')!!}" placeholder="{!! __('Background color')!!}" x-model="background_color" />
+                <x-input class="w-full" label="{!! __('Background color')!!}" placeholder="{!! __('Background color')!!}" x-model="background_color">
+                    <x-slot:prefix>Hex</x-slot:prefix>
+                </x-input>
 
                 <input
                     type="color"
@@ -860,10 +877,18 @@ class extends Component {
     <x-card title="{{ __('Wall layout') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateWallLayout">
-            <x-input type="number" label="{{ __('Top margin') }}" placeholder="{{ __('Top margin') }}" wire:model="margin_top" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{__('Bottom margin') }}" placeholder="{{__('Bottom margin') }}" wire:model="margin_bottom" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{ __('Left margin') }}" placeholder="{{ __('Left margin') }}" wire:model="margin_left" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{__('Right margin') }}" placeholder="{{__('Right margin') }}" wire:model="margin_right" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{ __('Top margin') }}" placeholder="{{ __('Top margin') }}" wire:model="margin_top" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
+            <x-input type="number" label="{{__('Bottom margin') }}" placeholder="{{__('Bottom margin') }}" wire:model="margin_bottom" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
+            <x-input type="number" label="{{ __('Left margin') }}" placeholder="{{ __('Left margin') }}" wire:model="margin_left" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
+            <x-input type="number" label="{{__('Right margin') }}" placeholder="{{__('Right margin') }}" wire:model="margin_right" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
 
             <x-slot:actions>
                 <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallLayout" />
@@ -877,7 +902,9 @@ class extends Component {
     <x-card title="{{ __('Images display') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateImagesDisplay">
-            <x-input type="number" label="{{ __('Time per image') }}" placeholder="{{ __('Time per image') }}" wire:model="duration" hint="{{ __('In seconds') }}" inline />
+            <x-input type="number" label="{{ __('Time per image') }}" placeholder="{{ __('Time per image') }}" wire:model="duration" inline >
+                <x-slot:prefix>In seconds</x-slot:prefix>
+            </x-input>
 
             @php
                 $transition_names = [
@@ -927,7 +954,10 @@ class extends Component {
 
             <x-badge value="{{ __('Captions styles also applies to names display') }}" class="badge-primary badge-soft badge-dash mb-1" />
 
-            <x-input type="number" label="{{ __('Captions max width') }}" placeholder="{{ __('Captions max width') }}" wire:model="caption_max_width" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{ __('Captions max width') }}" placeholder="{{ __('Captions max width') }}" wire:model="caption_max_width" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
+            
             @php
                 $options = [
                     ['custom_key' => 1 , 'name' => __('On image')],
@@ -947,7 +977,9 @@ class extends Component {
 
             <x-menu-separator />
             
-            <x-input type="number" label="{{ __('Captions font size') }}" placeholder="{{ __('Captions font size') }}" wire:model="caption_font_size" hint="{{ __('In pixels') }}" inline />
+            <x-input type="number" label="{{ __('Captions font size') }}" placeholder="{{ __('Captions font size') }}" wire:model="caption_font_size" inline >
+                <x-slot:prefix>In pixels</x-slot:prefix>
+            </x-input>
 
             <div x-data="{ caption_font_color: @entangle('caption_font_color') }"class="flex flex-row items-end justify-evenly">
                 <x-input class="w-full" label="{{ __('Font color')}}" placeholder="{{ __('Font color')}}" x-model="caption_font_color" />

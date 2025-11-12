@@ -344,7 +344,7 @@ new class extends Component {
                         <x-button 
                             wire:click="archiveImage({{ $image->id }})"
                             icon="o-archive-box"
-                            class="btn btn-sm"
+                            class="btn btn-xs"
                             tooltip="{{ __('Archive') }}"
                             aria-label="{{ __('Archive') }}"
                             @click="$wire.set('selectedImages', selectedApproved)"
@@ -354,7 +354,7 @@ new class extends Component {
                         <x-button 
                             id="propel-btn-{{ $image->id }}"
                             icon="o-rocket-launch"
-                            class="btn btn-sm {{ $image->priority == 1 ? 'bg-orange-600 hover:bg-orange-700' : '' }}"
+                            class="btn btn-xs {{ $image->priority == 1 ? 'bg-orange-600 hover:bg-orange-700' : '' }}"
                             tooltip="{{ __('Propel') }}"
                             aria-label="{{ __('Propel') }}"
                             @click="
@@ -372,7 +372,7 @@ new class extends Component {
                         />
                         <x-button 
                             icon="o-trash"
-                            class="btn btn-sm btn-danger"
+                            class="btn btn-xs btn-danger"
                             tooltip="{{ __('Delete') }}"
                             aria-label="{{ __('Delete') }}"
                             @click="

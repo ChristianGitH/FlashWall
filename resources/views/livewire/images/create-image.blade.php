@@ -14,10 +14,7 @@ use App\Models\Image;
 use App\Models\Submitter;
 use Livewire\Attributes\Title;
 
-new 
-#[Title('Post an image')]
-
-class extends Component {
+new class extends Component {
 
     use Toast, WithFileUploads;
 
@@ -257,6 +254,10 @@ private function getSubmitterRequirements(): void
 
 }; 
 ?>
+
+
+@section('title', $wall->posting_page_text)
+
 <div>
 
 <style>
@@ -275,112 +276,120 @@ private function getSubmitterRequirements(): void
 @endif
 
 <div x-data="{ currentCard: @entangle('currentCard') }"
-    class="h-screen flex items-center justify-center" style="{{ $background }}">
+    class="min-h-screen flex flex-col" style="{{ $background }}">
 
-    <div x-show="currentCard === 'loading'" class="absolute inset-0 flex items-center justify-center z-50">
-        <x-loading class="loading-ring" />
+    <!-- Main content centered -->
+    <main class="flex-1 flex items-center justify-center p-5 lg:px-10 lg:py-5">
+        <div x-show="currentCard === 'loading'" class="absolute inset-0 flex items-center justify-center z-50">
+            <x-loading class="loading-ring" />
+        </div>
+
+
+        <x-card x-show="currentCard === 'submitter'" x-cloak class="flex items-center justify-center">
+            @if($this->wall->posting_page_text_visibility)
+                <h1 class="mb-2 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
+            @endif
+                @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto object-cover " />
+            @endif
+
+            <x-form wire:submit="saveSubmitterData"> 
+
+                @if ($this->wall->ask_name_submitter && !$this->wall->require_name_submitter)
+                    <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline />
+                @elseif ($this->wall->ask_name_submitter && $this->wall->require_name_submitter)
+                    <x-input label="{{__('Name')}} *" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline required />
+                @endif
+
+                @if ($this->wall->ask_email_submitter && !$this->wall->require_email_submitter)
+                    <x-input label="{{__('Email')}}" placeholder="{{__('Email')}}" wire:model="email" maxlength="150" inline />
+                @elseif ($this->wall->ask_email_submitter && $this->wall->require_email_submitter)
+                    <x-input label="{{__('Email')}} *" placeholder="{{__('Email')}}" wire:model="email" maxlength="150" inline required />
+                @endif
+                
+                <x-slot:actions>
+                    <x-button label="{{__('Next')}}" icon="o-paper-airplane" spinner="saveSubmitterData" type="submit"
+                    class="{{ $this->wall->posting_page_buttons_color ? '' : 'btn-primary' }}"
+                    style="{{ $this->wall->posting_page_buttons_color ? '
+                    border-color: ' .$this->wall->posting_page_buttons_color. '; 
+                    color:' .$this->wall->posting_page_buttons_font_color. '; 
+                    background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
+                </x-slot:actions>
+            </x-form>
+        </x-card>
+
+        <x-card x-show="currentCard === 'upload'" x-cloak  class="flex items-center justify-center">
+            <h1 class="text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
+            @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mx-auto shadow-md object-cover " />
+            @endif
+
+            <!-- Submitter data display
+                IF askName & askEmail = false, we don't display anything
+                IF askName = true, we display Name (whatever askEmail is)
+                IF askEmail = true, we display Email only if askName is false.
+            -->
+            @php
+                $label = null;
+
+                if ($this->wall->ask_name_submitter) {
+                    $label = $this->submitter?->name ?: null;
+                } elseif ($this->wall->ask_email_submitter) {
+                    $label = $this->submitter?->email ?: null;
+                }
+            @endphp
+
+            @if($label)
+                <a role="button" class="flex justify-start items-center" @click="currentCard = 'submitter';">
+                    <x-icon name="o-user-circle" title="Change" />
+                    {{ $label }}
+                    <x-icon name="o-pencil-square" class="text-gray-500 ml-2" title="Change" />
+                </a>
+            @endif
+
+            <x-form wire:submit="uploadImage"> 
+
+                
+                <x-file wire:model="image" label="{{__('Image')}}" hint="{{__('Take a photo or choose from gallery')}}" 
+                accept="image/png, image/jpeg, image/jpg"
+                capture="user"
+                class="{{ $this->wall->posting_page_buttons_color ? 'custom-file-input' : '' }}"/>
+
+                <x-progress wire:loading wire:target="image" class="progress-primary h-0.5" indeterminate />
+
+                @if($image)
+                    <img src="{{ $image->temporaryUrl() }}" class="max-w-[30vw] max-h-[30vh] mx-auto shadow-md object-cover " />
+                @endif
+
+                @if ($wall->allow_captions)
+                <x-input label="{{__('Caption')}}" placeholder="{{__('Caption')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" inline />
+                @endif
+
+                <x-checkbox label="{{__('I agree with terms')}}" wire:model="terms" required />
+
+                <x-slot:actions>
+                    <x-button label="{{__('Send')}}" icon="o-paper-airplane" spinner="uploadImage" type="submit"
+                    class="{{ $this->wall->posting_page_buttons_color ? '' : 'btn-primary' }}"
+                    style="{{ $this->wall->posting_page_buttons_color ? '
+                    border-color: ' .$this->wall->posting_page_buttons_color. '; 
+                    color:' .$this->wall->posting_page_buttons_font_color. '; 
+                    background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
+                </x-slot:actions>
+            </x-form>
+        </x-card>
+
+
+        <x-card x-show="currentCard === 'message'" x-cloak class="flex flex-col items-center justify-center text-center p-6">
+            <h1 class="text-2xl font-bold mb-4" style="{{ $this->posting_page_font_style }}">
+                {{ $messageHeader }}
+            </h1>
+            <p class="text-lg mb-6">{{ $messageText }}</p>
+        </x-card>
+    </main>
+
+    
+    <div class="mt-auto w-full flex justify-end pt-0">
+        @include('partials.language-switcher')
     </div>
-
-
-    <x-card x-show="currentCard === 'submitter'" x-cloak class="flex items-center justify-center">
-        <h1 class="mb-2 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
-        @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-            <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto shadow-md object-cover " />
-        @endif
-
-        <x-form wire:submit="saveSubmitterData"> 
-
-            @if ($this->wall->ask_name_submitter && !$this->wall->require_name_submitter)
-                <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline />
-            @elseif ($this->wall->ask_name_submitter && $this->wall->require_name_submitter)
-                <x-input label="{{__('Name')}} *" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline required />
-            @endif
-
-            @if ($this->wall->ask_email_submitter && !$this->wall->require_email_submitter)
-                <x-input label="{{__('Email')}}" placeholder="{{__('Email')}}" wire:model="email" maxlength="150" inline />
-            @elseif ($this->wall->ask_email_submitter && $this->wall->require_email_submitter)
-                <x-input label="{{__('Email')}} *" placeholder="{{__('Email')}}" wire:model="email" maxlength="150" inline required />
-            @endif
-            
-            <x-slot:actions>
-                <x-button label="{{__('Next')}}" icon="o-paper-airplane" spinner="saveSubmitterData" type="submit"
-                class="{{ $this->wall->posting_page_buttons_color ? '' : 'btn-primary' }}"
-                style="{{ $this->wall->posting_page_buttons_color ? '
-                border-color: ' .$this->wall->posting_page_buttons_color. '; 
-                color:' .$this->wall->posting_page_buttons_font_color. '; 
-                background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
-            </x-slot:actions>
-        </x-form>
-    </x-card>
-
-    <x-card x-show="currentCard === 'upload'" x-cloak  class="flex items-center justify-center">
-        <h1 class="text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
-        @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-            <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mx-auto shadow-md object-cover " />
-        @endif
-
-        <!-- Submitter data display
-            IF askName & askEmail = false, we don't display anything
-            IF askName = true, we display Name (whatever askEmail is)
-            IF askEmail = true, we display Email only if askName is false.
-        -->
-        @php
-            $label = null;
-
-            if ($this->wall->ask_name_submitter) {
-                $label = $this->submitter?->name ?: null;
-            } elseif ($this->wall->ask_email_submitter) {
-                $label = $this->submitter?->email ?: null;
-            }
-        @endphp
-
-        @if($label)
-            <a role="button" class="flex justify-start items-center" @click="currentCard = 'submitter';">
-                <x-icon name="o-user-circle" title="Change" />
-                {{ $label }}
-                <x-icon name="o-pencil-square" class="text-gray-500 ml-2" title="Change" />
-            </a>
-        @endif
-
-        <x-form wire:submit="uploadImage"> 
-            <x-file wire:model="image" label="{{__('Image')}}" hint="{{__('Only image formats allowed')}}" 
-            accept="image/png, image/jpeg"
-            class="{{ $this->wall->posting_page_buttons_color ? 'custom-file-input' : '' }}"/>            
-            <x-progress wire:loading wire:target="image" class="progress-primary h-0.5" indeterminate />
-
-            @if($image)
-                <img src="{{ $image->temporaryUrl() }}" class="max-w-[30vw] max-h-[30vh] mx-auto shadow-md object-cover " />
-            @endif
-
-            @if ($wall->allow_captions)
-            <x-input label="{{__('Caption')}}" placeholder="{{__('Caption')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" inline />
-            @endif
-
-            <x-checkbox label="{{__('I agree with terms')}}" wire:model="terms" required />
-
-            <x-slot:actions>
-                <x-button label="{{__('Send')}}" icon="o-paper-airplane" spinner="uploadImage" type="submit"
-                class="{{ $this->wall->posting_page_buttons_color ? '' : 'btn-primary' }}"
-                style="{{ $this->wall->posting_page_buttons_color ? '
-                border-color: ' .$this->wall->posting_page_buttons_color. '; 
-                color:' .$this->wall->posting_page_buttons_font_color. '; 
-                background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
-            </x-slot:actions>
-        </x-form>
-    </x-card>
-
-
-    <x-card x-show="currentCard === 'message'" x-cloak class="flex flex-col items-center justify-center text-center p-6">
-        <h1 class="text-2xl font-bold mb-4" style="{{ $this->posting_page_font_style }}">
-            {{ $messageHeader }}
-        </h1>
-        <p class="text-lg mb-6">{{ $messageText }}</p>
-    </x-card>
-
 </div>
-
-<div class="absolute bottom-2 right-2 z-50">
-    @include('partials.language-switcher')
-</div>
-
 </div>

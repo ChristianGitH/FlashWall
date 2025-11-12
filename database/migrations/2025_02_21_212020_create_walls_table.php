@@ -44,6 +44,7 @@ return new class extends Migration
             $table->integer('caption_background_opacity')->default(70);
             $table->integer('caption_max_characters')->default(255);
             $table->string('posting_page_text')->nullable();
+            $table->boolean('posting_page_text_visibility')->default(true);
             $table->string('posting_page_font')->nullable();
             $table->string('posting_page_buttons_color')->nullable();
             $table->string('posting_page_buttons_font_color')->nullable();

@@ -42,6 +42,7 @@ class WallSeeder extends Seeder
             'caption_background_opacity' => '30',
             'caption_max_characters' => '255',
             'posting_page_text' => 'Post an image',
+            'posting_page_text_visibility' => true,
             'posting_page_font' => '',
             'posting_page_buttons_color' => '#4a00ff',
             'posting_page_buttons_font_color' => '#d1dbff',

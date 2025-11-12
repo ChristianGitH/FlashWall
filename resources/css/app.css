@@ -68,12 +68,12 @@
 
 .gallery_wrapper .image_wrapper img {
     object-fit: cover;
-    width: 100%;
+    width: 10em;
     height: 10em;
 }
 .gallery_wrapper .moderation_buttons {
     width: 100%;
-    margin-top: -35px;
+    margin-top: -30px;
     padding: 0px 5px 0px 5px;
 }
 .gallery_wrapper .uper_image_data {

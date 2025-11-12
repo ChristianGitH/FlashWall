@@ -236,7 +236,7 @@ new class extends Component {
             <div class="moderation_buttons flex justify-between">
                 <x-button 
                     icon="o-trash"
-                    class="btn btn-sm btn-danger"
+                    class="btn btn-xs btn-danger"
                     tooltip="{{ __('Delete') }}"
                     aria-label="{{ __('Delete') }}"
                     @click="

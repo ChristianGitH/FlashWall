@@ -48,6 +48,7 @@ class Wall extends Model
         'caption_background_opacity',
         'caption_max_characters',
         'posting_page_text',
+        'posting_page_text_visibility',
         'posting_page_buttons_color',
         'posting_page_buttons_font_color',
         'posting_page_logo',
@@ -71,6 +72,7 @@ class Wall extends Model
         'submitter_name_on_wall' => 'boolean',
         'caption_on_wall' => 'boolean',
         'posting_page_logo_visibility' => 'boolean',
+        'posting_page_text_visibility' => 'boolean',
         
         'background_choice' => 'integer',
         'caption_max_width' => 'integer',

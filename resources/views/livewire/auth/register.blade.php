@@ -39,8 +39,8 @@ class extends Component {
     }
 }; ?>
 
-<div>
-    <x-card class="h-screen flex items-center justify-center" title="{{__('Register')}}" shadow separator>
+<div class="lg:min-h-screen flex items-center justify-center">
+    <x-card class="flex items-center justify-center p-5 lg:px-10 lg:py-5" title="{{__('Register')}}" shadow separator>
  
         <x-form wire:submit="register">
             <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" icon="o-user" inline />
@@ -48,7 +48,7 @@ class extends Component {
             <x-input label="{{__('Password')}}" placeholder="{{__('Password')}}" wire:model="password" type="password" icon="o-key" inline />
             <x-input label="{{__('Confirm Password')}}" placeholder="{{__('Confirm Password')}}" wire:model="password_confirmation" type="password" icon="o-key" inline />
     
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap">
                 <x-button label="{{__('Already registered?')}}" class="btn-ghost" link="/login" />
                 <x-button label="{{__('Register')}}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="login" />
             </x-slot:actions>

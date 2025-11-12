@@ -86,6 +86,11 @@ class extends Component {
                             />
                             {{ $wall->require_email_submitter ? __('and required') : '' }}
                         </label>
+                        <label class="label">{{ __('Name displayed on wall') }} :
+                            <input type="checkbox" class="toggle toggle-success" disabled
+                                {{ $wall->submitter_name_on_wall ? 'checked' : '' }}
+                            />
+                        </label>
                     </fieldset>
                     
                 </x-slot:content>
