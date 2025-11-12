@@ -335,7 +335,11 @@ private function getSubmitterRequirements(): void
         @endphp
 
         @if($label)
-            <x-icon name="o-user-circle" :label="$label" />
+            <a role="button" class="flex justify-start items-center" @click="currentCard = 'submitter';">
+                <x-icon name="o-user-circle" title="Change" />
+                {{ $label }}
+                <x-icon name="o-pencil-square" class="text-gray-500 ml-2" title="Change" />
+            </a>
         @endif
 
         <x-form wire:submit="uploadImage"> 

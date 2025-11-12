@@ -62,14 +62,30 @@ class Wall extends Model
      * Cast des attributs pour garantir une bonne comparaison avec isDirty(), (ADDED when adding wall settings)
      */
     protected $casts = [
-        'captions' => 'boolean',
+        'allow_captions' => 'boolean',
         'moderation' => 'boolean',
-        'ask_name_submitter',
-        'ask_email_submitter',
-        'require_name_submitter',
-        'require_email_submitter',
-        'submitter_name_on_wall',
-        'caption_on_wall',
+        'ask_name_submitter' => 'boolean',
+        'ask_email_submitter' => 'boolean',
+        'require_name_submitter' => 'boolean',
+        'require_email_submitter' => 'boolean',
+        'submitter_name_on_wall' => 'boolean',
+        'caption_on_wall' => 'boolean',
+        'posting_page_logo_visibility' => 'boolean',
+        
+        'background_choice' => 'integer',
+        'caption_max_width' => 'integer',
+        'caption_position' => 'integer',
+        'caption_font_size' => 'integer',
+        'margin_top' => 'integer',
+        'margin_bottom' => 'integer',
+        'margin_left' => 'integer',
+        'margin_right' => 'integer',
+        'duration' => 'integer',
+        'caption_background_opacity' => 'integer',
+        'caption_max_characters' => 'integer',
+        'max_images_submitter' => 'integer',
+        'posting_page_logo_visibility' => 'integer',
+        'posting_page_background_choice' => 'integer',
     ];
 
 
@@ -80,6 +96,8 @@ class Wall extends Model
      */
     protected $hidden = [
         'user_id',
+        'created_at',
+        'updated_at',
     ];
 
     // Relations : One wall belongs to one user.

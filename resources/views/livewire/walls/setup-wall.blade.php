@@ -53,10 +53,10 @@ class extends Component {
     public int $caption_background_opacity;
     public int $caption_max_characters;
 
-    public string $posting_page_text;
-    public string $posting_page_font;
-    public string $posting_page_buttons_color;
-    public string $posting_page_buttons_font_color;
+    public ?string $posting_page_text;
+    public ?string $posting_page_font;
+    public ?string $posting_page_buttons_color;
+    public ?string $posting_page_buttons_font_color;
     public string $posting_page_logo;
     public $new_posting_page_logo;
     public bool $posting_page_logo_visibility;
@@ -219,10 +219,12 @@ class extends Component {
             $this->wall->save();
             $this->success(__('Changes saved!'));
 
-            if ($this->wall->wasChanged('moderation')) {
+            
+            /****** FOR WALL DISPLAY WITH COPIES ******/
+            /*if ($this->wall->wasChanged('moderation')) {
                 // If moderation has changed in database
                 $this->handleModerationChange();
-            }
+            }*/
             // Refresh navigation when a wall name is updated.
             $this->dispatch('refreshNavigation');
         } else {
@@ -230,8 +232,8 @@ class extends Component {
         }
     }
 
-
-    protected function handleModerationChange()
+    /****** FOR WALL DISPLAY WITH COPIES ******/
+    /*protected function handleModerationChange()
     {
         if ($this->wall->moderation) {
         // Moderation has been activated
@@ -269,7 +271,7 @@ class extends Component {
                 }
             }
         }
-    }
+    }*/
 
 
 
@@ -843,7 +845,6 @@ class extends Component {
             </br>
             <p style="width: 100%;">Background exemples for testing. Right click to download.</p>
             <div style="width: 100%; display: flex; justify-content: space-around;">
-                <img src="{{ asset('storage/walls_images/background_images/grid_background.jpg') }}" style="width: 45%; height: auto; border: 2px solid #4a00ff;" inline />
                 <img src="{{ asset('storage/walls_images/background_images/default_background.jpg') }}" style="width: 45%; height: auto; border: 2px solid #4a00ff;" inline />
             </div>
             

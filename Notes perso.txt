@@ -1,18 +1,16 @@
 TO DEPLOY :
-UPGRADE to Daisy UI 5, Tailwind CSS 4, Laravel 12, Mary 2.
-    UPGRADE also with composer, for phpunit and packages
+setup-wall : added possibility for some vars to be nullable like in database.
+    Removed/commented copies creation from setup-wall
+create-wall : AFTER UPGRADE Laravel 12 : added placeholders on inputs.
+moderation : Added collapse/tabs elements to components
+    Refactor of the function that loads image, to use a computed property, on archived-image and approved-image components
+    Added a tooltip for Wall Settings Quick View
+create-image : now allow user to go back and change data.
+Models->Wall : Updated protected and fillable fields.
 
-setup-wall: AFTER UPGRADE: had to add placeholders on inputs, change radio input to group and change custom input styles to match new Tailwind CSS
-setup-wall : Change QR Code file name when downloaded.
-auth: AFTER UPGRADE: added placeholders on inputs.
-moderation : AFTER UPGRADE: changed background opacity format for modals
+
 
 NEXT TO DO :
-create-image : Check submitter requirement again when trying to submit image.
-    Allow submitter to logout and change data.
-
-composer.json : updated Lavavel to v12, and Mary to v2
-
 Bug sur display-image lors de l'archivage ou Suppression d'image.
     Lié à la Suppression des copies lors de l'archivage d'une image.
     Solution trouvée : Changer le status '5' puis supprimer la copie ulterieurement.
@@ -26,10 +24,7 @@ Maybe change possibility of using copies system only if slideshow started playin
     copies usage on page : setup-wall, moderation:all components, displaywall:slideshow
 Models : Vérifier les champs qui doivent être protected / hidden
 
-
-MISE A JOUR LARAVEL : 
-Modifier composer.json
-puis Terminal : composer update
+!!!! Copies creation déjà retirée/commenté de setup-wall, à faire dans moderation. !!!!
 
 
 /*\ COMMAND LINES /*\
@@ -85,3 +80,22 @@ Faire un reload quand on arrive à la fin des images affichées pour la premièr
 
 5 6 7 8 reload : null, 1 2 3 4 reload : + 4
 9 10 11 12 reload : null, 5 6 7 8 1 2 3 4
+
+
+
+
+UPDATES LARAVEL :
+Updated Daisy UI, then removed Daisy UI line from tailwind config js,
+    then added @plugin "daisyui"; to app.css
+    then update tailwind with npx @tailwindcss/upgrade --force 
+
+    Then update Mary UI : composer require robsontenorio/mary:^2.0
+
+    then updated Laravel (laravel 12 in composer.json) then composer update
+
+    remove dependancies :
+        npm remove autoprefixer postcss
+        npm remove autoprefixer postcss
+        npm add --dev daisyui tailwindcss @tailwindcss/vite laravel-vite-plugin vite
+
+    removed : postcss.config.js

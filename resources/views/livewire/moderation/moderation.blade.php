@@ -49,7 +49,49 @@ class extends Component {
         <h1 class="text-2xl md:text-3xl lg:text-4xl">
             {{ __('Moderation') }} : {{ __( $wall->name ) }}
         </h1>
-        <p class="text-sm font-normal lg:text-base xl:text-lg">{{ $wall->description }}</p>
+        <div class="flex items-center pb-1.5">
+            <p class="text-sm font-normal lg:text-base xl:text-lg">{{ $wall->description }}</p>
+            
+            <!-- Wall settings quick view popover -->
+            <x-popover>
+                <x-slot:trigger>
+                    <x-icon name="o-information-circle" class="text-gray-700 ml-2" title="Wall settings quick view" />
+                </x-slot:trigger>
+                <x-slot:content>
+                    <!-- This code bellow is using Daisy UI, not Mary UI. -->
+                    <fieldset class="fieldset">
+                        
+                        <legend class="fieldset-legend">{{ __('Settings quick view') }}</legend>
+                        <label class="label">{{ __('Caption enabled') }} :
+                            <input type="checkbox" class="toggle toggle-success" disabled
+                                {{ $wall->caption ? 'checked' : '' }}
+                            />
+                        </label>
+                        <label class="label">{{ __('Caption displayed on wall') }} :
+                            <input type="checkbox" class="toggle toggle-success" disabled
+                                {{ $wall->caption_on_wall ? 'checked' : '' }}
+                            />
+                        </label>
+
+                        <legend class="fieldset-legend">{{ __('Requested user information') }}</legend>
+                        <label class="label">{{ __('Name') }} :
+                            <input type="checkbox" class="toggle toggle-success" disabled
+                                {{ $wall->ask_name_submitter ? 'checked' : '' }}
+                            />
+                            {{ $wall->require_name_submitter ? __('and required') : '' }}
+                        </label>
+                        <label class="label">{{ __('Email') }} :
+                            <input type="checkbox" class="toggle toggle-success" disabled
+                                {{ $wall->ask_email_submitter ? 'checked' : '' }}
+                            />
+                            {{ $wall->require_email_submitter ? __('and required') : '' }}
+                        </label>
+                    </fieldset>
+                    
+                </x-slot:content>
+            </x-popover>
+
+        </div>
     </div>
 
     @if ($wall->moderation)
@@ -59,6 +101,8 @@ class extends Component {
     @else
         <livewire:moderation.all-images :wall="$wall" />
     @endif
+
+
 
     <!-- Zoom Image Modal -->
     <div 
@@ -72,8 +116,8 @@ class extends Component {
                     <x-button @click="showImageZoomModal = false" class="btn btn-sm" icon="o-x-mark" />
                 </div>
                 <img :src="modalImageUrl" alt="Image Preview" class="w-full h-auto mt-4 max-w-[80vw] et max-h-[80vh]" />
-            </div>
         </div>
+    </div>
 
     <!-- Confirmation Modal -->
     <div 

@@ -1,7 +1,12 @@
 {
     "No item selected": "Aucun élément sélectionné",
+    "Settings quick view": "Aperçu rapide des paramètres",
     "Full screen": "Plein écran",
+    "and required": "et obligatoire",
+    "Caption enabled": "Légende activée",
+    "Caption displayed on wall": "Légende affichée sur le wall",
     "Delete caption": "Supprimer une légende",
+    "Wall settings quick view": "Aperçu rapide des paramètres",
     "Are you sure you want to delete the caption attached to this image?": "Êtes-vous sûr de vouloir supprimer la légende associée à cette image ?",
     "Caption successfully deleted": "Légende supprimée avec succès",
     "None": "Aucun",

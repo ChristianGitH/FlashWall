@@ -163,7 +163,7 @@ new class extends Component {
     />
     <!-- Message d'erreur affiché dynamiquement -->
     <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
-    <p wire:loading class="text-primary font-bold">Please wait <x-loading class="loading-dots relative -bottom-2.5 text-primary" /></p>
+    <p wire:loading class="text-primary font-bold">Please wait <x-loading class="loading-dots relative -bottom-0.5 text-primary" /></p>
     
 </div>
 

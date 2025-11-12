@@ -68,7 +68,7 @@
 
 .gallery_wrapper .image_wrapper img {
     object-fit: cover;
-    width: 10em;
+    width: 100%;
     height: 10em;
 }
 .gallery_wrapper .moderation_buttons {
