@@ -416,7 +416,8 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                     style="max-height: 100%; max-width: 100%;"
                 />
                 
-                @if(($image->caption && $wall->caption_on_wall) || ($image->submitter_name && $wall->submitter_name_on_wall))
+                <!-- We check for name, email and avatar if they're enabled and not empty.  -->
+                @if(($image->caption && $wall->caption_on_wall) || ($image->submitter_name && $wall->submitter_name_on_wall) || ($image->submitter_avatar && $wall->require_avatar_submitter))
                     <!-- CAPTION POSITION = If 1, caption is on the image. If 0, caption is bellow the image. 
                         Bellow the image then outside div class="relative", image wrapper -->
                     @if($this->wall->caption_position == 0)
@@ -430,6 +431,16 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                             background-color: {{ $displaySettings['caption_background'] }};
                             max-width: {{ $displaySettings['caption_max_width'] }}%;
                             display: inline-block;">
+
+                                @if($wall->require_avatar_submitter && $image->submitter_avatar)
+                                    <x-button
+                                        type="button"
+                                        @click="open = !open"
+                                        class="emoji_font custom_input btn btn-circle btn-lg border-none bg-base-300 p-4">
+                                        <span class="inline-block text-3xl leading-none">{{ $image->submitter_avatar }}</span>
+                                    </x-button>
+                                @endif
+
                                 @if($wall->submitter_name_on_wall && $image->submitter_name)
                                     {{ $image->submitter_name }}
                                 @endif
@@ -441,7 +452,6 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                                 @if($wall->caption_on_wall && $image->caption)
                                     {{ $image->caption }}
                                 @endif
-                                | Id : {{ $image->id }}
                             </span>
                         </div>
 

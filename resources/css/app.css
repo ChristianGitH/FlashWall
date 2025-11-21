@@ -35,6 +35,23 @@
 @layer base {  button:not(:disabled),  [role="button"]:not(:disabled) {    cursor: pointer;  }}
 
 
+
+/* EMOJI FONT FOR AVATAR */
+/*
+@font-face {
+    font-family: 'Noto Color Emoji';
+    src: url('../fonts/NotoColorEmoji-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+.emoji_font {
+    font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", system-ui;
+    font-display: swap;
+}
+*/
+
+
 /* Table pagination: active page highlight */
 .mary-table-pagination span[aria-current="page"] > span {
     @apply bg-primary text-base-100
@@ -81,7 +98,6 @@
     width: 100%;
     margin-bottom: -35px;
     position: relative;
-    z-index: 1;
     text-align: right;
     padding: 0px 5px 0px 5px;
 }

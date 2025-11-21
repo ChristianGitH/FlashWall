@@ -20,6 +20,7 @@ class Image extends Model
         'visitor_token',
         'submitter_id',
         'submitter_name',
+        'submitter_avatar',
         'priority',
         'permanent',
         'parent_id',

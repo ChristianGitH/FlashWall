@@ -1,8 +1,16 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-CNUJq0_F.css",
+    "file": "assets/app-G7zTMFT9.css",
     "src": "resources/css/app.css",
     "isEntry": true
+  },
+  "resources/fonts/NotoColorEmoji-Regular.ttf": {
+    "file": "assets/NotoColorEmoji-Regular-YuApCPkg.ttf",
+    "src": "resources/fonts/NotoColorEmoji-Regular.ttf"
+  },
+  "resources/fonts/NotoColorEmoji-Regular.woff2": {
+    "file": "assets/NotoColorEmoji-Regular-B7znpBph.woff2",
+    "src": "resources/fonts/NotoColorEmoji-Regular.woff2"
   },
   "resources/js/app.js": {
     "file": "assets/app-Bj43h_rG.js",

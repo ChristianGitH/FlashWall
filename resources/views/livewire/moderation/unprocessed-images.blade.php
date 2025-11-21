@@ -79,7 +79,10 @@ new class extends Component {
                 'webp_name' => $webpFilename,       // webp
                 'thumb' => $thumbFilename, // miniature WebP
                 'caption' => 'Image : '. $i,
+                'avatar' => 'Image : '. $i,
                 'visitor_token' => '1458-afgd',
+                'submitter_name' => 'Username',
+                'submitter_avatar' => '😊',
                 'permanent' => true,
             ]);
         }

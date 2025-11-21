@@ -1,8 +1,15 @@
 TO DEPLOY :
-setup-wall : upgraded color selectors for the nullable ones.
-    Small UI change
-slideshow : Added page title
-
+setup-wall : (NOT TESTED in local) Added more QR Code download format (now PNG,SVG, EPS)
+    Added toggle button to enable for submitter Avatar selection and display.
+create-image : Added width and height size limit. Now scale down only if needed (no upsizing).
+    Original file now scaled down before storage, but keeps the original format.
+    Added a "Thank you" card for after uploading image.
+    Added missing default page title.
+    background-size 100% changed to background-size: cover;
+    Changed Terms display, now appears on submitter card, except if no data is aske, then upload card.
+    Now admin can choose if submitters can upload image from disc or only take photo (capture attribute on file upload input)
+    Added avatar selector
+moderation : Wall Settings Quick View z-index bug in "all-images" component ?? need css build to test
 
 
 NEXT TO DO :
@@ -10,19 +17,26 @@ Bug sur display-image lors de l'archivage ou Suppression d'image.
     Lié à la Suppression des copies lors de l'archivage d'une image.
     Solution trouvée : Changer le status '5' puis supprimer la copie ulterieurement.
 Trouver une solution pour supprimer les copies d'images avec status = 5 à un moment
+Maybe change possibility of using copies system only if slideshow started playing, 
+    or add a option to use slideshow without the copies creations.
+    copies usage on page : setup-wall, moderation:all components, displaywall:slideshow
+    CSRF on slideshow
+
 moderation : refactor moderation components, DRY, uper_image_data, mayby also bulk_actions
     create a trait to not repete php functions, and maybe a child component for the buttons
 setup-wall + display-wall : Video as background on wall display
 display-image : Add possibility to display QR code on display-image
-Maybe change possibility of using copies system only if slideshow started playing, 
-    or add a option to use slideshow without the copies creations.
-    copies usage on page : setup-wall, moderation:all components, displaywall:slideshow
 
 !!!! Copies creation déjà retirée/commenté de setup-wall, à faire dans moderation. !!!!
 
-Check for possibility to "Rogner" image to a square shape
+Check for possibility to Crop image to a square shape
 A faire : rediger les Terms
 Video as background on wall display
+
+A FAIRE AVANT  :
+Autres options de position "avatar et légende"
+
+
 
 
 /*\ COMMAND LINES /*\

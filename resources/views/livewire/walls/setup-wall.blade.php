@@ -27,10 +27,12 @@ class extends Component {
     public string $slug = '';
     public string $description = '';
     public string $max_images_submitter;
+    public string $capture_mode;
     public bool $ask_name_submitter = false;
     public bool $require_name_submitter = false;
     public bool $ask_email_submitter = false;
     public bool $require_email_submitter = false;
+    public bool $require_avatar_submitter = false;
     public bool $submitter_name_on_wall = false;
     public bool $caption_on_wall = false;
     public bool $allow_captions = false;
@@ -55,7 +57,7 @@ class extends Component {
 
     public ?string $posting_page_text;
     public bool $posting_page_text_visibility;
-    public ?string $posting_page_font;
+    public ?string $posting_page_font = null;
     public ?string $posting_page_buttons_color = null;
     public ?string $posting_page_buttons_font_color = null;
     public string $posting_page_logo;
@@ -82,10 +84,12 @@ class extends Component {
         if($wall->max_images_submitter) {
             $this->max_images_submitter = $wall->max_images_submitter;
         }
+        $this->capture_mode = $wall->capture_mode;
         $this->ask_name_submitter = $wall->ask_name_submitter;
         $this->require_name_submitter = $wall->require_name_submitter;
         $this->ask_email_submitter = $wall->ask_email_submitter;
         $this->require_email_submitter = $wall->require_email_submitter;
+        $this->require_avatar_submitter = $wall->require_avatar_submitter;
         $this->submitter_name_on_wall = $wall->submitter_name_on_wall;
         $this->caption_on_wall = $wall->caption_on_wall;
         $this->allow_captions = $wall->allow_captions;
@@ -161,7 +165,7 @@ class extends Component {
     }
 
 
-    // Function to get the last saved slug for the copy to clipboard functionality.
+    // Computed property to get the last saved slug for the copy to clipboard functionality.
     public function getDisplayImageUrlProperty(): string
     {
         return route('slideshow', ['wall' => $this->lastSavedSlug]);
@@ -180,17 +184,33 @@ class extends Component {
         return $pngData;
     }
     
-    public function downloadQrCode()
+    public function downloadQrCode($qrCodeFormat)
     {
-        $png = QrCode::format('png')
+        // List of allowed format 
+        $allowed = ['png', 'svg', 'eps'];
+
+        if (!in_array($qrCodeFormat, $allowed)) {
+            abort(400, 'Format not supported');
+        }
+
+        $qr = QrCode::format($qrCodeFormat)
             ->size(600)
             ->margin(1)
             ->generate($this->CreateImageUrl);
 
-        return Response::streamDownload(function () use ($png) {
-            echo $png;
-        }, 'Flashwall_QR_Code_'.$this->lastSavedSlug.'.png', [
-            'Content-Type' => 'image/png',
+        // MIME types
+        $mimeTypes = [
+            'png' => 'image/png',
+            'svg' => 'image/svg+xml',
+            'eps' => 'application/postscript',
+        ];
+
+        $filename = 'Flashwall_' . $qrCodeFormat . 'QR_Code_' . $this->lastSavedSlug . '.' . $qrCodeFormat;
+
+        return Response::streamDownload(function () use ($qr) {
+            echo $qr;
+        }, $filename, [
+            'Content-Type' => $mimeTypes[$qrCodeFormat],
         ]);
     }
 
@@ -203,10 +223,12 @@ class extends Component {
             'name' => 'required|string|max:30',
             'description' => 'nullable|string|max:100',
             'max_images_submitter' => 'integer|max:99',
+            'capture_mode' => 'required|integer|max:2',
             'ask_name_submitter' => 'boolean',
             'ask_email_submitter' => 'boolean',
             'require_name_submitter' => 'boolean',
             'require_email_submitter' => 'boolean',
+            'require_avatar_submitter' => 'boolean',
             'submitter_name_on_wall' => 'boolean',
             'moderation' => 'boolean',
         ]); 
@@ -512,6 +534,22 @@ class extends Component {
                 <x-menu-separator />
             <x-input type="number" label="{!! __('Max images per user')!!}" placeholder="{!! __('Max images per user')!!}" wire:model="max_images_submitter" max="99" inline required />
 
+            @php
+                $capture_mode_options = [
+                    ['custom_key' => 0 , 'name' => __('Gallery')],
+                    ['custom_key' => 1 , 'name' => __('Front camera')],
+                    ['custom_key' => 2 , 'name' => __('Rear camera')],
+                ];
+            @endphp
+            <div class="flex justify-center text-center">
+                <x-group
+                    label="{{ __('By default, the user can select and upload an image from:') }}"
+                    :options="$capture_mode_options"
+                    wire:model="capture_mode"
+                    option-value="custom_key"
+                    class="[&:checked]:!btn-primary btn-sm normal-case" />
+            </div>
+
             <p class="pb-0 label label-text font-semibold">Requested user information</p>
             <div x-data="{
                 ask_name_submitter: @entangle('ask_name_submitter'),
@@ -535,6 +573,8 @@ class extends Component {
             </div>
 
             <x-toggle label="{{__('Display user name?')}}" wire:model="submitter_name_on_wall" right inline hint="To manage how names are displayed, go to captions options"/>
+
+            <x-toggle label="{{__('Enable avatar selection and display?')}}" wire:model="require_avatar_submitter" right inline/>
 
                 <x-menu-separator />
 
@@ -810,21 +850,40 @@ class extends Component {
             </div>-->
             
             <!-- Display QR Code as svg -->
-            <div class="text-center mt-4">
+            <div class="text-center mt-2">
                 <p class="pt-0 label-text font-semibold mb-3">{{ __('QR Code to post image') }} :</p>
                 <div class="mx-auto w-full flex justify-center">
                     {!! $this->createImageQrCode !!}
                 </div>
-            </div>
+            
 
-            <x-button
-                wire:click="downloadQrCode"
-                class="btn flex items-center gap-2"
-                icon="o-arrow-down-tray"
-                hint="png"
-                label="{{ __('Download QR code') }}"
-                spinner="downloadQrCode"
-            />
+            <!-- QR Code Download buttons -->
+            <p class="pt-0 label-text font-semibold mt-4 mb-3">{{ __('Download QR code') }}</p>
+            <div class="flex flex-wrap justify-evenly">
+                <x-button
+                    wire:click="downloadQrCode('png')"
+                    class="btn flex items-center gap-2"
+                    icon="o-arrow-down-tray"
+                    label="SVG"
+                    spinner="downloadQrCode"
+                />
+                <x-button
+                    wire:click="downloadQrCode('svg')"
+                    class="btn flex items-center gap-2"
+                    icon="o-arrow-down-tray"
+                    label="PNG"
+                    spinner="downloadQrCode"
+                />
+                <x-button
+                    wire:click="downloadQrCode('EPS')"
+                    class="btn flex items-center gap-2"
+                    icon="o-arrow-down-tray"
+                    label="EPS"
+                    spinner="downloadQrCode"
+                />
+            </div>
+            
+            </div>
 
            
             <x-slot:actions>
