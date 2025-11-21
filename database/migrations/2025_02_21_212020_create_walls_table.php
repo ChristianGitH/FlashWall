@@ -20,10 +20,12 @@ return new class extends Migration
             $table->boolean('allow_captions')->default(false);
             $table->boolean('moderation')->default(false);
             $table->integer('max_images_submitter')->default(2);
+            $table->integer('capture_mode')->default(0);
             $table->boolean('ask_name_submitter')->default(false);
             $table->boolean('require_name_submitter')->default(false);
             $table->boolean('ask_email_submitter')->default(false);
             $table->boolean('require_email_submitter')->default(false);
+            $table->boolean('require_avatar_submitter')->default(false);
             $table->boolean('submitter_name_on_wall')->default(false);
             $table->boolean('caption_on_wall')->default(false);
             $table->integer('background_choice')->default(0); // 0=color, 1=image
@@ -43,7 +45,8 @@ return new class extends Migration
             $table->string('caption_background_color')->default('#ffffff');
             $table->integer('caption_background_opacity')->default(70);
             $table->integer('caption_max_characters')->default(255);
-            $table->string('posting_page_text')->nullable();
+            $table->string('posting_page_text')->default('Share your selfie');
+            $table->boolean('posting_page_text_visibility')->default(true);
             $table->string('posting_page_font')->nullable();
             $table->string('posting_page_buttons_color')->nullable();
             $table->string('posting_page_buttons_font_color')->nullable();

@@ -49,14 +49,14 @@ class extends Component {
 
 }; ?>
 
-<div>
-    <x-card class="lg:h-screen flex items-center justify-center" title="{{__('Create a Wall')}}" shadow separator>
+<div class="lg:min-h-screen flex items-center justify-center">
+    <x-card class="flex items-center justify-center p-5 lg:px-10 lg:py-5" title="{{__('Create a Wall')}}" shadow separator>
         <x-form wire:submit="createWall">
-            <x-input label="{{__('Name')}}" wire:model="name"  inline />
-            <x-input label="{{__('Description')}}" wire:model="description" inline separator />
+            <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name"  inline />
+            <x-input label="{{__('Description')}}" placeholder="{{__('Description')}}" wire:model="description" inline separator />
 
             <x-slot:actions>
-                <x-button label="{{__('Créer')}}" type="submit" icon="o-plus" class="btn-primary" spinner="createWall" />
+                <x-button label="{{__('Create')}}" type="submit" icon="o-plus" class="btn-primary" spinner="createWall" />
             </x-slot:actions>
         </x-form>
 

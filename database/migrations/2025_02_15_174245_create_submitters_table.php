@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->nullable();
             $table->string('email')->nullable();
+            $table->string('avatar')->default('😊');
             $table->string('token')->nullable();
             $table->timestamps();
         });

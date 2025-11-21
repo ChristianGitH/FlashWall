@@ -23,16 +23,16 @@ new class extends Component {
         $this->wall = $wall;
     }
 
-    public function archivedImages()
+    public function getArchivedImagesProperty()
     {
-        $images = Image::where('wall_id', $this->wall->id)
+        $ArchivedImages = Image::where('wall_id', $this->wall->id)
                     ->where('status', 2) // 0 = unprocessed. 1 = approved. 2 = archived.
                     ->where('permanent', 1)
                     ->orderBy('created_at', 'desc')
                     ->paginate(30, pageName: 'archived-images');
 
-        $this->archivedImagesPageCount = $images->count();
-        return $images;
+        $this->archivedImagesPageCount = $ArchivedImages->count();
+        return $ArchivedImages;
     }
 
     protected $listeners = ['reset-selection-archived' => '$refresh', 'archived-images-updated' => '$refresh',];
@@ -241,141 +241,145 @@ new class extends Component {
         }"
 >
 
-<x-card title="{{ __( 'Archived images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>
+<x-collapse separator>
+    <x-slot:heading>{{ __( 'Archived images' ) . ' (' . $this->ArchivedImages->total() }})</x-slot:heading>
 
-<div class="bulk-actions flex items-center space-x-2"
- x-data="{
-        handleSelectionArchivedImages(actionType, actionMethod, actionTitle, confirmClass) {
-            if (selectedArchived.length === 0) {
-                errorMessage = '{{ __('No item selected') }}';
-                setTimeout(() => errorMessage = '', 1500);
-                return;
-            }
+    <x-slot:content>
 
-            let textPlural = selectedArchived.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
-            $dispatch('confirm-action', {
-                title: actionTitle,
-                message: `{{ __('You are about to') }} ${actionType} ${selectedArchived.length} ${textPlural}.`,
-                confirmText: `{{ __('Yes') }}, ${actionType} !`,
-                confirmClass: confirmClass,
-                action: () => $wire.call(actionMethod, selectedArchived)
-            });
-        }
-    }"
->
+        <div class="bulk-actions flex items-center space-x-2"
+        x-data="{
+                handleSelectionArchivedImages(actionType, actionMethod, actionTitle, confirmClass) {
+                    if (selectedArchived.length === 0) {
+                        errorMessage = '{{ __('No item selected') }}';
+                        setTimeout(() => errorMessage = '', 1500);
+                        return;
+                    }
 
-    <button class="btn btn-sm" @click="allSelected = !allSelected; selectedArchived = allSelected ? [...document.querySelectorAll('.archived-image-checkbox')].map(cb => cb.value) : []">
-        <label for="archived-select-all-checkbox" @click="allSelected = !allSelected; selectedArchived = allSelected ? [...document.querySelectorAll('.archived-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">{{__('Select all')}}</label>
-        <input 
-            type="checkbox"
-            id="archived-select-all-checkbox"
-            class="checkbox"
-            x-model="allSelected"
-        />
-    </button>
+                    let textPlural = selectedArchived.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+                    $dispatch('confirm-action', {
+                        title: actionTitle,
+                        message: `{{ __('You are about to') }} ${actionType} ${selectedArchived.length} ${textPlural}.`,
+                        confirmText: `{{ __('Yes') }}, ${actionType} !`,
+                        confirmClass: confirmClass,
+                        action: () => $wire.call(actionMethod, selectedArchived)
+                    });
+                }
+            }"
+        >
 
-    <x-button 
-        @click="handleSelectionArchivedImages('{{ __('approve') }}', 'approveSelected', '{{ __('Approve') }}', 'bg-green-600 hover:bg-green-700')"
-        icon="o-check"
-        class="btn btn-sm"
-        tooltip="{{ __('Approve selection') }}"
-        aria-label="{{ __('Approve selection') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-    />
+            <button class="btn btn-sm" @click="allSelected = !allSelected; selectedArchived = allSelected ? [...document.querySelectorAll('.archived-image-checkbox')].map(cb => cb.value) : []">
+                <label for="archived-select-all-checkbox" @click="allSelected = !allSelected; selectedArchived = allSelected ? [...document.querySelectorAll('.archived-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">{{__('Select all')}}</label>
+                <input 
+                    type="checkbox"
+                    id="archived-select-all-checkbox"
+                    class="checkbox"
+                    x-model="allSelected"
+                />
+            </button>
 
-    <x-button     
-        @click="handleSelectionArchivedImages('{{ __('delete') }}', 'deleteSelected', '{{ __('Delete') }}', 'bg-red-600 hover:bg-red-700')"
-        icon="o-trash"
-        class="btn btn-sm"
-        tooltip="{{ __('Delete selection') }}"
-        aria-label="{{ __('Delete selection') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-    />
-    <!-- Message d'erreur affiché dynamiquement -->
-    <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
-    <p wire:loading class="text-primary font-bold">Please wait <x-loading class="loading-dots relative -bottom-2.5 text-primary" /></p>
-    
-</div>
-
-
-<div class="gallery_wrapper">
-
-    @if($this->archivedImages()->isEmpty())
-            <p class="text-center text-gray-500">{{ __('No archived image.') }}</p>
-        @else
-            @foreach($this->archivedImages() as $image)
-            @php
-            if ($image->caption) {
-                $data1 = "tooltip tooltip-bottom";
-                $data2 = "$image->caption";
-                $data3 = "";
-            } else {
-                $data1 = "";
-                $data2 = "";
-                $data3 = "hidden";
-            }
-        @endphp
-        <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{!! $data2 !!}" wire:key="image-{{ $image->id }}">
-            <div class="uper_image_data justify-between">
-                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
-                    </svg>
-                </a>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $data3 ) }}">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                </svg>
-            <input 
-                type="checkbox" 
-                class="checkbox checkbox-sm archived-image-checkbox"
-                :value="{{ $image->id }}"
-                x-model="selectedArchived"
-                id="checkbox-{{ $image->id }}"
+            <x-button 
+                @click="handleSelectionArchivedImages('{{ __('approve') }}', 'approveSelected', '{{ __('Approve') }}', 'bg-green-600 hover:bg-green-700')"
+                icon="o-check"
+                class="btn btn-sm"
+                tooltip="{{ __('Approve selection') }}"
+                aria-label="{{ __('Approve selection') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
             />
-            </div>
-                <label for="checkbox-{{ $image->id }}" display="block">
-                    <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
-                </label>
-            <div class="moderation_buttons flex justify-between">
-                <x-button 
-                    wire:click="approveImage({{ $image->id }})"
-                    icon="o-check"
-                    class="btn btn-sm"
-                    tooltip="{{ __('Approve') }}"
-                    aria-label="{{ __('Approve') }}"
-                    @click="$wire.set('selectedImages', selectedArchived)"
-                    wire:loading.attr="disabled"
-                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-                />
-                <x-button 
-                    icon="o-trash"
-                    class="btn btn-sm btn-danger"
-                    tooltip="{{ __('Delete') }}"
-                    aria-label="{{ __('Delete') }}"
-                    @click="
-                        $dispatch('confirm-action', {
-                            title: '{{ __('Delete') }}',
-                            message: '{{ __('Are you sure you want to delete this image?') }}',
-                            confirmText: '{{ __('Yes, delete!') }}',
-                            confirmClass: 'bg-red-600 hover:bg-red-700',
-                            action: () => $wire.call('deleteImage', {{ $image->id }})
-                        })
-                    "
-                    wire:loading.attr="disabled"
-                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-                />
-            </div>
+
+            <x-button     
+                @click="handleSelectionArchivedImages('{{ __('delete') }}', 'deleteSelected', '{{ __('Delete') }}', 'bg-red-600 hover:bg-red-700')"
+                icon="o-trash"
+                class="btn btn-sm"
+                tooltip="{{ __('Delete selection') }}"
+                aria-label="{{ __('Delete selection') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+            />
+            <!-- Message d'erreur affiché dynamiquement -->
+            <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
+            <p wire:loading class="text-primary font-bold">Please wait <x-loading class="-bottom-0.5 loading-dots relative text-primary" /></p>
+            
         </div>
-        @endforeach
-    @endif
-</div>
 
-<div class="galerie-navigation flex justify-evenly">
-    {{ $this->archivedImages()->links(data: ['scrollTo' => false]) }}
-</div>
 
-</x-card>
+        <div class="gallery_wrapper">
+
+            @if($this->ArchivedImages->isEmpty())
+                    <p class="text-center text-gray-500">{{ __('No archived image.') }}</p>
+                @else
+                    @foreach($this->ArchivedImages as $image)
+                    @php
+                    if ($image->caption) {
+                        $data1 = "tooltip tooltip-bottom";
+                        $data2 = "$image->caption";
+                        $data3 = "";
+                    } else {
+                        $data1 = "";
+                        $data2 = "";
+                        $data3 = "hidden";
+                    }
+                @endphp
+                <div class="image_wrapper {{ ( $data1 ) }}" data-tip="{!! $data2 !!}" wire:key="image-{{ $image->id }}">
+                    <div class="uper_image_data justify-between">
+                        <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
+                            </svg>
+                        </a>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $data3 ) }}">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                        </svg>
+                    <input 
+                        type="checkbox" 
+                        class="checkbox checkbox-sm archived-image-checkbox"
+                        :value="{{ $image->id }}"
+                        x-model="selectedArchived"
+                        id="checkbox-{{ $image->id }}"
+                    />
+                    </div>
+                        <label for="checkbox-{{ $image->id }}" display="block">
+                            <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
+                        </label>
+                    <div class="moderation_buttons flex justify-between">
+                        <x-button 
+                            wire:click="approveImage({{ $image->id }})"
+                            icon="o-check"
+                            class="btn btn-xs"
+                            tooltip="{{ __('Approve') }}"
+                            aria-label="{{ __('Approve') }}"
+                            @click="$wire.set('selectedImages', selectedArchived)"
+                            wire:loading.attr="disabled"
+                            wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+                        />
+                        <x-button 
+                            icon="o-trash"
+                            class="btn btn-xs btn-danger"
+                            tooltip="{{ __('Delete') }}"
+                            aria-label="{{ __('Delete') }}"
+                            @click="
+                                $dispatch('confirm-action', {
+                                    title: '{{ __('Delete') }}',
+                                    message: '{{ __('Are you sure you want to delete this image?') }}',
+                                    confirmText: '{{ __('Yes, delete!') }}',
+                                    confirmClass: 'bg-red-600 hover:bg-red-700',
+                                    action: () => $wire.call('deleteImage', {{ $image->id }})
+                                })
+                            "
+                            wire:loading.attr="disabled"
+                            wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+                        />
+                    </div>
+                </div>
+                @endforeach
+            @endif
+        </div>
+
+        <div class="galerie-navigation flex justify-evenly">
+            {{ $this->archivedImages->links(data: ['scrollTo' => false]) }}
+        </div>
+   
+    </x-slot:content>
+</x-collapse>
 
 </div>

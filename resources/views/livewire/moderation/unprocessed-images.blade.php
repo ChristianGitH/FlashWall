@@ -79,7 +79,10 @@ new class extends Component {
                 'webp_name' => $webpFilename,       // webp
                 'thumb' => $thumbFilename, // miniature WebP
                 'caption' => 'Image : '. $i,
+                'avatar' => 'Image : '. $i,
                 'visitor_token' => '1458-afgd',
+                'submitter_name' => 'Username',
+                'submitter_avatar' => '😊',
                 'permanent' => true,
             ]);
         }
@@ -379,217 +382,218 @@ new class extends Component {
         }"
 >
 
-<x-card title="{{ __( 'Pending images' ) }}" class="mt-[15px] mb-[15px]" shadow separator>
+<x-collapse separator x-init="$el.querySelector('input[type=checkbox]').checked = true">
+    <x-slot:heading>{{ __( 'Pending images' ) . ' (' . $this->images->total() }})</x-slot:heading>
 
+    <x-slot:content>
+        <div class="bulk-actions flex items-center flex-wrap space-x-2"
+            x-data="{
+                handleSelection(actionType, actionMethod, actionTitle, confirmClass) {
+                    if (selected.length === 0) {
+                        errorMessage = '{{ __('No item selected') }}';
+                        setTimeout(() => errorMessage = '', 1500);
+                        return;
+                    }
 
-<div class="bulk-actions flex items-center flex-wrap space-x-2"
-    x-data="{
-        handleSelection(actionType, actionMethod, actionTitle, confirmClass) {
-            if (selected.length === 0) {
-                errorMessage = '{{ __('No item selected') }}';
-                setTimeout(() => errorMessage = '', 1500);
-                return;
-            }
-
-            let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
-            $dispatch('confirm-action', {
-                title: actionTitle,
-                message: `{{ __('You are about to') }} ${actionType} ${selected.length} ${textPlural}.`,
-                confirmText: `{{ __('Yes') }}, ${actionType} !`,
-                confirmClass: confirmClass,
-                action: () => $wire.call(actionMethod, selected)
-            });
-        }
-    }"
->
-    <button class="btn btn-sm" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.unprocessed-image-checkbox')].map(cb => cb.value) : []">
-        <label for="select-all-checkbox" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.unprocessed-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">{{__('Select all')}}</label>
-        <input 
-            type="checkbox"
-            id="select-all-checkbox"
-            class="checkbox"
-            x-model="allSelected"
-        />
-    </button>
-
-    <x-button 
-        @click="handleSelection('{{ __('approve') }}', 'approveSelected', '{{ __('Approve') }}', 'bg-green-600 hover:bg-green-700')"
-        icon="o-check"
-        class="btn btn-sm"
-        tooltip="{{ __('Approve selection') }}"
-        aria-label="{{ __('Approve selection') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-    />
-
-    <x-button 
-        @click="handleSelection('{{ __('archive') }}', 'archiveSelected', '{{ __('Archive') }}', 'bg-blue-600 hover:bg-blue-700')"
-        icon="o-archive-box"
-        class="btn btn-sm"
-        tooltip="{{ __('Archive selection') }}"
-        aria-label="{{ __('Archive selection') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-    />
-    <x-button
-        @click="handleSelection('{{ __('delete') }}', 'deleteSelected', '{{ __('Delete') }}', 'bg-red-600 hover:bg-red-700')"
-        icon="o-trash"
-        class="btn btn-sm"
-        tooltip="{{ __('Delete selection') }}"
-        aria-label="{{ __('Delete selection') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-    />
-    <x-button
-        @click="$wire.$refresh()"
-        icon="o-arrow-path"
-        class="btn btn-sm"
-        wire:click.prevent=""
-        tooltip="{{ __('Refresh') }}"
-        aria-label="{{ __('Refresh') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-    />
-    <x-button
-        wire:click="fillForDev()"
-        icon="o-photo"
-        class="btn btn-sm bg-green-600 hover:bg-green-700"
-        wire:click.prevent=""
-        tooltip="{{ __('Fill with dev images') }}"
-        aria-label="{{ __('Fill with dev images') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-    />
-    <x-button
-        wire:click="cleanDeletedImages()"
-        icon="o-trash"
-        class="btn btn-sm bg-red-600 hover:bg-red-700"
-        wire:click.prevent=""
-        tooltip="{{ __('Empty the bin') }}"
-        aria-label="{{ __('Empty the bin') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-    />
-    <!-- Message d'erreur affiché dynamiquement -->
-    <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
-    <p wire:loading class="text-primary font-bold">Please wait <x-loading class="loading-dots relative -bottom-2.5 text-primary" /></p>
-    
-</div>
-
-
-<div class="gallery_wrapper">
-    @if($this->images->isEmpty())
-        <p class="text-center text-gray-500">{{ __('No image pending.') }}</p>
-    @else
-        @foreach($this->images as $image)
-    
-            <!-- Building caption tooltip with Submitter Name and Caption -->
-            @php
-                $caption_tooltip_classes = "tooltip tooltip-bottom"; // tooltip classes
-                $caption_tooltip_icon_visibility = "hidden"; // default = hidden
-
-                // Building tooltip content
-                $caption_tooltip_content = '';
-                if ($wall->submitter_name_on_wall && $image->submitter_name) {
-                    $caption_tooltip_content .= $image->submitter_name;
+                    let textPlural = selected.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+                    $dispatch('confirm-action', {
+                        title: actionTitle,
+                        message: `{{ __('You are about to') }} ${actionType} ${selected.length} ${textPlural}.`,
+                        confirmText: `{{ __('Yes') }}, ${actionType} !`,
+                        confirmClass: confirmClass,
+                        action: () => $wire.call(actionMethod, selected)
+                    });
                 }
+            }"
+        >
+            <button class="btn btn-sm" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.unprocessed-image-checkbox')].map(cb => cb.value) : []">
+                <label for="select-all-checkbox" @click="allSelected = !allSelected; selected = allSelected ? [...document.querySelectorAll('.unprocessed-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">{{__('Select all')}}</label>
+                <input 
+                    type="checkbox"
+                    id="select-all-checkbox"
+                    class="checkbox"
+                    x-model="allSelected"
+                />
+            </button>
 
-                if ($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name) {
-                    $caption_tooltip_content .= ' : ';
-                }
-
-                if ($wall->caption_on_wall && $image->caption) {
-                    $caption_tooltip_content .= $image->caption;
-                    $caption_tooltip_icon_visibility = '';
-                }
-
-                // Si rien à afficher, cacher le tooltip
-                if (empty($caption_tooltip_content)) {
-                    $caption_tooltip_classes = '';
-                    $caption_tooltip_icon_visibility = 'hidden';
-                }
-            @endphp
-            
-        <div class="image_wrapper {{ ( $caption_tooltip_classes ) }}" data-tip="{{ $caption_tooltip_content }}" wire:key="image-{{ $image->id }}">
-            <div class="uper_image_data justify-between">
-                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
-                    </svg>
-                </a>
-
-                <a role="button" 
-                    @click="$dispatch('confirm-action', {
-                            title: '{{ __('Delete caption') }}',
-                            message: '{{ __('Are you sure you want to delete the caption attached to this image?') }}',
-                            confirmText: '{{ __('Yes') }}',
-                            confirmClass: 'bg-orange-600 hover:bg-orange-700',
-                            action: () => $wire.call('deleteCaption', {{ $image->id }})
-                        })"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $caption_tooltip_icon_visibility ) }}">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                    </svg>
-                </a>
-            <input 
-                type="checkbox" 
-                class="checkbox checkbox-sm unprocessed-image-checkbox"
-                :value="{{ $image->id }}"
-                x-model="selected"
-                id="checkbox-{{ $image->id }}"
+            <x-button 
+                @click="handleSelection('{{ __('approve') }}', 'approveSelected', '{{ __('Approve') }}', 'bg-green-600 hover:bg-green-700')"
+                icon="o-check"
+                class="btn btn-sm"
+                tooltip="{{ __('Approve selection') }}"
+                aria-label="{{ __('Approve selection') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
             />
-            </div>
-                <label for="checkbox-{{ $image->id }}" display="block">
-                    <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
-                </label>
-            <div class="moderation_buttons flex justify-between">
-                <x-button 
-                    wire:click="approveImage({{ $image->id }})"
-                    icon="o-check"
-                    class="btn btn-sm"
-                    tooltip="{{ __('Approve') }}"
-                    aria-label="{{ __('Approve') }}"
-                    @click="$wire.set('selectedImages', selected)"
-                    wire:loading.attr="disabled"
-                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-                />
-                <x-button 
-                    wire:click="archiveImage({{ $image->id }})"
-                    icon="o-archive-box"
-                    class="btn btn-sm"
-                    tooltip="{{ __('Archive') }}"
-                    aria-label="{{ __('Archive') }}"
-                    @click="$wire.set('selectedImages', selected)"
-                    wire:loading.attr="disabled"
-                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-                />
-                <x-button 
-                    wire:click.prevent=""
-                    icon="o-trash"
-                    class="btn btn-sm btn-danger"
-                    tooltip="{{ __('Delete') }}"
-                    aria-label="{{ __('Delete') }}"
-                    @click="
-                        $dispatch('confirm-action', {
-                            title: '{{ __('Delete') }}',
-                            message: '{{ __('Are you sure you want to delete this image?') }}',
-                            confirmText: '{{ __('Yes, delete!') }}',
-                            confirmClass: 'bg-red-600 hover:bg-red-700',
-                            action: () => $wire.call('deleteImage', {{ $image->id }})
-                        })
-                    "
-                    wire:loading.attr="disabled"
-                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
-                />
-            </div>
-        </div>
-        @endforeach
-    @endif
-</div>
-<div class="galerie-navigation flex justify-evenly">
-    {{ $this->images->links(data: ['scrollTo' => false]) }}
-</div>
 
-</x-card>
+            <x-button 
+                @click="handleSelection('{{ __('archive') }}', 'archiveSelected', '{{ __('Archive') }}', 'bg-blue-600 hover:bg-blue-700')"
+                icon="o-archive-box"
+                class="btn btn-sm"
+                tooltip="{{ __('Archive selection') }}"
+                aria-label="{{ __('Archive selection') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+            />
+            <x-button
+                @click="handleSelection('{{ __('delete') }}', 'deleteSelected', '{{ __('Delete') }}', 'bg-red-600 hover:bg-red-700')"
+                icon="o-trash"
+                class="btn btn-sm"
+                tooltip="{{ __('Delete selection') }}"
+                aria-label="{{ __('Delete selection') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+            />
+            <x-button
+                @click="$wire.$refresh()"
+                icon="o-arrow-path"
+                class="btn btn-sm"
+                wire:click.prevent=""
+                tooltip="{{ __('Refresh') }}"
+                aria-label="{{ __('Refresh') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+            />
+            <x-button
+                wire:click="fillForDev()"
+                icon="o-photo"
+                class="btn btn-sm bg-green-600 hover:bg-green-700"
+                tooltip="{{ __('Fill with dev images') }}"
+                aria-label="{{ __('Fill with dev images') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+            />
+            <x-button
+                wire:click="cleanDeletedImages()"
+                icon="o-trash"
+                class="btn btn-sm bg-red-600 hover:bg-red-700"
+                wire:click.prevent=""
+                tooltip="{{ __('Empty the bin') }}"
+                aria-label="{{ __('Empty the bin') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+            />
+            <!-- Message d'erreur affiché dynamiquement -->
+            <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
+            <p wire:loading class="text-primary font-bold">Please wait <x-loading class="loading-dots relative -bottom-0.5 text-primary" /></p>
+            
+        </div>
+
+
+        <div class="gallery_wrapper">
+            @if($this->images->isEmpty())
+                <p class="text-center text-gray-500">{{ __('No image pending.') }}</p>
+            @else
+                @foreach($this->images as $image)
+            
+                    <!-- Building caption tooltip with Submitter Name and Caption -->
+                    @php
+                        $caption_tooltip_classes = "tooltip tooltip-bottom"; // tooltip classes
+                        $caption_tooltip_icon_visibility = "hidden"; // default = hidden
+
+                        // Building tooltip content
+                        $caption_tooltip_content = '';
+                        if ($wall->submitter_name_on_wall && $image->submitter_name) {
+                            $caption_tooltip_content .= $image->submitter_name;
+                        }
+
+                        if ($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name) {
+                            $caption_tooltip_content .= ' : ';
+                        }
+
+                        if ($wall->caption_on_wall && $image->caption) {
+                            $caption_tooltip_content .= $image->caption;
+                            $caption_tooltip_icon_visibility = '';
+                        }
+
+                        // Si rien à afficher, cacher le tooltip
+                        if (empty($caption_tooltip_content)) {
+                            $caption_tooltip_classes = '';
+                            $caption_tooltip_icon_visibility = 'hidden';
+                        }
+                    @endphp
+                    
+                <div class="image_wrapper {{ ( $caption_tooltip_classes ) }}" data-tip="{{ $caption_tooltip_content }}" wire:key="image-{{ $image->id }}">
+                    <div class="uper_image_data justify-between">
+                        <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
+                            </svg>
+                        </a>
+
+                        <a role="button" 
+                            @click="$dispatch('confirm-action', {
+                                    title: '{{ __('Delete caption') }}',
+                                    message: '{{ __('Are you sure you want to delete the caption attached to this image?') }}',
+                                    confirmText: '{{ __('Yes') }}',
+                                    confirmClass: 'bg-orange-600 hover:bg-orange-700',
+                                    action: () => $wire.call('deleteCaption', {{ $image->id }})
+                                })"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $caption_tooltip_icon_visibility ) }}">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                            </svg>
+                        </a>
+                    <input 
+                        type="checkbox" 
+                        class="checkbox checkbox-sm unprocessed-image-checkbox"
+                        :value="{{ $image->id }}"
+                        x-model="selected"
+                        id="checkbox-{{ $image->id }}"
+                    />
+                    </div>
+                        <label for="checkbox-{{ $image->id }}" display="block">
+                            <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
+                        </label>
+                    <div class="moderation_buttons flex justify-between">
+                        <x-button 
+                            wire:click="approveImage({{ $image->id }})"
+                            icon="o-check"
+                            class="btn btn-xs"
+                            tooltip="{{ __('Approve') }}"
+                            aria-label="{{ __('Approve') }}"
+                            @click="$wire.set('selectedImages', selected)"
+                            wire:loading.attr="disabled"
+                            wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+                        />
+                        <x-button 
+                            wire:click="archiveImage({{ $image->id }})"
+                            icon="o-archive-box"
+                            class="btn btn-xs"
+                            tooltip="{{ __('Archive') }}"
+                            aria-label="{{ __('Archive') }}"
+                            @click="$wire.set('selectedImages', selected)"
+                            wire:loading.attr="disabled"
+                            wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+                        />
+                        <x-button 
+                            wire:click.prevent=""
+                            icon="o-trash"
+                            class="btn btn-xs btn-danger"
+                            tooltip="{{ __('Delete') }}"
+                            aria-label="{{ __('Delete') }}"
+                            @click="
+                                $dispatch('confirm-action', {
+                                    title: '{{ __('Delete') }}',
+                                    message: '{{ __('Are you sure you want to delete this image?') }}',
+                                    confirmText: '{{ __('Yes, delete!') }}',
+                                    confirmClass: 'bg-red-600 hover:bg-red-700',
+                                    action: () => $wire.call('deleteImage', {{ $image->id }})
+                                })
+                            "
+                            wire:loading.attr="disabled"
+                            wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected"
+                        />
+                    </div>
+                </div>
+                @endforeach
+            @endif
+        </div>
+        <div class="galerie-navigation flex justify-evenly">
+            {{ $this->images->links(data: ['scrollTo' => false]) }}
+        </div>
+
+    </x-slot:content>
+</x-collapse>
 
 </div>

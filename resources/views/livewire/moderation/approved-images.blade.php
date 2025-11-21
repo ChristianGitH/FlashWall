@@ -24,16 +24,16 @@ new class extends Component {
         $this->wall = $wall;
     }
 
-    public function approvedImages()
+    public function getApprovedImagesProperty()
     {
-        $images = Image::where('wall_id', $this->wall->id)
+        $ApprovedImages = Image::where('wall_id', $this->wall->id)
                     ->where('status', 1) // 0 = unprocessed. 1 = approved. 2 = archived.
                     ->where('permanent', 1)
                     ->orderBy('created_at', 'desc')
                     ->paginate(30, pageName: 'approved-images');
         
-        $this->approvedImagesPageCount = $images->count();
-        return $images;
+        $this->approvedImagesPageCount = $ApprovedImages->count();
+        return $ApprovedImages;
     }
 
     protected $listeners = ['reset-selection-approved' => '$refresh', 'approved-images-updated' => '$refresh'];
@@ -206,190 +206,196 @@ new class extends Component {
         }"
     >
 
-<x-card title="{{ __('Approved images') }}" subtitle="{{ __('These images are displayed')}}" class="mt-[15px] mb-[15px]" shadow separator>
+<x-collapse separator>
+    <x-slot:heading>{{ __( 'Approved images' ) . ' (' . $this->ApprovedImages->total() }})
+        <span class="text-gray-500">{{ __('These images are displayed')}}</span>
+    </x-slot:heading>
 
-<div class="bulk-actions flex items-center space-x-2"
-    x-data="{
-        handleSelectionApprovedImages(actionType, actionMethod, actionTitle, confirmClass) {
-            if (selectedApproved.length === 0) {
-                errorMessage = '{{ __('No item selected') }}';
-                setTimeout(() => errorMessage = '', 1500);
-                return;
-            }
+    <x-slot:content>
 
-            let textPlural = selectedApproved.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
-            $dispatch('confirm-action', {
-                title: actionTitle,
-                message: `{{ __('You are about to') }} ${actionType} ${selectedApproved.length} ${textPlural}.`,
-                confirmText: `{{ __('Yes') }}, ${actionType} !`,
-                confirmClass: confirmClass,
-                action: () => $wire.call(actionMethod, selectedApproved)
-            });
-        }
-    }"
->
-    <button class="btn btn-sm" @click="allSelectedApproved = !allSelectedApproved; selectedApproved = allSelectedApproved ? [...document.querySelectorAll('.approved-image-checkbox')].map(cb => cb.value) : []">
-        <label for="approved-select-all-checkbox" @click="allSelectedApproved = !allSelectedApproved; selectedApproved = allSelectedApproved ? [...document.querySelectorAll('.approved-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">{{__('Select all')}}</label>
-        <input 
-            type="checkbox"
-            id="approved-select-all-checkbox"
-            class="checkbox"
-            x-model="allSelectedApproved"
-        />
-    </button>
+        <div class="bulk-actions flex items-center space-x-2"
+            x-data="{
+                handleSelectionApprovedImages(actionType, actionMethod, actionTitle, confirmClass) {
+                    if (selectedApproved.length === 0) {
+                        errorMessage = '{{ __('No item selected') }}';
+                        setTimeout(() => errorMessage = '', 1500);
+                        return;
+                    }
 
-    <x-button 
-        @click="handleSelectionApprovedImages('{{ __('archive') }}', 'archiveSelected', '{{ __('Archive') }}', 'bg-blue-600 hover:bg-blue-700')"
-        icon="o-archive-box"
-        class="btn btn-sm"
-        tooltip="{{ __('Archive selection') }}"
-        aria-label="{{ __('Archive selection') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
-    />
-    <x-button     
-        @click="handleSelectionApprovedImages('{{ __('delete') }}', 'deleteSelected', '{{ __('Delete') }}', 'bg-red-600 hover:bg-red-700')"
-        icon="o-trash"
-        class="btn btn-sm"
-        tooltip="{{ __('Delete selection') }}"
-        aria-label="{{ __('Delete selection') }}"
-        wire:loading.attr="disabled"
-        wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
-    />
-    <!-- Message d'erreur affiché dynamiquement -->
-    <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
-    <p wire:loading class="text-primary font-bold">Please wait <x-loading class="loading-dots relative -bottom-2.5 text-primary" /></p>
+                    let textPlural = selectedApproved.length === 1 ? '{{ __('image') }}' : '{{ __('images') }}';
+                    $dispatch('confirm-action', {
+                        title: actionTitle,
+                        message: `{{ __('You are about to') }} ${actionType} ${selectedApproved.length} ${textPlural}.`,
+                        confirmText: `{{ __('Yes') }}, ${actionType} !`,
+                        confirmClass: confirmClass,
+                        action: () => $wire.call(actionMethod, selectedApproved)
+                    });
+                }
+            }"
+        >
+            <button class="btn btn-sm" @click="allSelectedApproved = !allSelectedApproved; selectedApproved = allSelectedApproved ? [...document.querySelectorAll('.approved-image-checkbox')].map(cb => cb.value) : []">
+                <label for="approved-select-all-checkbox" @click="allSelectedApproved = !allSelectedApproved; selectedApproved = allSelectedApproved ? [...document.querySelectorAll('.approved-image-checkbox')].map(cb => cb.value) : []" class="cursor-pointer">{{__('Select all')}}</label>
+                <input 
+                    type="checkbox"
+                    id="approved-select-all-checkbox"
+                    class="checkbox"
+                    x-model="allSelectedApproved"
+                />
+            </button>
 
-</div>
-
-
-<div class="gallery_wrapper" x-data="{ removeHighlight(id) {
-        let btn = document.getElementById('propel-btn-' + id);
-        if (btn) {
-            setTimeout(() => {
-                btn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
-            }, 2000);
-        }
-    }}">
-
-    @if($this->approvedImages()->isEmpty())
-        <p class="text-center">{{ __('No approved image.') }}</p>
-    @else
-    @foreach($this->approvedImages() as $image)
-
-    <!-- Building caption tooltip with Submitter Name and Caption -->
-    @php
-        $caption_tooltip_classes = "tooltip tooltip-bottom"; // tooltip classes
-        $caption_tooltip_icon_visibility = "hidden"; // default = hidden
-
-        // Building tooltip content
-        $caption_tooltip_content = '';
-        if ($wall->submitter_name_on_wall && $image->submitter_name) {
-            $caption_tooltip_content .= $image->submitter_name;
-        }
-
-        if ($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name) {
-            $caption_tooltip_content .= ' : ';
-        }
-
-        if ($wall->caption_on_wall && $image->caption) {
-            $caption_tooltip_content .= $image->caption;
-            $caption_tooltip_icon_visibility = '';
-        }
-
-        // Si rien à afficher, cacher le tooltip
-        if (empty($caption_tooltip_content)) {
-            $caption_tooltip_classes = '';
-            $caption_tooltip_icon_visibility = 'hidden';
-        }
-    @endphp
-        <div class="image_wrapper {{ ( $caption_tooltip_classes ) }}" data-tip="{!! $caption_tooltip_content !!}" wire:key="image-{{ $image->id }}">
-            <div class="uper_image_data justify-between">
-                <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
-                    </svg>
-                </a>
-                
-                <a role="button" 
-                    @click="$dispatch('confirm-action', {
-                            title: '{{ __('Delete caption') }}',
-                            message: '{{ __('Are you sure you want to delete the caption attached to this image?') }}',
-                            confirmText: '{{ __('Yes') }}',
-                            confirmClass: 'bg-orange-600 hover:bg-orange-700',
-                            action: () => $wire.call('deleteCaption', {{ $image->id }})
-                        })"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $caption_tooltip_icon_visibility ) }}">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                    </svg>
-                </a>
-            <input 
-                type="checkbox" 
-                class="checkbox checkbox-sm approved-image-checkbox"
-                :value="{{ $image->id }}"
-                x-model="selectedApproved"
-                id="checkbox-{{ $image->id }}"
+            <x-button 
+                @click="handleSelectionApprovedImages('{{ __('archive') }}', 'archiveSelected', '{{ __('Archive') }}', 'bg-blue-600 hover:bg-blue-700')"
+                icon="o-archive-box"
+                class="btn btn-sm"
+                tooltip="{{ __('Archive selection') }}"
+                aria-label="{{ __('Archive selection') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
             />
-            </div>
-                <label for="checkbox-{{ $image->id }}" display="block">
-                    <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
-                </label>
-            <div class="moderation_buttons flex justify-between">
-                <x-button 
-                    wire:click="archiveImage({{ $image->id }})"
-                    icon="o-archive-box"
-                    class="btn btn-sm"
-                    tooltip="{{ __('Archive') }}"
-                    aria-label="{{ __('Archive') }}"
-                    @click="$wire.set('selectedImages', selectedApproved)"
-                    wire:loading.attr="disabled"
-                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
-                />
-                <x-button 
-                    id="propel-btn-{{ $image->id }}"
-                    icon="o-rocket-launch"
-                    class="btn btn-sm {{ $image->priority == 1 ? 'bg-orange-600 hover:bg-orange-700' : '' }}"
-                    tooltip="{{ __('Propel') }}"
-                    aria-label="{{ __('Propel') }}"
-                    @click="
-                        $dispatch('confirm-action', {
-                            title: '{{ __('Propel') }}',
-                            message: '{{ __('Are you sure you want to propel to first place?') }}',
-                            confirmText: '{{ __('Yes') }}',
-                            confirmClass: 'bg-orange-600 hover:bg-orange-700',
-                            action: () => $wire.call('propelImage', {{ $image->id }})
-                        })
-                    "
-                    wire:loading.attr="disabled"
-                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
-                    x-init="{{ $image->priority == 1 ? 'removeHighlight(' . $image->id . ')' : '' }}"
-                />
-                <x-button 
-                    icon="o-trash"
-                    class="btn btn-sm btn-danger"
-                    tooltip="{{ __('Delete') }}"
-                    aria-label="{{ __('Delete') }}"
-                    @click="
-                        $dispatch('confirm-action', {
-                            title: '{{ __('Delete') }}',
-                            message: '{{ __('Are you sure you want to delete this image?') }}',
-                            confirmText: '{{ __('Yes, delete!') }}',
-                            confirmClass: 'bg-red-600 hover:bg-red-700',
-                            action: () => $wire.call('deleteImage', {{ $image->id }})
-                        })
-                    "
-                    wire:loading.attr="disabled"
-                    wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
-                />
-            </div>
-        </div>
-        @endforeach
-    @endif
-</div>
-<div class="galerie-navigation flex justify-evenly">
-    {{ $this->approvedImages()->links(data: ['scrollTo' => false]) }}
-</div>
+            <x-button     
+                @click="handleSelectionApprovedImages('{{ __('delete') }}', 'deleteSelected', '{{ __('Delete') }}', 'bg-red-600 hover:bg-red-700')"
+                icon="o-trash"
+                class="btn btn-sm"
+                tooltip="{{ __('Delete selection') }}"
+                aria-label="{{ __('Delete selection') }}"
+                wire:loading.attr="disabled"
+                wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
+            />
+            <!-- Message d'erreur affiché dynamiquement -->
+            <p x-show="errorMessage" x-text="errorMessage" class="text-red-500 mt-2 transition-opacity duration-500"></p>
+            <p wire:loading class="text-primary font-bold">Please wait <x-loading class="loading-dots relative -bottom-0.5 text-primary" /></p>
 
-</x-card>
+        </div>
+
+
+        <div class="gallery_wrapper" x-data="{ removeHighlight(id) {
+                let btn = document.getElementById('propel-btn-' + id);
+                if (btn) {
+                    setTimeout(() => {
+                        btn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                    }, 2000);
+                }
+            }}">
+
+            @if($this->ApprovedImages->isEmpty())
+                <p class="text-center">{{ __('No approved image.') }}</p>
+            @else
+            @foreach($this->ApprovedImages as $image)
+
+            <!-- Building caption tooltip with Submitter Name and Caption -->
+            @php
+                $caption_tooltip_classes = "tooltip tooltip-bottom"; // tooltip classes
+                $caption_tooltip_icon_visibility = "hidden"; // default = hidden
+
+                // Building tooltip content
+                $caption_tooltip_content = '';
+                if ($wall->submitter_name_on_wall && $image->submitter_name) {
+                    $caption_tooltip_content .= $image->submitter_name;
+                }
+
+                if ($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name) {
+                    $caption_tooltip_content .= ' : ';
+                }
+
+                if ($wall->caption_on_wall && $image->caption) {
+                    $caption_tooltip_content .= $image->caption;
+                    $caption_tooltip_icon_visibility = '';
+                }
+
+                // Si rien à afficher, cacher le tooltip
+                if (empty($caption_tooltip_content)) {
+                    $caption_tooltip_classes = '';
+                    $caption_tooltip_icon_visibility = 'hidden';
+                }
+            @endphp
+                <div class="image_wrapper {{ ( $caption_tooltip_classes ) }}" data-tip="{!! $caption_tooltip_content !!}" wire:key="image-{{ $image->id }}">
+                    <div class="uper_image_data justify-between">
+                        <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
+                            </svg>
+                        </a>
+                        
+                        <a role="button" 
+                            @click="$dispatch('confirm-action', {
+                                    title: '{{ __('Delete caption') }}',
+                                    message: '{{ __('Are you sure you want to delete the caption attached to this image?') }}',
+                                    confirmText: '{{ __('Yes') }}',
+                                    confirmClass: 'bg-orange-600 hover:bg-orange-700',
+                                    action: () => $wire.call('deleteCaption', {{ $image->id }})
+                                })"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6 {{ ( $caption_tooltip_icon_visibility ) }}">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                            </svg>
+                        </a>
+                    <input 
+                        type="checkbox" 
+                        class="checkbox checkbox-sm approved-image-checkbox"
+                        :value="{{ $image->id }}"
+                        x-model="selectedApproved"
+                        id="checkbox-{{ $image->id }}"
+                    />
+                    </div>
+                        <label for="checkbox-{{ $image->id }}" display="block">
+                            <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
+                        </label>
+                    <div class="moderation_buttons flex justify-between">
+                        <x-button 
+                            wire:click="archiveImage({{ $image->id }})"
+                            icon="o-archive-box"
+                            class="btn btn-xs"
+                            tooltip="{{ __('Archive') }}"
+                            aria-label="{{ __('Archive') }}"
+                            @click="$wire.set('selectedImages', selectedApproved)"
+                            wire:loading.attr="disabled"
+                            wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
+                        />
+                        <x-button 
+                            id="propel-btn-{{ $image->id }}"
+                            icon="o-rocket-launch"
+                            class="btn btn-xs {{ $image->priority == 1 ? 'bg-orange-600 hover:bg-orange-700' : '' }}"
+                            tooltip="{{ __('Propel') }}"
+                            aria-label="{{ __('Propel') }}"
+                            @click="
+                                $dispatch('confirm-action', {
+                                    title: '{{ __('Propel') }}',
+                                    message: '{{ __('Are you sure you want to propel to first place?') }}',
+                                    confirmText: '{{ __('Yes') }}',
+                                    confirmClass: 'bg-orange-600 hover:bg-orange-700',
+                                    action: () => $wire.call('propelImage', {{ $image->id }})
+                                })
+                            "
+                            wire:loading.attr="disabled"
+                            wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
+                            x-init="{{ $image->priority == 1 ? 'removeHighlight(' . $image->id . ')' : '' }}"
+                        />
+                        <x-button 
+                            icon="o-trash"
+                            class="btn btn-xs btn-danger"
+                            tooltip="{{ __('Delete') }}"
+                            aria-label="{{ __('Delete') }}"
+                            @click="
+                                $dispatch('confirm-action', {
+                                    title: '{{ __('Delete') }}',
+                                    message: '{{ __('Are you sure you want to delete this image?') }}',
+                                    confirmText: '{{ __('Yes, delete!') }}',
+                                    confirmClass: 'bg-red-600 hover:bg-red-700',
+                                    action: () => $wire.call('deleteImage', {{ $image->id }})
+                                })
+                            "
+                            wire:loading.attr="disabled"
+                            wire:target="approveImage, archiveImage, deleteImage, approveSelected, archiveSelected, deleteSelected, propelImage"
+                        />
+                    </div>
+                </div>
+                @endforeach
+            @endif
+        </div>
+        <div class="galerie-navigation flex justify-evenly">
+            {{ $this->approvedImages->links(data: ['scrollTo' => false]) }}
+        </div>
+    </x-slot:content>
+</x-collapse>
+
 </div>

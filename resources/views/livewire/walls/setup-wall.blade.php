@@ -27,10 +27,12 @@ class extends Component {
     public string $slug = '';
     public string $description = '';
     public string $max_images_submitter;
+    public string $capture_mode;
     public bool $ask_name_submitter = false;
     public bool $require_name_submitter = false;
     public bool $ask_email_submitter = false;
     public bool $require_email_submitter = false;
+    public bool $require_avatar_submitter = false;
     public bool $submitter_name_on_wall = false;
     public bool $caption_on_wall = false;
     public bool $allow_captions = false;
@@ -53,10 +55,11 @@ class extends Component {
     public int $caption_background_opacity;
     public int $caption_max_characters;
 
-    public string $posting_page_text;
-    public string $posting_page_font;
-    public string $posting_page_buttons_color;
-    public string $posting_page_buttons_font_color;
+    public ?string $posting_page_text;
+    public bool $posting_page_text_visibility;
+    public ?string $posting_page_font = null;
+    public ?string $posting_page_buttons_color = null;
+    public ?string $posting_page_buttons_font_color = null;
     public string $posting_page_logo;
     public $new_posting_page_logo;
     public bool $posting_page_logo_visibility;
@@ -81,10 +84,12 @@ class extends Component {
         if($wall->max_images_submitter) {
             $this->max_images_submitter = $wall->max_images_submitter;
         }
+        $this->capture_mode = $wall->capture_mode;
         $this->ask_name_submitter = $wall->ask_name_submitter;
         $this->require_name_submitter = $wall->require_name_submitter;
         $this->ask_email_submitter = $wall->ask_email_submitter;
         $this->require_email_submitter = $wall->require_email_submitter;
+        $this->require_avatar_submitter = $wall->require_avatar_submitter;
         $this->submitter_name_on_wall = $wall->submitter_name_on_wall;
         $this->caption_on_wall = $wall->caption_on_wall;
         $this->allow_captions = $wall->allow_captions;
@@ -108,6 +113,7 @@ class extends Component {
 
         // Custom style and images for create-image page
         $this->posting_page_text = $wall->posting_page_text;
+        $this->posting_page_text_visibility = $wall->posting_page_text_visibility;
         $this->posting_page_font = $wall->posting_page_font;
         $this->posting_page_buttons_color = $wall->posting_page_buttons_color;
         $this->posting_page_buttons_font_color = $wall->posting_page_buttons_font_color;
@@ -159,7 +165,7 @@ class extends Component {
     }
 
 
-    // Function to get the last saved slug for the copy to clipboard functionality.
+    // Computed property to get the last saved slug for the copy to clipboard functionality.
     public function getDisplayImageUrlProperty(): string
     {
         return route('slideshow', ['wall' => $this->lastSavedSlug]);
@@ -178,17 +184,33 @@ class extends Component {
         return $pngData;
     }
     
-    public function downloadQrCode()
+    public function downloadQrCode($qrCodeFormat)
     {
-        $png = QrCode::format('png')
+        // List of allowed format 
+        $allowed = ['png', 'svg', 'eps'];
+
+        if (!in_array($qrCodeFormat, $allowed)) {
+            abort(400, 'Format not supported');
+        }
+
+        $qr = QrCode::format($qrCodeFormat)
             ->size(600)
             ->margin(1)
             ->generate($this->CreateImageUrl);
 
-        return Response::streamDownload(function () use ($png) {
-            echo $png;
-        }, 'Flashwall_QR_Code_'.$this->lastSavedSlug.'.png', [
-            'Content-Type' => 'image/png',
+        // MIME types
+        $mimeTypes = [
+            'png' => 'image/png',
+            'svg' => 'image/svg+xml',
+            'eps' => 'application/postscript',
+        ];
+
+        $filename = 'Flashwall_' . $qrCodeFormat . 'QR_Code_' . $this->lastSavedSlug . '.' . $qrCodeFormat;
+
+        return Response::streamDownload(function () use ($qr) {
+            echo $qr;
+        }, $filename, [
+            'Content-Type' => $mimeTypes[$qrCodeFormat],
         ]);
     }
 
@@ -201,10 +223,12 @@ class extends Component {
             'name' => 'required|string|max:30',
             'description' => 'nullable|string|max:100',
             'max_images_submitter' => 'integer|max:99',
+            'capture_mode' => 'required|integer|max:2',
             'ask_name_submitter' => 'boolean',
             'ask_email_submitter' => 'boolean',
             'require_name_submitter' => 'boolean',
             'require_email_submitter' => 'boolean',
+            'require_avatar_submitter' => 'boolean',
             'submitter_name_on_wall' => 'boolean',
             'moderation' => 'boolean',
         ]); 
@@ -219,10 +243,12 @@ class extends Component {
             $this->wall->save();
             $this->success(__('Changes saved!'));
 
-            if ($this->wall->wasChanged('moderation')) {
+            
+            /****** FOR WALL DISPLAY WITH COPIES ******/
+            /*if ($this->wall->wasChanged('moderation')) {
                 // If moderation has changed in database
                 $this->handleModerationChange();
-            }
+            }*/
             // Refresh navigation when a wall name is updated.
             $this->dispatch('refreshNavigation');
         } else {
@@ -230,8 +256,8 @@ class extends Component {
         }
     }
 
-
-    protected function handleModerationChange()
+    /****** FOR WALL DISPLAY WITH COPIES ******/
+    /*protected function handleModerationChange()
     {
         if ($this->wall->moderation) {
         // Moderation has been activated
@@ -269,7 +295,7 @@ class extends Component {
                 }
             }
         }
-    }
+    }*/
 
 
 
@@ -278,12 +304,13 @@ class extends Component {
     {
         $data = $this->validate([
             'posting_page_text' => 'string|max:155',
-            'posting_page_font' => 'string|max:155',
-            'posting_page_buttons_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'posting_page_buttons_font_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'posting_page_text_visibility' => 'required|boolean',
+            'posting_page_font' => 'nullable|string|max:155',
+            'posting_page_buttons_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'posting_page_buttons_font_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'new_posting_page_logo' => 'nullable|image|max:1024',
             'posting_page_logo_visibility' => 'required|boolean',
-            'posting_page_background_color' => ['string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'posting_page_background_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'new_posting_page_background_image' => 'nullable|image|max:20480',
             'posting_page_background_choice' => 'required|integer|max:2',
         ]);
@@ -311,6 +338,7 @@ class extends Component {
         // On prépare les changements sur le modèle (sauf l'image)
         // Remplit le modèle avec les données validées
         $this->wall->posting_page_text = $this->posting_page_text;
+        $this->wall->posting_page_text_visibility = $this->posting_page_text_visibility;
         $this->wall->posting_page_font = $this->posting_page_font;
         $this->wall->posting_page_buttons_color = $this->posting_page_buttons_color;
         $this->wall->posting_page_buttons_font_color = $this->posting_page_buttons_font_color;
@@ -506,6 +534,22 @@ class extends Component {
                 <x-menu-separator />
             <x-input type="number" label="{!! __('Max images per user')!!}" placeholder="{!! __('Max images per user')!!}" wire:model="max_images_submitter" max="99" inline required />
 
+            @php
+                $capture_mode_options = [
+                    ['custom_key' => 0 , 'name' => __('Gallery')],
+                    ['custom_key' => 1 , 'name' => __('Front camera')],
+                    ['custom_key' => 2 , 'name' => __('Rear camera')],
+                ];
+            @endphp
+            <div class="flex justify-center text-center">
+                <x-group
+                    label="{{ __('By default, the user can select and upload an image from:') }}"
+                    :options="$capture_mode_options"
+                    wire:model="capture_mode"
+                    option-value="custom_key"
+                    class="[&:checked]:!btn-primary btn-sm normal-case" />
+            </div>
+
             <p class="pb-0 label label-text font-semibold">Requested user information</p>
             <div x-data="{
                 ask_name_submitter: @entangle('ask_name_submitter'),
@@ -530,6 +574,8 @@ class extends Component {
 
             <x-toggle label="{{__('Display user name?')}}" wire:model="submitter_name_on_wall" right inline hint="To manage how names are displayed, go to captions options"/>
 
+            <x-toggle label="{{__('Enable avatar selection and display?')}}" wire:model="require_avatar_submitter" right inline/>
+
                 <x-menu-separator />
 
             <x-toggle label="{{__('Activate moderation?')}}" wire:model="moderation" right inline/>
@@ -546,7 +592,8 @@ class extends Component {
 
         <x-form wire:submit="updatePostingPageStyle">
 
-            <x-input label="{{ __('Welcome text') }}" placeholder="{{ __('Welcome text') }}" wire:model="posting_page_text" inline />
+            <x-input label="{{ __('Welcome text') }}" hint="{{ __('It will also be the page title, even if the Welcome text is hidden') }}"
+            placeholder="{{ __('Welcome text') }}" wire:model="posting_page_text" inline />
 
             <!-- CUSTOM FONT SELECTOR INPUT -->
             <div x-data="{
@@ -563,7 +610,7 @@ class extends Component {
             }" class="relative">
 
                 <!-- Clickable fake input -->
-                <label class="pt-0 label label-text font-semibold">{{ __('Welcome text font') }}</label>
+                <label class="fieldset-legend text-sm font-medium">{{ __('Welcome text font') }}</label>
                 <div tabindex="0" @click="open = !open"
                     :class="open ? 'ring ring-primary ring-opacity-30' : ''"
                     class="flex items-center justify-between w-full input cursor-pointer"
@@ -610,37 +657,70 @@ class extends Component {
                     </template>
                 </ul>
             </div>
+            <!-- END CUSTOM FONT SELECTOR INPUT -->
 
+            <x-toggle label="{{__('Display welcome text?')}}" wire:model="posting_page_text_visibility" right inline/>
 
-                <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }"class="flex flex-row items-end justify-evenly">
-                    <x-input class="w-full" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" />
+            <hr>
 
+                <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }"class="flex flex-row gap-x-3 items-end justify-between">
+                    <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" >
+                        <x-slot:prefix>Hex</x-slot:prefix>
+                        <x-slot:suffix>
+                            <button
+                                type="button"
+                                class="text-gray-500 hover:text-gray-black focus:outline-none"
+                                title="{{ __('Clear color') }}"
+                                wire:click="$set('posting_page_buttons_color', null)">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </x-slot:suffix>
+                    </x-input>
+                    
                     <input
                         type="color"
-                        x-model="posting_page_buttons_color"
+                        x-bind:value="posting_page_buttons_color || '#cccccc'"
+                        @input="posting_page_buttons_color = $event.target.value"
                         wire:model="posting_page_buttons_color"
                         class="h-8 w-12 mb-[0.46rem] cursor-pointer"
                         title="{{ __('Choose a color') }}"
                     >
+                </div>
                 @error('posting_page_buttons_color')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
-                </div>
                 
-                <div x-data="{ posting_page_buttons_font_color: @entangle('posting_page_buttons_font_color') }" class="flex flex-row items-end justify-evenly">
-                    <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" placeholder="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" />
+                <div x-data="{ posting_page_buttons_font_color: @entangle('posting_page_buttons_font_color') }" class="flex flex-row gap-x-3 items-end justify-evenly">
+                    <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" placeholder="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" >
+                        <x-slot:prefix>Hex</x-slot:prefix>
+                        <x-slot:suffix>
+                            <button
+                                type="button"
+                                class="text-gray-500 hover:text-gray-black focus:outline-none"
+                                title="{{ __('Clear color') }}"
+                                wire:click="$set('posting_page_buttons_font_color', null)">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </x-slot:suffix>
+                    </x-input>
 
                     <input
                         type="color"
-                        x-model="posting_page_buttons_font_color"
+                        x-bind:value="posting_page_buttons_font_color || '#cccccc'"
+                        @input="posting_page_buttons_font_color = $event.target.value"
                         wire:model="posting_page_buttons_font_color"
                         class="h-8 w-12 mb-[0.46rem] cursor-pointer"
                         title="{{ __('Choose a color') }}"
                     >
+                </div>
                 @error('posting_page_buttons_font_color')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
-                </div>
+
             </div>
 
         <x-menu-separator />
@@ -676,7 +756,9 @@ class extends Component {
             </div>
         
             <div x-show="posting_page_choice == 0"  x-data="{ posting_page_background_color: @entangle('posting_page_background_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{!! __('Page background color')!!}" x-model="posting_page_background_color" />
+                <x-input class="w-full" label="{!! __('Page background color')!!}" x-model="posting_page_background_color">
+                    <x-slot:prefix>Hex</x-slot:prefix>
+                </x-input>
 
                 <input
                     type="color"
@@ -685,11 +767,10 @@ class extends Component {
                     class="h-8 w-12 mb-[0.46rem] cursor-pointer"
                     title="{{ __('Choose a color') }}"
                 >
-
-                @error('posting_page_background_color')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
             </div>
+            @error('posting_page_background_color')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
         
             <div x-show="posting_page_choice == 1"  class="max-w-full overflow-hidden">
                 <x-file style="max-width: 100% !important" wire:model="new_posting_page_background_image" label="{!! __('Page background image') !!}" 
@@ -769,21 +850,40 @@ class extends Component {
             </div>-->
             
             <!-- Display QR Code as svg -->
-            <div class="text-center mt-4">
+            <div class="text-center mt-2">
                 <p class="pt-0 label-text font-semibold mb-3">{{ __('QR Code to post image') }} :</p>
                 <div class="mx-auto w-full flex justify-center">
                     {!! $this->createImageQrCode !!}
                 </div>
-            </div>
+            
 
-            <x-button
-                wire:click="downloadQrCode"
-                class="btn-primary flex items-center gap-2"
-                icon="o-arrow-down-tray"
-                hint="png"
-                label="{{ __('Download QR code') }}"
-                spinner="downloadQrCode"
-            />
+            <!-- QR Code Download buttons -->
+            <p class="pt-0 label-text font-semibold mt-4 mb-3">{{ __('Download QR code') }}</p>
+            <div class="flex flex-wrap justify-evenly">
+                <x-button
+                    wire:click="downloadQrCode('png')"
+                    class="btn flex items-center gap-2"
+                    icon="o-arrow-down-tray"
+                    label="SVG"
+                    spinner="downloadQrCode"
+                />
+                <x-button
+                    wire:click="downloadQrCode('svg')"
+                    class="btn flex items-center gap-2"
+                    icon="o-arrow-down-tray"
+                    label="PNG"
+                    spinner="downloadQrCode"
+                />
+                <x-button
+                    wire:click="downloadQrCode('EPS')"
+                    class="btn flex items-center gap-2"
+                    icon="o-arrow-down-tray"
+                    label="EPS"
+                    spinner="downloadQrCode"
+                />
+            </div>
+            
+            </div>
 
            
             <x-slot:actions>
@@ -810,7 +910,9 @@ class extends Component {
             </div>
 
             <div x-show="wall_background_choice == 0" x-data="{ background_color: @entangle('background_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{!! __('Background color')!!}" placeholder="{!! __('Background color')!!}" x-model="background_color" />
+                <x-input class="w-full" label="{!! __('Background color')!!}" placeholder="{!! __('Background color')!!}" x-model="background_color">
+                    <x-slot:prefix>Hex</x-slot:prefix>
+                </x-input>
 
                 <input
                     type="color"
@@ -843,7 +945,6 @@ class extends Component {
             </br>
             <p style="width: 100%;">Background exemples for testing. Right click to download.</p>
             <div style="width: 100%; display: flex; justify-content: space-around;">
-                <img src="{{ asset('storage/walls_images/background_images/grid_background.jpg') }}" style="width: 45%; height: auto; border: 2px solid #4a00ff;" inline />
                 <img src="{{ asset('storage/walls_images/background_images/default_background.jpg') }}" style="width: 45%; height: auto; border: 2px solid #4a00ff;" inline />
             </div>
             
@@ -859,10 +960,18 @@ class extends Component {
     <x-card title="{{ __('Wall layout') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateWallLayout">
-            <x-input type="number" label="{{ __('Top margin') }}" placeholder="{{ __('Top margin') }}" wire:model="margin_top" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{__('Bottom margin') }}" placeholder="{{__('Bottom margin') }}" wire:model="margin_bottom" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{ __('Left margin') }}" placeholder="{{ __('Left margin') }}" wire:model="margin_left" hint="{{ __('As a percentage') }}" inline />
-            <x-input type="number" label="{{__('Right margin') }}" placeholder="{{__('Right margin') }}" wire:model="margin_right" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{ __('Top margin') }}" placeholder="{{ __('Top margin') }}" wire:model="margin_top" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
+            <x-input type="number" label="{{__('Bottom margin') }}" placeholder="{{__('Bottom margin') }}" wire:model="margin_bottom" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
+            <x-input type="number" label="{{ __('Left margin') }}" placeholder="{{ __('Left margin') }}" wire:model="margin_left" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
+            <x-input type="number" label="{{__('Right margin') }}" placeholder="{{__('Right margin') }}" wire:model="margin_right" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
 
             <x-slot:actions>
                 <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallLayout" />
@@ -876,7 +985,9 @@ class extends Component {
     <x-card title="{{ __('Images display') }}" class="w-96" shadow separator>
 
         <x-form wire:submit="updateImagesDisplay">
-            <x-input type="number" label="{{ __('Time per image') }}" placeholder="{{ __('Time per image') }}" wire:model="duration" hint="{{ __('In seconds') }}" inline />
+            <x-input type="number" label="{{ __('Time per image') }}" placeholder="{{ __('Time per image') }}" wire:model="duration" inline >
+                <x-slot:prefix>In seconds</x-slot:prefix>
+            </x-input>
 
             @php
                 $transition_names = [
@@ -926,7 +1037,10 @@ class extends Component {
 
             <x-badge value="{{ __('Captions styles also applies to names display') }}" class="badge-primary badge-soft badge-dash mb-1" />
 
-            <x-input type="number" label="{{ __('Captions max width') }}" placeholder="{{ __('Captions max width') }}" wire:model="caption_max_width" hint="{{ __('As a percentage') }}" inline />
+            <x-input type="number" label="{{ __('Captions max width') }}" placeholder="{{ __('Captions max width') }}" wire:model="caption_max_width" inline >
+                <x-slot:prefix>%</x-slot:prefix>
+            </x-input>
+            
             @php
                 $options = [
                     ['custom_key' => 1 , 'name' => __('On image')],
@@ -946,7 +1060,9 @@ class extends Component {
 
             <x-menu-separator />
             
-            <x-input type="number" label="{{ __('Captions font size') }}" placeholder="{{ __('Captions font size') }}" wire:model="caption_font_size" hint="{{ __('In pixels') }}" inline />
+            <x-input type="number" label="{{ __('Captions font size') }}" placeholder="{{ __('Captions font size') }}" wire:model="caption_font_size" inline >
+                <x-slot:prefix>In pixels</x-slot:prefix>
+            </x-input>
 
             <div x-data="{ caption_font_color: @entangle('caption_font_color') }"class="flex flex-row items-end justify-evenly">
                 <x-input class="w-full" label="{{ __('Font color')}}" placeholder="{{ __('Font color')}}" x-model="caption_font_color" />

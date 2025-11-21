@@ -8,6 +8,7 @@ new class extends Component {
 
 ?>
 
+@section('title', __('Home'))
 
 <div class="hero bg-base-200 min-h-full">
     <div class="hero-content text-center">

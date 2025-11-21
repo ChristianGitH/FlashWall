@@ -28,6 +28,7 @@ return new class extends Migration
                 ->constrained('submitters')
                 ->nullOnDelete(); // If the submitter is deleted, image stays with null id.
             $table->string('submitter_name')->nullable();
+            $table->string('submitter_avatar')->default('😊');
             $table->boolean('priority')->default(0);
             $table->boolean('permanent');
             $table->timestamps();

@@ -21,6 +21,7 @@ class ImageSeeder extends Seeder
                 'caption' => 'Image : '. $i,
                 'visitor_token' => '1458-afgd',
                 'submitter_name' => 'John '. $i,
+                'submitter_avatar' => '😊',
                 'permanent' => true,
             ]);
             $i++;

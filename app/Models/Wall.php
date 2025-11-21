@@ -25,10 +25,12 @@ class Wall extends Model
         'allow_captions',
         'moderation',
         'max_images_submitter',
+        'capture_mode',
         'ask_name_submitter',
         'ask_email_submitter',
         'require_name_submitter',
         'require_email_submitter',
+        'require_avatar_submitter',
         'submitter_name_on_wall',
         'caption_on_wall',
         'background_choice',
@@ -48,6 +50,7 @@ class Wall extends Model
         'caption_background_opacity',
         'caption_max_characters',
         'posting_page_text',
+        'posting_page_text_visibility',
         'posting_page_buttons_color',
         'posting_page_buttons_font_color',
         'posting_page_logo',
@@ -62,14 +65,33 @@ class Wall extends Model
      * Cast des attributs pour garantir une bonne comparaison avec isDirty(), (ADDED when adding wall settings)
      */
     protected $casts = [
-        'captions' => 'boolean',
+        'allow_captions' => 'boolean',
         'moderation' => 'boolean',
-        'ask_name_submitter',
-        'ask_email_submitter',
-        'require_name_submitter',
-        'require_email_submitter',
-        'submitter_name_on_wall',
-        'caption_on_wall',
+        'ask_name_submitter' => 'boolean',
+        'ask_email_submitter' => 'boolean',
+        'require_name_submitter' => 'boolean',
+        'require_email_submitter' => 'boolean',
+        'require_avatar_submitter' => 'boolean',
+        'submitter_name_on_wall' => 'boolean',
+        'caption_on_wall' => 'boolean',
+        'posting_page_logo_visibility' => 'boolean',
+        'posting_page_text_visibility' => 'boolean',
+        
+        'background_choice' => 'integer',
+        'caption_max_width' => 'integer',
+        'caption_position' => 'integer',
+        'caption_font_size' => 'integer',
+        'margin_top' => 'integer',
+        'margin_bottom' => 'integer',
+        'margin_left' => 'integer',
+        'margin_right' => 'integer',
+        'duration' => 'integer',
+        'caption_background_opacity' => 'integer',
+        'caption_max_characters' => 'integer',
+        'max_images_submitter' => 'integer',
+        'capture_mode' => 'integer',
+        'posting_page_logo_visibility' => 'integer',
+        'posting_page_background_choice' => 'integer',
     ];
 
 
@@ -80,6 +102,8 @@ class Wall extends Model
      */
     protected $hidden = [
         'user_id',
+        'created_at',
+        'updated_at',
     ];
 
     // Relations : One wall belongs to one user.

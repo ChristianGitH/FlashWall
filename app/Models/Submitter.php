@@ -9,7 +9,7 @@ class Submitter extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'email', 'token'];
+    protected $fillable = ['name', 'email', 'avatar', 'token'];
 
     public function images()
     {

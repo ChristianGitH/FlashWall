@@ -28,15 +28,15 @@ class extends Component {
     }
 }; ?>
 
-<div>
-    <x-card class="h-screen flex items-center justify-center" title="{{__('Login')}}" shadow separator>
- 
+<div class="lg:min-h-screen flex items-center justify-center">
+    <x-card class="flex items-center justify-center p-5 lg:px-10 lg:py-5" title="{{__('Login')}}" shadow separator>
+
         <x-form wire:submit="login">
             <x-input label="{{__('E-mail')}}" placeholder="{{__('E-mail')}}" wire:model="email" icon="o-envelope" inline />
             <x-input label="{{__('Password')}}" placeholder="{{__('Password')}}" wire:model="password" type="password" icon="o-key" inline />
             <x-checkbox label="{{ __('Remember me') }}" placeholder="{{ __('Remember me') }}" wire:model="remember"/>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap">
                 <x-button label="{{__('Forgot your password?')}}" class="btn-ghost" link="/forgot-password" />
                 <x-button label="{{__('Create an account')}}" class="btn-ghost" link="/register" />
                 <x-button label="{{__('Login')}}" type="submit" icon="o-paper-airplane" class="btn-primary" />
