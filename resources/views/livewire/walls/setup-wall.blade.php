@@ -864,18 +864,18 @@ class extends Component {
                     wire:click="downloadQrCode('png')"
                     class="btn flex items-center gap-2"
                     icon="o-arrow-down-tray"
-                    label="SVG"
+                    label="PNG"
                     spinner="downloadQrCode"
                 />
                 <x-button
                     wire:click="downloadQrCode('svg')"
                     class="btn flex items-center gap-2"
                     icon="o-arrow-down-tray"
-                    label="PNG"
+                    label="SVG"
                     spinner="downloadQrCode"
                 />
                 <x-button
-                    wire:click="downloadQrCode('EPS')"
+                    wire:click="downloadQrCode('eps')"
                     class="btn flex items-center gap-2"
                     icon="o-arrow-down-tray"
                     label="EPS"

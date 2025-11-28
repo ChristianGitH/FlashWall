@@ -186,6 +186,8 @@ new class extends Component {
         // Validate data
         $data = $this->validate($rules);
 
+        $data['token'] = $this->visitorToken;
+
         if ($this->submitter) {
             $this->submitter->fill($data);
 
@@ -496,6 +498,9 @@ new class extends Component {
                 
                 <x-slot:actions>
                     <x-button label="{{__('Next')}}" icon="o-paper-airplane" spinner="saveSubmitterData" type="submit"
+                    wire:loading.attr="disabled"
+                    wire:target="saveSubmitterData"
+                    wire:loading.class="opacity-50"
                     class="{{ $this->wall->posting_page_buttons_color ? '' : 'btn-primary' }}"
                     style="{{ $this->wall->posting_page_buttons_color ? '
                     border-color: ' .$this->wall->posting_page_buttons_color. '; 
@@ -557,7 +562,10 @@ new class extends Component {
                 @endif
 
                 <x-slot:actions>
-                    <x-button label="{{__('Send')}}" icon="o-paper-airplane" spinner="uploadImage" type="submit"
+                    <x-button label="{{__('Send')}}" icon="o-paper-airplane" spinner="uploadImage, image" type="submit"
+                    wire:loading.attr="disabled"
+                    wire:target="image, uploadImage"
+                    wire:loading.class="opacity-50"
                     class="{{ $this->wall->posting_page_buttons_color ? '' : 'btn-primary' }}"
                     style="{{ $this->wall->posting_page_buttons_color ? '
                     border-color: ' .$this->wall->posting_page_buttons_color. '; 
