@@ -6,12 +6,14 @@ use App\Models\Wall;
 new class extends Component {
 
     public Wall $wall;
+    public string $mode = 'prod';
     public array $displaySettings;
 
 
-    public function mount(Wall $wall)
+    public function mount(Wall $wall, string $mode = 'prod')
     {
         $this->wall = $wall;
+        $this->mode = $mode;
         $this->displaySettings = $this->computeWallSettings();
     }
 
@@ -36,14 +38,10 @@ public function computeWallSettings(): array
     $image_width  = 100 - $marginLeft - $marginRight;
 
     $image_container_style = "
-        position: absolute;
         top: {$marginTop}%;
         bottom: {$marginBottom}%;
         left: {$marginLeft}%;
         right: {$marginRight}%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     ";
 
     // BACKGROUND COLOR AND OPACITY. Change the pourcentage of opacity from 0-100 to 0-255
@@ -85,7 +83,13 @@ public function computeWallSettings(): array
     <!-- Slideshow appears only when ready = true -->
     <div x-show="ready" x-cloak>
         <!-- Slideshow bellow -->
-        <livewire:displaywalls.slideshow :wall="$wall" :displaySettings="$displaySettings" />
+        @if($mode === 'dev')
+            <livewire:displaywalls.slideshow-dev :wall="$wall" :displaySettings="$displaySettings" />
+        @elseif($mode === 'oldcaption')
+            <livewire:displaywalls.slideshow-stable-classic-caption :wall="$wall" :displaySettings="$displaySettings" />
+        @else
+            <livewire:displaywalls.slideshow :wall="$wall" :displaySettings="$displaySettings" />
+        @endif
     </div>
 
 </div>

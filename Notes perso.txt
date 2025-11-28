@@ -1,15 +1,9 @@
 TO DEPLOY :
-setup-wall : (NOT TESTED in local) Added more QR Code download format (now PNG,SVG, EPS)
-    Added toggle button to enable for submitter Avatar selection and display.
-create-image : Added width and height size limit. Now scale down only if needed (no upsizing).
-    Original file now scaled down before storage, but keeps the original format.
-    Added a "Thank you" card for after uploading image.
-    Added missing default page title.
-    background-size 100% changed to background-size: cover;
-    Changed Terms display, now appears on submitter card, except if no data is aske, then upload card.
-    Now admin can choose if submitters can upload image from disc or only take photo (capture attribute on file upload input)
-    Added avatar selector
-moderation : Wall Settings Quick View z-index bug in "all-images" component ?? need css build to test
+slideshow : new layout for captions
+    changed slideshow-wrapper, navigation and routes to allow access to slideshow dev and with old caption.
+setup-wall : Fixed QR Code wrong EPS (capital letters) and png/svg were swaped.
+create-image : added submitter token in submitter table, was missing.
+    Send button disabled and added spinner while image is loading.
 
 
 NEXT TO DO :
@@ -29,13 +23,11 @@ display-image : Add possibility to display QR code on display-image
 
 !!!! Copies creation déjà retirée/commenté de setup-wall, à faire dans moderation. !!!!
 
-Check for possibility to Crop image to a square shape
 A faire : rediger les Terms
-Video as background on wall display
 
 A FAIRE AVANT  :
-Autres options de position "avatar et légende"
-
+moderation : fix caption display, overlay bug with side menu drawer
+    
 
 
 

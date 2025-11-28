@@ -219,6 +219,28 @@ public function markImageAsDisplayed($imageId, $nextImageId)
     showDebug: false, // FOR DEV ONLY
     }">
 
+<!-- DEV TOGGLE BUTTON -->
+<div class="fixed top-5 left-5" style="z-index: 100;">
+    <x-button 
+        @click="showDebug = !showDebug"
+        class="btn btn-xs"
+        x-text="showDebug ? 'Masquer debug' : 'Afficher debug'"
+    />
+</div>
+
+<!-- For DEV and testing -->
+<div x-show="showDebug" style="z-index: 100; opacity: 0.7;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
+    <p>Displayed : {{ $countImageDisplay }}. IDs to display ({{ count($approvedImages) }}) : 
+    @foreach ($approvedImages as $index => $image)
+        <span style="color: {{ $image->permanent ? 'green' : 'blue' }}; background-color: {{ $image->priority == 1 ? 'orange' : 'transparent' }}">
+            {{ $image->id }}
+        </span>@if (!$loop->last), @endif
+    @endforeach
+    </p>
+    <p>Already displayed IDs : {{ implode(', ', $displayedImageIds) }}</p>
+    <p>Refresh every : {{ $refreshEvery }}. Last DB check: {{ $lastDBCheckAt ?? 'Never' }}</p>
+</div>
+<!-- For dev and testing -->
 
 @if($approvedImages->isEmpty())
     <p class="text-center text-gray-500">{{ __('No image. Reload the page to start the slideshow.') }}</p>
@@ -342,16 +364,16 @@ public function markImageAsDisplayed($imageId, $nextImageId)
 
             
 
-            // Utility function, to set a delay
+            // Fonction utilitaire pour attendre un délai
             const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
             // Reset captions
             this.showCaption = false;
             this.showCaptionContent = false;
 
-            // Caption display, wrapper first, then content
+            // Affichage progressif des légendes
             (async () => {
-                await wait(this.captionDelay); // After image display, wait before displaying caption wrapper
+                await wait(this.captionDelay); // attendre 3s avant d'afficher la première légende
                 this.showCaption = true;
 
                 this.$nextTick(() => {
@@ -359,7 +381,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                     if (captionDiv) captionDiv.style.width = '100%';
                 });
 
-                await wait(this.captionContentDelay); // Wait again before displaying caption content
+                await wait(this.captionContentDelay); // attendre 0,4s avant d'afficher le contenu
                 this.showCaptionContent = true;
             })();
 
@@ -368,7 +390,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
             requestAnimationFrame(this.nextFrame.bind(this));
                 
             document.addEventListener('fullscreenchange', () => {
-                // When we leave Fullscreen (ex: hit Escape)
+                // Quand on quitte le fullscreen (ex: touche Échap)
                 if (!document.fullscreenElement) {
                     this.isFullscreen = false;
                     document.body.style.cursor = 'default';
@@ -472,8 +494,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                     color: {{ $displaySettings['caption_font_color'] }};
                     background-color: {{ $displaySettings['caption_background'] }};
                     max-width: {{ $displaySettings['caption_max_width'] }}%;
-                    display: inline-block;">
-                                                
+                    display: inline-block;">                            
                     <div class="flex justify-center items-center gap-2">
                         @if($wall->require_avatar_submitter && $image->submitter_avatar)
                         <span
@@ -508,6 +529,11 @@ public function markImageAsDisplayed($imageId, $nextImageId)
     </div>
     @endforeach
 
+        <!-- Debug panel -->
+    <div x-show="showDebug" style="z-index: 150;" class="fixed bottom-2 right-2 bg-white text-xs text-gray-700 shadow p-2 rounded max-w-xs z-50">
+        <p><strong>currentSlide:</strong> <span x-text="currentSlide"></span></p>
+        <p><strong>slides:</strong> <span x-text="JSON.stringify(slides)"></span></p>
+    </div>
 </div>
 
 @endif

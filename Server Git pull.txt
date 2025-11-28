@@ -26,3 +26,15 @@ Display images, moderation
 On Local VS Code :
 Stage changes = > Commit => Pull and push.
 If local server doesn't show the lastest change that have been push/pulled : php artisan optimize:clear. It clears cache and else.
+
+
+OVH VPS :
+Log : ssh username@ip4 -p port
+Port : 52777
+
+Port changé, 
+Par feu iptables paramétré : http, htpps, ssh, sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
+Zone DNS en cours,
+Fail 2 ban installé non paramétré
+Root user non bloqué
+

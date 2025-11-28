@@ -24,8 +24,8 @@ Volt::route('/{wall}', 'images.create-image')->name('create-image');
 
 // Autres routes accessibles à tous (si besoin)
 Volt::route('/', 'index')->name('home');
-Volt::route('/display/{wall}', 'displaywalls.slideshow-wrapper')->name('slideshow');
-
+Volt::route('/display/{wall}', 'displaywalls.slideshow-wrapper', ['mode' => 'prod'])->name('slideshow');
+Volt::route('/display/{wall}/{mode}', 'displaywalls.slideshow-wrapper')->name('slideshow.mode');
 
 // Routes pour le changement de langue
 Route::get('language/{locale}', function ($locale) {
