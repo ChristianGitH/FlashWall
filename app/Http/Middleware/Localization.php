@@ -19,6 +19,12 @@ class Localization
     {
         if (Session::has('locale')) {
             App::setLocale(Session::get('locale'));
+        } else {
+            // Get browser language
+            $browserLocale = $request->getPreferredLanguage(['fr', 'en']);
+
+            // Définir la langue (fallback en en)
+            App::setLocale($browserLocale ?? 'fr');
         }
         return $next($request);
     }

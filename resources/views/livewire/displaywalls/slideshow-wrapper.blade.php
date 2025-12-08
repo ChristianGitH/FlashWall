@@ -20,10 +20,13 @@ new class extends Component {
 public function computeWallSettings(): array
 {
     $caption_max_width = $this->wall->caption_max_width;
+    $caption_font_unit = $this->wall->caption_font_unit;
     $caption_font_size = $this->wall->caption_font_size;
+    $submitter_name_font_size = $this->wall->submitter_name_font_size;
     $duration = $this->wall->duration*1000;
     $transition = $this->wall->transition;
     $caption_font_color = $this->wall->caption_font_color;
+    $submitter_name_font_color = $this->wall->submitter_name_font_color;
     $caption_background_color = $this->wall->caption_background_color;
     $caption_background_opacity = $this->wall->caption_background_opacity;
 
@@ -60,11 +63,14 @@ public function computeWallSettings(): array
 
     return [
         'caption_max_width' => $caption_max_width,
+        'caption_font_unit' => $caption_font_unit,
         'caption_font_size' => $caption_font_size,
+        'submitter_name_font_size' => $submitter_name_font_size,
         'background' => $background,
         'duration' => $duration,
         'transition' => $transition,
         'caption_font_color' => $caption_font_color,
+        'submitter_name_font_color' => $submitter_name_font_color,
         'caption_background' => $caption_background,
         'image_container_style' => $image_container_style,
         'image_height' => $image_height,

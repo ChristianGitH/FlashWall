@@ -1,10 +1,14 @@
 TO DEPLOY :
-slideshow : new layout for captions
-    changed slideshow-wrapper, navigation and routes to allow access to slideshow dev and with old caption.
-setup-wall : Fixed QR Code wrong EPS (capital letters) and png/svg were swaped.
-create-image : added submitter token in submitter table, was missing.
-    Send button disabled and added spinner while image is loading.
-
+language-switcher : color change for dark mode
+create-image : changed some labels positions, language switcher position, margins between elements.
+    changed capture_mode_options input, to completly remove capture attribute from input when default.
+    Fixed bug, impossible to send submitterData form because no avatar, added default.
+    Custom end page/card Title and Message
+localization.php : added getPreferredLanguage to get browser language.
+setup-wall : fixed spinner bug on some cards/forms.
+    Changed font family selector to sort by popularity.
+    Added inputs for custom end page/card Title and Message.
+    Added font unit, and seperate size and color for name.
 
 NEXT TO DO :
 Bug sur display-image lors de l'archivage ou Suppression d'image.
@@ -21,13 +25,18 @@ moderation : refactor moderation components, DRY, uper_image_data, mayby also bu
 setup-wall + display-wall : Video as background on wall display
 display-image : Add possibility to display QR code on display-image
 
-!!!! Copies creation déjà retirée/commenté de setup-wall, à faire dans moderation. !!!!
+!!!! Copies creation déjà retirée/commenté de setup-wall, à faire dans moderation et create image!!!!
 
-A faire : rediger les Terms
 
-A FAIRE AVANT  :
+A faire : 
+rediger les Terms
+new site welcome page
 moderation : fix caption display, overlay bug with side menu drawer
-    
+slideshow : verifier que la boucle du slideshow fonctionne bien,
+    qu'il n y a pas de décalage entre le fait d'attente le chargement de l'image et le départ des async.
+    Saut d'image car parfois deux refresh à la suite : DEPLACER this.lastTime = now; ??
+create-image : card too wide, maybe because of the page logo
+
 
 
 

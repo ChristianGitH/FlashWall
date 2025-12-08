@@ -30,6 +30,8 @@ new class extends Component {
     public ?string $avatar = '';
     public string $posting_page_font_link = '';
     public string $posting_page_font_style = '';
+    public string $posting_page_end_title = '';
+    public string $posting_page_end_text = '';
     public ?string $visitorToken = '';
     public string $currentCard = 'loading';
 
@@ -45,6 +47,7 @@ new class extends Component {
 
         $this->initBackground();
         $this->initFont();
+        $this->initEndMessage();
         $this->initVisitorToken();
         $this->initSubmitterData();
         $this->getSubmitterRequirements();
@@ -71,6 +74,12 @@ new class extends Component {
             $this->posting_page_font_style = "font-family: {$font}, sans-serif;";
     }
 
+    private function initEndMessage(): void
+    {
+        $this->posting_page_end_title = $this->wall->posting_page_end_title;
+        $this->posting_page_end_text = $this->wall->posting_page_end_text;
+    }
+
     private function initVisitorToken(): void
     {
         $this->visitorToken = request()->cookie('visitor_token') ?? (string) \Str::uuid();
@@ -83,8 +92,11 @@ new class extends Component {
             $this->submitter = Submitter::find($submitterId);
             $this->name = $this->submitter?->name ?? '';
             $this->email = $this->submitter?->email ?? '';
-            $this->avatar = $this->submitter?->avatar ?? '';
-        }
+            $this->avatar = $this->submitter?->avatar ?? '😊';
+        } else {
+        // si pas de submitter existant
+        $this->avatar = '😊';
+    }
     }
 
 
@@ -113,7 +125,7 @@ new class extends Component {
         return match($this->wall->capture_mode) {
             1 => 'user',        // Front camera
             2 => 'environment', // Rear camera
-            default => '',      // Gallery ou aucune capture forcée
+            default => null,      // Gallery ou aucune capture forcée
         };
     }
 
@@ -174,7 +186,7 @@ new class extends Component {
     {
         // Build validation rules dynamically
         $rules = [
-            'name' => ($this->wall->require_name_submitter ? 'required|' : 'nullable|') . 'string|max:50',
+            'name' => ($this->wall->require_name_submitter ? 'required|' : 'nullable|') . 'string|max:15',
             'email' => ($this->wall->require_email_submitter ? 'required|' : 'nullable|') . 'email|max:150',
             'avatar' => ($this->wall->require_avatar_submitter ? 'required|' : 'nullable|') . 'string|max:4',
         ];
@@ -269,34 +281,11 @@ new class extends Component {
         // Save thumb         
         Storage::disk('public')->put($parent->thumb_full_path, $img->scale(width: 500)->encodeByExtension('webp', 80));
 
-
-        // COPIES CREATION
-        /*if (!$this->wall->moderation) {
-            // Calculating the number of iterence of non-permanent image we need to add
-            $wallImagesCount = Image::where('wall_id', $this->wall->id)->where('permanent', true)->count();
-            $j = round($wallImagesCount*0.2);
-            for ($k = 0; $k < $j; $k++) {
-                // Saving in database
-                Image::create([
-                    'wall_id' => $this->wall->id,
-                    'parent_id' => $parent->id,
-                    'name' => $originalFilename,
-                    'webp_name' => $webpFilename,
-                    'thumb' => $webpFilename,
-                    'caption' => $this->caption,
-                    'status' => 1,
-                    'visitor_token' => $this->visitorToken,
-                    'submitter_id' => $this->submitter->id ?? null,
-                    'submitter_name' => $this->submitter->name ?? null,
-                    'permanent' => false,
-                ]);
-            }
-        }*/
-
         $this->success(__('Image added successfully!'));
-        $this->showMessage('The submission was successful', 'Thank you');
+        $this->showMessage($this->posting_page_end_text, $this->posting_page_end_title);
         $this->reset('image', 'caption');
     }
+    
 
 }; 
 ?>
@@ -327,7 +316,7 @@ new class extends Component {
 <div x-data="{ currentCard: @entangle('currentCard') }"
     class="min-h-screen flex flex-col" style="{{ $background }}">
     <!-- Main content centered -->
-    <main class="flex-1 flex items-center justify-center p-5 lg:px-10 lg:py-5">
+    <main class="flex-1 flex flex-col items-center justify-center p-5 lg:px-10 lg:py-5">
         <div x-show="currentCard === 'loading'" class="absolute inset-0 flex items-center justify-center z-50">
             <x-loading class="loading-ring" />
         </div>
@@ -341,13 +330,13 @@ new class extends Component {
                 <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto object-cover " />
             @endif
 
-            <x-form wire:submit="saveSubmitterData"> 
+            <x-form wire:submit="saveSubmitterData" class="mt-6"> 
 
                 <!-- Name input display -->
                 @if ($this->wall->ask_name_submitter && !$this->wall->require_name_submitter)
-                    <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline />
+                    <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" maxlength="15" inline />
                 @elseif ($this->wall->ask_name_submitter && $this->wall->require_name_submitter)
-                    <x-input label="{{__('Name')}} *" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline required />
+                    <x-input label="{{__('Name')}} *" placeholder="{{__('Name')}}" wire:model="name" maxlength="15" inline required />
                 @endif
 
                 <!-- Email input display -->
@@ -508,12 +497,22 @@ new class extends Component {
                     background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
                 </x-slot:actions>
             </x-form>
+
+            <div class="w-full flex justify-center pt-0 mt-4 -mb-4">
+                @include('partials.language-switcher')
+            </div>
         </x-card>
 
+
+
+
+
         <x-card x-show="currentCard === 'upload'" x-cloak  class="flex items-center justify-center">
-            <h1 class="text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
-            @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mx-auto shadow-md object-cover " />
+            @if($this->wall->posting_page_text_visibility)
+                <h1 class="mb-4 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
+            @endif
+                @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto object-cover " />
             @endif
 
             <!-- Submitter data display
@@ -532,7 +531,7 @@ new class extends Component {
             @endphp
 
             @if($label)
-                <a role="button" class="flex justify-start items-center" @click="currentCard = 'submitter';">
+                <a role="button" class="flex justify-center items-center mb-1" @click="currentCard = 'submitter';">
                     <x-icon name="o-user-circle" title="Change" />
                     {{ $label }}
                     <x-icon name="o-pencil-square" class="text-gray-500 ml-2" title="Change" />
@@ -541,19 +540,26 @@ new class extends Component {
 
             <x-form wire:submit="uploadImage"> 
 
-                <x-file wire:model="image" label="{{__('Image')}}" hint="{{__('Take a photo or choose from gallery')}}" 
-                accept="image/png, image/jpeg, image/jpg"
-                capture="{{ $this->captureValue }}"
-                class="{{ $this->wall->posting_page_buttons_color ? 'custom-file-input' : '' }}"/>
+                <!-- Check if there's a capture attribute -->
+                @if($this->captureValue)
+                    <x-file wire:model="image" label="{{__('Take a photo or choose from gallery')}}" 
+                    accept="image/png, image/jpeg, image/jpg"
+                    capture="{{ $this->captureValue }}"
+                    class="mb-3 {{ $this->wall->posting_page_buttons_color ? 'custom-file-input' : '' }}"/>
+                @else
+                    <x-file wire:model="image" label="{{__('Take a photo or choose from gallery')}}" 
+                    accept="image/png, image/jpeg, image/jpg"
+                    class="mb-3 {{ $this->wall->posting_page_buttons_color ? 'custom-file-input' : '' }}"/>
+                @endif
 
-                <x-progress wire:loading wire:target="image" class="progress-primary h-0.5" indeterminate />
+                <x-progress wire:loading wire:target="image" class="progress-primary h-0.5 -mt-3" indeterminate />
 
                 @if($image)
-                    <img src="{{ $image->temporaryUrl() }}" class="max-w-[30vw] max-h-[30vh] mx-auto shadow-md object-cover " />
+                    <img src="{{ $image->temporaryUrl() }}" class="-mt-3 max-w-[30vw] max-h-[30vh] mx-auto shadow-md object-cover" />
                 @endif
 
                 @if($wall->allow_captions)
-                <x-input label="{{__('Caption')}}" placeholder="{{__('Caption')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" inline />
+                <x-input label="{{__('Write your message here')}}" placeholder="{{__('Write your message here')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" inline />
                 @endif
                 
                 <!-- We add the Terms checkbox if needed, depends if some data is asked to submitter -->
@@ -573,6 +579,10 @@ new class extends Component {
                     background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
                 </x-slot:actions>
             </x-form>
+
+            <div class="w-full flex justify-center pt-0 mt-4 -mb-4">
+                @include('partials.language-switcher')
+            </div>
         </x-card>
 
 
@@ -582,11 +592,10 @@ new class extends Component {
             </h1>
             <p class="text-lg mb-6">{{ $messageText }}</p>
         </x-card>
+
+
+
     </main>
 
-    
-    <div class="mt-auto w-full flex justify-end pt-0">
-        @include('partials.language-switcher')
-    </div>
 </div>
 </div>

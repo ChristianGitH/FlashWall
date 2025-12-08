@@ -45,18 +45,23 @@ class extends Component {
     public string $transition;
     public int $caption_max_width;
     public int $caption_position;
+    public string $caption_font_unit;
     public int $caption_font_size;
+    public int $submitter_name_font_size;
     public int $margin_top;
     public int $margin_bottom;
     public int $margin_left;
     public int $margin_right;
     public string $caption_font_color;
+    public string $submitter_name_font_color;
     public string $caption_background_color;
     public int $caption_background_opacity;
     public int $caption_max_characters;
 
     public ?string $posting_page_text;
     public bool $posting_page_text_visibility;
+    public string $posting_page_end_title;
+    public string $posting_page_end_text;
     public ?string $posting_page_font = null;
     public ?string $posting_page_buttons_color = null;
     public ?string $posting_page_buttons_font_color = null;
@@ -101,12 +106,15 @@ class extends Component {
         $this->background_image = $wall->background_image;
         $this->caption_max_width = $wall->caption_max_width;
         $this->caption_position = $wall->caption_position;
+        $this->caption_font_unit = $wall->caption_font_unit;
         $this->caption_font_size = $wall->caption_font_size;
+        $this->submitter_name_font_size = $wall->submitter_name_font_size;
         $this->margin_top = $wall->margin_top;
         $this->margin_bottom = $wall->margin_bottom;
         $this->margin_left = $wall->margin_left;
         $this->margin_right = $wall->margin_right;
         $this->caption_font_color = $wall->caption_font_color;
+        $this->submitter_name_font_color = $wall->submitter_name_font_color;
         $this->caption_background_color = $wall->caption_background_color;
         $this->caption_background_opacity = $wall->caption_background_opacity;
         $this->caption_max_characters = $wall->caption_max_characters;
@@ -114,6 +122,8 @@ class extends Component {
         // Custom style and images for create-image page
         $this->posting_page_text = $wall->posting_page_text;
         $this->posting_page_text_visibility = $wall->posting_page_text_visibility;
+        $this->posting_page_end_title = $wall->posting_page_end_title;
+        $this->posting_page_end_text = $wall->posting_page_end_text;
         $this->posting_page_font = $wall->posting_page_font;
         $this->posting_page_buttons_color = $wall->posting_page_buttons_color;
         $this->posting_page_buttons_font_color = $wall->posting_page_buttons_font_color;
@@ -140,27 +150,38 @@ class extends Component {
         Cache::forget('google_fonts');
         $this->googleFonts = Cache::remember('google_fonts', 60, function () {
             $apiKey = env('GOOGLE_FONTS_API_KEY');
+            if (!$apiKey) {
+                return [];
+            }
+
             $url = "https://www.googleapis.com/webfonts/v1/webfonts?key=$apiKey&sort=popularity";
 
             $response = @file_get_contents($url);
             if (!$response) {
-                return []; // fallback vide si l'API échoue
+                return [];
             }
 
             $data = json_decode($response, true);
+            if (!isset($data['items'])) {
+                return [];
+            }
 
-        // Trier par popularité et ne garder que les 100 premières
-        $topFonts = collect($data['items'] ?? [])
-            ->sortBy(fn($font) => $font['family']) // trie par ordre alphabétique
+
+        $fonts  = collect($data['items']);
+        
+        return $fonts
             ->take(100)
-            ->map(fn($font) => [
-                'custom_key' => $font['family'], // valeur sélectionnée
-                'name' => $font['family'],       // texte affiché
-                'style' => "font-family:'{$font['family']}',sans-serif;", // style inline
-                'google_url' => "https://fonts.googleapis.com/css2?family=" . str_replace(' ', '+', $font['family']) . "&display=swap"
-            ])->toArray();
+            ->map(fn ($font) => [
+                'custom_key' => $font['family'],
+                'name' => $font['family'],
+                'style' => "font-family:'{$font['family']}',sans-serif;", // Inline style
+                'google_url' => "https://fonts.googleapis.com/css2?family=" 
+                    . urlencode($font['family']) 
+                    . "&display=swap"
+            ])
+            ->values()
+            ->toArray();
 
-            return $topFonts;
         });
     }
 
@@ -305,6 +326,8 @@ class extends Component {
         $data = $this->validate([
             'posting_page_text' => 'string|max:155',
             'posting_page_text_visibility' => 'required|boolean',
+            'posting_page_end_title' => 'required|string|max:100',
+            'posting_page_end_text' => 'required|string|max:255',
             'posting_page_font' => 'nullable|string|max:155',
             'posting_page_buttons_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'posting_page_buttons_font_color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
@@ -339,6 +362,8 @@ class extends Component {
         // Remplit le modèle avec les données validées
         $this->wall->posting_page_text = $this->posting_page_text;
         $this->wall->posting_page_text_visibility = $this->posting_page_text_visibility;
+        $this->wall->posting_page_end_text = $this->posting_page_end_text;
+        $this->wall->posting_page_text = $this->posting_page_text;
         $this->wall->posting_page_font = $this->posting_page_font;
         $this->wall->posting_page_buttons_color = $this->posting_page_buttons_color;
         $this->wall->posting_page_buttons_font_color = $this->posting_page_buttons_font_color;
@@ -480,8 +505,11 @@ class extends Component {
             'caption_max_characters' => 'integer|min:10|max:255',
             'caption_max_width' => 'required|integer|max:100',
             'caption_position' => 'required|integer|max:3',
-            'caption_font_size' => 'required|integer|max:50',
+            'caption_font_unit' => 'required|string|max:10',
+            'caption_font_size' => 'required|integer|max:500',
+            'submitter_name_font_size' => 'required|integer|max:500',
             'caption_font_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'submitter_name_font_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'caption_background_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'caption_background_opacity' => 'required|integer|max:100',
         ]);
@@ -550,7 +578,7 @@ class extends Component {
                     class="[&:checked]:!btn-primary btn-sm normal-case" />
             </div>
 
-            <p class="pb-0 label label-text font-semibold">Requested user information</p>
+            <p class="pb-0 label label-text font-semibold">{{__('Requested user information')}}</p>
             <div x-data="{
                 ask_name_submitter: @entangle('ask_name_submitter'),
                 ask_email_submitter: @entangle('ask_email_submitter'),
@@ -572,7 +600,7 @@ class extends Component {
                 </div>
             </div>
 
-            <x-toggle label="{{__('Display user name?')}}" wire:model="submitter_name_on_wall" right inline hint="To manage how names are displayed, go to captions options"/>
+            <x-toggle label="{{__('Display user name?')}}" wire:model="submitter_name_on_wall" right inline hint="{{__('To manage how names are displayed, go to captions options')}}"/>
 
             <x-toggle label="{{__('Enable avatar selection and display?')}}" wire:model="require_avatar_submitter" right inline/>
 
@@ -595,6 +623,15 @@ class extends Component {
             <x-input label="{{ __('Welcome text') }}" hint="{{ __('It will also be the page title, even if the Welcome text is hidden') }}"
             placeholder="{{ __('Welcome text') }}" wire:model="posting_page_text" inline />
 
+            <x-toggle label="{{__('Display welcome text?')}}" wire:model="posting_page_text_visibility" right inline/>
+
+            <span class="fieldset-legend text-sm font-medium pt-0">{{ __('End page content / Thank you message')}}</span>
+            <x-input label="{{ __('Title') }}"
+            placeholder="{{ __('Title') }}" wire:model="posting_page_end_title" inline />
+
+            <x-input label="Message"
+            placeholder="Message" wire:model="posting_page_end_text" inline />
+
             <!-- CUSTOM FONT SELECTOR INPUT -->
             <div x-data="{
                 open: false,
@@ -610,7 +647,7 @@ class extends Component {
             }" class="relative">
 
                 <!-- Clickable fake input -->
-                <label class="fieldset-legend text-sm font-medium">{{ __('Welcome text font') }}</label>
+                <label class="fieldset-legend text-sm font-medium">{{ __('Posting page font') }}</label>
                 <div tabindex="0" @click="open = !open"
                     :class="open ? 'ring ring-primary ring-opacity-30' : ''"
                     class="flex items-center justify-between w-full input cursor-pointer"
@@ -658,8 +695,6 @@ class extends Component {
                 </ul>
             </div>
             <!-- END CUSTOM FONT SELECTOR INPUT -->
-
-            <x-toggle label="{{__('Display welcome text?')}}" wire:model="posting_page_text_visibility" right inline/>
 
             <hr>
 
@@ -986,7 +1021,7 @@ class extends Component {
 
         <x-form wire:submit="updateImagesDisplay">
             <x-input type="number" label="{{ __('Time per image') }}" placeholder="{{ __('Time per image') }}" wire:model="duration" inline >
-                <x-slot:prefix>In seconds</x-slot:prefix>
+                <x-slot:prefix>{{ __('Seconds')}}</x-slot:prefix>
             </x-input>
 
             @php
@@ -1000,7 +1035,7 @@ class extends Component {
             <x-select label="Transition" wire:model="transition" :options="$transition_names" option-label="name" option-value="custom_key" />
 
             <x-slot:actions>
-                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallLayout" />
+                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateImagesDisplay" />
             </x-slot:actions>
             
         </x-form>
@@ -1032,12 +1067,74 @@ class extends Component {
                 </template>
             </div>
 
+
+            <x-menu-separator />
             
+
+            @php
+                $font_unit_options = [
+                    ['custom_key' => 'px' , 'name' => 'Pixels'],
+                    ['custom_key' => '%' , 'name' => '%'],
+                ];
+            @endphp
+            <div class="flex justify-center text-center">
+                <x-group
+                    label="{{__('Font unit') }} :"
+                    :options="$font_unit_options"
+                    wire:model="caption_font_unit"
+                    option-value="custom_key"
+                    class="[&:checked]:!btn-primary btn-sm normal-case pt-0" />
+            </div>
+
+            <p class="pb-0 label label-text font-semibold">{{ __('Captions font')}}</p>
+            <x-input type="number" label="{{ __('Font size') }}" placeholder="{{ __('Font size') }}" wire:model="caption_font_size" inline >
+                <x-slot:prefix>
+                    <span x-data="{ unit: @entangle('caption_font_unit') }" x-text="unit === '%' ? '%' : 'Pixels'"></span>
+                </x-slot:prefix>
+            </x-input>
+
+            <div x-data="{ caption_font_color: @entangle('caption_font_color') }"class="flex flex-row items-end justify-evenly">
+                <x-input class="w-full" label="{{ __('Font color')}}" placeholder="{{ __('Font color')}}" x-model="caption_font_color" />
+
+                <input
+                    type="color"
+                    x-model="caption_font_color"
+                    wire:model="caption_font_color"
+                    class="h-8 w-12 mb-[0.46rem] cursor-pointer"
+                    title="{{ __('Choose a color') }}"
+                >
+            </div>
+            @error('caption_font_color')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
+
+            <p class="pb-0 label label-text font-semibold">{{ __('Names font')}}</p>
+            <x-input type="number" label="{{ __('Names font size') }}" placeholder="{{ __('Names font size') }}" wire:model="submitter_name_font_size" inline >
+                <x-slot:prefix>
+                    <span x-data="{ unit: @entangle('caption_font_unit') }" x-text="unit === '%' ? '%' : 'Pixels'"></span>
+                </x-slot:prefix>
+            </x-input>
+
+            <div x-data="{ submitter_name_font_color: @entangle('submitter_name_font_color') }"class="flex flex-row items-end justify-evenly">
+                <x-input class="w-full" label="{{ __('Font color')}}" placeholder="{{ __('Font color')}}" x-model="submitter_name_font_color" />
+
+                <input
+                    type="color"
+                    x-model="submitter_name_font_color"
+                    wire:model="submitter_name_font_color"
+                    class="h-8 w-12 mb-[0.46rem] cursor-pointer"
+                    title="{{ __('Choose a color') }}"
+                >
+            </div>
+            @error('submitter_name_font_color')
+                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+            @enderror
+
+
+
             <x-menu-separator />
 
-            <x-badge value="{{ __('Captions styles also applies to names display') }}" class="badge-primary badge-soft badge-dash mb-1" />
-
-            <x-input type="number" label="{{ __('Captions max width') }}" placeholder="{{ __('Captions max width') }}" wire:model="caption_max_width" inline >
+            <x-input type="number" label="{{ __('Captions bloc max width') }}" placeholder="{{ __('Captions bloc max width') }}" wire:model="caption_max_width" inline >
                 <x-slot:prefix>%</x-slot:prefix>
             </x-input>
             
@@ -1057,27 +1154,6 @@ class extends Component {
             </div>
 
 
-
-            <x-menu-separator />
-            
-            <x-input type="number" label="{{ __('Captions font size') }}" placeholder="{{ __('Captions font size') }}" wire:model="caption_font_size" inline >
-                <x-slot:prefix>In pixels</x-slot:prefix>
-            </x-input>
-
-            <div x-data="{ caption_font_color: @entangle('caption_font_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{{ __('Font color')}}" placeholder="{{ __('Font color')}}" x-model="caption_font_color" />
-
-                <input
-                    type="color"
-                    x-model="caption_font_color"
-                    wire:model="caption_font_color"
-                    class="h-8 w-12 mb-[0.46rem] cursor-pointer"
-                    title="{{ __('Choose a color') }}"
-                >
-            </div>
-            @error('caption_font_color')
-                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-            @enderror
 
             <div x-data="{ caption_background_color: @entangle('caption_background_color') }"class="flex flex-row items-end justify-evenly">
                 <x-input class="w-full" label="{!! __('Background color')!!}" placeholder="{!! __('Background color')!!}" x-model="caption_background_color" />

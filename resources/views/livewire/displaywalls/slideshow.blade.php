@@ -215,9 +215,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
 
 @section('title', 'Display ' . $wall->name)
 
-<div x-data="{
-    showDebug: false, // FOR DEV ONLY
-    }">
+<div>
 
 
 @if($approvedImages->isEmpty())
@@ -232,11 +230,6 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         lastTime: performance.now(),
         isFullscreen: false,
         wakeLock: null,
-        showCaption: false,
-        showCaptionContent: false,
-        duration: {{ $displaySettings['duration'] }},
-        captionDelay: {{ $displaySettings['duration'] }} / 3,
-        captionContentDelay: 600, 
 
         // WAKE LOCK : Keep screen active !
         async requestWakeLock() {
@@ -265,18 +258,17 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         },
 
         async nextFrame(now) {
+            const duration = {{ $displaySettings['duration'] }};
             if (!this.lastTime) this.lastTime = now;
 
-            if (now - this.lastTime >= this.duration) {
+            if (now - this.lastTime >= duration) {
                 if (!this.isUpdating) {
                     this.isUpdating = true;
 
-                    const currentSlideEl = this.$refs['image-' + this.currentSlide];
-                    const imageId = currentSlideEl ? parseInt(currentSlideEl.dataset.imageId) : null;
-
-                    const nextIndex = (this.currentSlide + 1) % this.slides;
-                    const nextSlideEl = this.$refs['image-' + nextIndex];
-                    const nextImageId = nextSlideEl ? parseInt(nextSlideEl.dataset.imageId) : null;
+                    // On récupère l'ID de l'image affichée
+                    let imageId = parseInt(this.$refs['image-' + this.currentSlide]?.dataset?.imageId);
+                    let nextIndex  = (this.currentSlide + 1) % this.slides;
+                    let nextImageId = parseInt(this.$refs['image-' + nextIndex]?.dataset?.imageId);
 
                     if (imageId) {
                         try {
@@ -286,29 +278,8 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                         }
                     }
 
-                    // CHANGING SLIDE
+                    // On passe à la diapo suivante
                     this.currentSlide = nextIndex;
-                    
-                    // Reset captions
-                    this.showCaption = false;
-                    this.showCaptionContent = false;
-                    
-                    // Display caption 3s after first slide appears
-                    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-                    (async () => {
-                        await wait(this.captionDelay);
-                        this.showCaption = true;
-
-                        this.$nextTick(() => {
-                            const captionDiv = this.$refs['captionDiv-' + this.currentSlide];
-                            if (captionDiv) captionDiv.style.width = '100%';
-                        });
-
-                        await wait(this.captionContentDelay);
-                        this.showCaptionContent = true;
-                    })();
-
                     this.isUpdating = false;
                 }
 
@@ -340,35 +311,10 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                 }
             });
 
-            
-
-            // Utility function, to set a delay
-            const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-            // Reset captions
-            this.showCaption = false;
-            this.showCaptionContent = false;
-
-            // Caption display, wrapper first, then content
-            (async () => {
-                await wait(this.captionDelay); // After image display, wait before displaying caption wrapper
-                this.showCaption = true;
-
-                this.$nextTick(() => {
-                    const captionDiv = this.$refs['captionDiv-0'];
-                    if (captionDiv) captionDiv.style.width = '100%';
-                });
-
-                await wait(this.captionContentDelay); // Wait again before displaying caption content
-                this.showCaptionContent = true;
-            })();
-
-
-
             requestAnimationFrame(this.nextFrame.bind(this));
                 
             document.addEventListener('fullscreenchange', () => {
-                // When we leave Fullscreen (ex: hit Escape)
+                // Quand on quitte le fullscreen (ex: touche Échap)
                 if (!document.fullscreenElement) {
                     this.isFullscreen = false;
                     document.body.style.cursor = 'default';
@@ -396,20 +342,20 @@ public function markImageAsDisplayed($imageId, $nextImageId)
 
     $transitions = [
         'fade' => [
-            'enter' => 'transition ease-out duration-2000',
+            'enter' => 'transition linear duration-700',
             'enterStart' => 'opacity-0',
             'enterEnd' => 'opacity-100',
-            'leave' => 'transition duration-500',
+            'leave' => 'transition linear duration-700',
             'leaveStart' => 'opacity-100',
             'leaveEnd' => 'opacity-0',
         ],
         'zoom' => [
-            'enter' => 'transition ease-out duration-500',
-            'enterStart' => 'transform opacity-50 scale-50',
+            'enter' => 'transition ease-out duration-100',
+            'enterStart' => 'transform opacity-0 scale-75',
             'enterEnd' => 'transform opacity-100 scale-100',
-            'leave' => 'transition ease-in duration-500',
+            'leave' => 'transition ease-in duration-75',
             'leaveStart' => 'transform opacity-100 scale-100',
-            'leaveEnd' => 'transform opacity-0 scale-0',
+            'leaveEnd' => 'transform opacity-0 scale-75',
         ],
         'none' => [
             'enter' => 'transition duration-[1ms]',
@@ -435,77 +381,81 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         x-transition:leave-end="{{ $t['leaveEnd'] }}"
         x-ref="image-{{ $index }}"
         data-image-id="{{ $image->id }}"
-        class="absolute max-h-screen inset-0 flex items-center flex-row justify-center text-center "
+        class="absolute inset-0 flex items-center justify-center text-center"
         wire:key="image-{{ $image->id }}"
         style="{{ $displaySettings['image_container_style'] }}"
-    > 
-            <div class="relative flex items-center justify-center"
-                style="height: 100%;  width: 100%;">
+    >
+            <div class="relative flex items-center justify-center h-full w-full" style="max-height: 100%; max-width: 100%;">
                 <img
                     src="{{ asset('storage/' . $image->webp_full_path) }}"
-                    class="max-h-full object-contain"
-                    style="max-height: 100%; max-width: 100%; height: auto; width: auto;"
+                    class="object-contain"
+                    style="max-height: 100%; max-width: 100%;"
                 />
             </div>
-                
-            <!-- CAPTION WRAPPER - and avatar and name -->
-            <!-- We check for name, email and avatar if they're enabled and not empty.  -->
-            @if(($image->caption && $wall->caption_on_wall) || ($image->submitter_name && $wall->submitter_name_on_wall) || ($image->submitter_avatar && $wall->require_avatar_submitter))
-            <div x-show="showCaption"
-                x-ref="captionDiv-{{ $index }}"
-                x-transition:enter="transition-all duration-1000 linear"
-                x-transition:enter-start="max-w-0"
-                x-transition:enter-end="max-w-full"
 
-                class="relative flex items-center justify-center"
-                style="height: 100%; width: 100%;">
+                <!-- CAPTION WRAPPER - and avatar and name -->
+                <!-- We check for name, email and avatar if they're enabled and not empty.  -->
+                @if(($image->caption && $wall->caption_on_wall) || ($image->submitter_name && $wall->submitter_name_on_wall) || ($image->submitter_avatar && $wall->require_avatar_submitter))
 
-                <div x-show="showCaptionContent && currentSlide === {{ $index }}"
-                    x-transition:enter="transition-all duration-500 linear"
-                    x-transition:enter-start="scale-0"
-                    x-transition:enter-end="scale-100"
-                    x-transition:leave="{{ $t['leave'] }}"
-                    x-transition:leave-start="{{ $t['leaveStart'] }}"
-                    x-transition:leave-end="{{ $t['leaveEnd'] }}"
-                    class="text-center w-full leading-none p-[0.5em] font-semibold rounded-md"
-                    style="font-size: {{ $displaySettings['caption_font_size'] }}px;
-                    color: {{ $displaySettings['caption_font_color'] }};
-                    background-color: {{ $displaySettings['caption_background'] }};
-                    max-width: {{ $displaySettings['caption_max_width'] }}%;
-                    display: inline-block;">
-                                                
-                    <div class="flex justify-center items-center gap-2">
-                        @if($wall->require_avatar_submitter && $image->submitter_avatar)
-                        <span
-                            class="emoji_font bg-base-300 rounded-full inline-flex items-center justify-center"
-                            style="
-                                font-size: {{ $displaySettings['caption_font_size'] }}px;
-                                width: {{ $displaySettings['caption_font_size'] * 2 }}px;
-                                height: {{ $displaySettings['caption_font_size'] * 2 }}px;
-                            "
-                        >
-                            {{ $image->submitter_avatar }}
-                        </span>
 
-                        @endif
+                        <div x-data="{ showCaption: false, showCaptionContent: false }"
+                            x-init="
+                            const duration = {{ $displaySettings['duration'] }};
+                            showCaptionDelay = duration/3;
+                            showCaptionContentDelay = showCaptionDelay+700
+                            if ({{ $index }} === 0) {
+                                setTimeout(() => showCaption = true, showCaptionDelay);
+                                setTimeout(() => showCaptionContent = true, showCaptionContentDelay);
+                            }
+                            $watch('currentSlide', value => {
+                                if (value === {{ $index }}) {
+                                    showCaption = false;
+                                    showCaptionContent = false;
+                                    setTimeout(() => showCaption = true, showCaptionDelay);
+                                    setTimeout(() => showCaptionContent = true, showCaptionContentDelay);
+                                }
+                            })"
+                        class="text-center overflow-hidden transition-all duration-1000"
+                        :class="{ 'w-0': !showCaption, 'w-full': showCaption }">
+                            <span class="leading-none p-[0.5em] font-semibold rounded-md transition-all duration-700"
+                            :class="{ 'opacity-0': !showCaptionContent, 'opacity-100': showCaptionContent }"
+                            style="background-color: {{ $displaySettings['caption_background'] }};
+                            max-width: {{ $displaySettings['caption_max_width'] }}%;
+                            display: inline-block;">
 
-                        @if($wall->submitter_name_on_wall && $image->submitter_name)
-                            <span>{{ $image->submitter_name }}</span>
-                        @endif
+                            <div class="flex justify-center items-center gap-2">
+                                @if($wall->require_avatar_submitter && $image->submitter_avatar)
+                                <span
+                                    class="emoji_font bg-base-300 rounded-full inline-flex items-center justify-center"
+                                    style="
+                                        font-size: {{ $displaySettings['submitter_name_font_size'] . $displaySettings['caption_font_unit'] }};
+                                        width: 2em;
+                                        height: 2em;
+                                    "
+                                >
+                                    {{ $image->submitter_avatar }}
+                                </span>
+                                @endif
 
-                        @if($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name)
-                            :
-                        @endif
-                    </div>
+                                @if($wall->submitter_name_on_wall && $image->submitter_name)
+                                    <span style="font-size: {{ $displaySettings['submitter_name_font_size'] . $displaySettings['caption_font_unit'] }};
+                                    color: {{ $displaySettings['submitter_name_font_color'] }};
+                                    ">
+                                        {{ $image->submitter_name }}
+                                    </span>
+                                @endif
 
-                        @if($wall->caption_on_wall && $image->caption)
-                            <div class="p-[0.5em]">{{ $image->caption }}</div>
-                        @endif
+                            </div>
 
-                </div>
-            </div>
-            @endif
-    </div>
+                                @if($wall->caption_on_wall && $image->caption)
+                                    <div class="p-[0.5em]" style="
+                                    color: {{ $displaySettings['caption_font_color'] }};
+                                    font-size: {{ $displaySettings['caption_font_size'] . $displaySettings['caption_font_unit'] }};">{{ $image->caption }}</div>
+                                @endif
+                            
+                        </div>
+                @endif
+        </div>
     @endforeach
 
 </div>

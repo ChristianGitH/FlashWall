@@ -1,3 +1,22 @@
+Nouveau algo sans copies :
+On récupère au max X images, qu'on affiche dans l'ordre d'envoi,
+On garde en mémoire les dernières images envoyées.
+Une fois qu'on arrive à la fin du diaporama, on récupère les x nouvelles images. 
+Si nombre d'images inférieur à X images, on ajoute les images gardées en mémoire à la fin du diaporama.
+Si nombre d'images supérieur à X images, on garde les images affichées en mémoire.
+Si pas de nouvelles images, on remet les images gardées en mémoire dans le diaporama.
+Faire un reload quand on arrive à la fin des images affichées pour la première fois, si pas de nouvelles images, on continue le diaporama
+
+
+1 2 3 4, reloard : +4
+
+5 6 7 8 reload : null, 1 2 3 4 reload : + 4
+9 10 11 12 reload : null, 5 6 7 8 1 2 3 4
+
+
+
+
+
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                               📄 Page Web                                   │
 │                      (HTML + Blade + Alpine.js)                             │
