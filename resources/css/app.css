@@ -31,6 +31,15 @@
   }
 }
 
+@layer base {
+    body, p, li, a {
+        font-family: 'Lato', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+}
+
 /* If we want to keep the pointer on buttons */ 
 @layer base {  button:not(:disabled),  [role="button"]:not(:disabled) {    cursor: pointer;  }}
 
@@ -50,6 +59,23 @@
     font-display: swap;
 }
 */
+/* Figtree pour les titres */
+@font-face {
+    font-family: 'Figtree';
+    src: url('../fonts/Figtree-VariableFont_wght.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Lato pour le contenu */
+@font-face {
+    font-family: 'Lato';
+    src: url('../fonts/Lato-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 
 
 /* Table pagination: active page highlight */

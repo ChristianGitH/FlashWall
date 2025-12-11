@@ -1,8 +1,16 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-CPkGqzV9.css",
+    "file": "assets/app-j9GwUdXp.css",
     "src": "resources/css/app.css",
     "isEntry": true
+  },
+  "resources/fonts/Figtree-VariableFont_wght.woff2": {
+    "file": "assets/Figtree-VariableFont_wght-CQcOzkRQ.woff2",
+    "src": "resources/fonts/Figtree-VariableFont_wght.woff2"
+  },
+  "resources/fonts/Lato-Regular.woff2": {
+    "file": "assets/Lato-Regular-DvzxJk-o.woff2",
+    "src": "resources/fonts/Lato-Regular.woff2"
   },
   "resources/fonts/NotoColorEmoji-Regular.ttf": {
     "file": "assets/NotoColorEmoji-Regular-YuApCPkg.ttf",

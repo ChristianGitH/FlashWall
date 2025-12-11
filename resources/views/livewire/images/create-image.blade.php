@@ -41,7 +41,7 @@ new class extends Component {
     public string $messageHeader = '';
     public string $terms_checkbox_display_card = '';
 
-    public function mount(wall $wall)
+    public function mount(Wall $wall)
     {
         $this->wall = $wall;
 
@@ -83,7 +83,18 @@ new class extends Component {
     private function initVisitorToken(): void
     {
         $this->visitorToken = request()->cookie('visitor_token') ?? (string) \Str::uuid();
-        cookie()->queue(cookie('visitor_token', $this->visitorToken, 60 * 24 * 31, null, null, false, true));
+        cookie()->queue(
+            cookie(
+                name: 'visitor_token',
+                value: $this->visitorToken,
+                minutes: 60 * 24 * 31,
+                path: '/',
+                domain: null,
+                secure: app()->environment('production'),
+                httpOnly: true,
+                sameSite: 'Lax',
+            )
+        );    
     }
 
     private function initSubmitterData(): void
@@ -211,7 +222,18 @@ new class extends Component {
         } else {
             // Creating new submitter
             $this->submitter = Submitter::create($data);
-            cookie()->queue(cookie('submitter_id', $this->submitter->id, 60 * 24 * 31, null, null, false, true));
+            cookie()->queue(
+                cookie(
+                    name: 'submitter_id',
+                    value: $this->submitter->id,
+                    minutes: 60 * 24 * 31,
+                    path: '/',
+                    domain: null,
+                    secure: app()->environment('production'),
+                    httpOnly: true,
+                    sameSite: 'Lax',
+                )
+            ); 
             $this->req_data_status = true;
         }
         $this->req_data_status = true;
@@ -227,7 +249,7 @@ new class extends Component {
         if (!$this->canPostImage()) return;
 
         $rules = [
-            'image' => 'required|image|max:10240|dimensions:max_width=12000,max_height=10000',
+            'image' => 'required|image|max:10240|dimensions:max_width=2100,max_height=2100',
             'caption' => 'nullable|string|max:' . $this->wall->caption_max_characters,
         ];
         // We add the Terms checkbox validation if the checkbox is displayed on the submitter card.
@@ -237,33 +259,36 @@ new class extends Component {
     
         $data = $this->validate($rules);
 
+        // File is already optimized on client side (converted to WebP, resized to 2048px)
+        // But we add fallback processing in case client-side conversion failed
         // Convert to intervention image element
         $img = InterventionImage::read($this->image->getRealPath());
         
-        // Reduce image size, limit max 2048px
-        $max = 2048;
+        // Safety check: Ensure image isn't larger than expected (fallback if JS didn't resize)
+        $max = 2100;
         $width = $img->width();
         $height = $img->height();
-        // Check if we need to scale
         if ($width > $max || $height > $max) {
-            $img->scale($max); // réduit la plus grande dimension à $max
+            $img->scale($max); // Scales down longest side to $max
         }
 
-        // Saving image with original format but resized if it was to big
-        $filename = $this->image->hashName(); // Unique name
-        $path = 'walls_images/images_submitters/' . $filename;
-        Storage::disk('public')->put($path, $img->encode());
+        // Generate WebP filename
+        $webpFilename = pathinfo($this->image->hashName(), PATHINFO_FILENAME) . '.webp';
 
-        $originalFilename = basename($path);
+        // Check if file is already WebP, if not convert it
+        $clientMimeType = $this->image->getMimeType();
+        if ($clientMimeType !== 'image/webp') {
+            // JS conversion failed, encode to WebP on server
+            $webpContent = $img->encodeByExtension('webp', 80);
+        } else {
+            // File is already WebP, store it as-is
+            $webpContent = $this->image->get();
+        }
 
-        // Creating file names for WebP and thumbnail
-        $baseName = pathinfo($originalFilename, PATHINFO_FILENAME);
-        $webpFilename = $baseName . '.webp';
-
-        // Saving in database first, to get the $parent model
+        // Save to database first to get the model
         $parent = Image::create([
             'wall_id' => $this->wall->id,
-            'name' => $originalFilename,
+            'name' => $webpFilename,
             'webp_name' => $webpFilename,
             'thumb' => $webpFilename,
             'caption' => $this->caption,
@@ -274,11 +299,10 @@ new class extends Component {
             'permanent' => true,
         ]);
 
-        // Save WebP version
-        Storage::disk('public')->put($parent->webp_full_path, $img->encodeByExtension('webp', 80));
+        // Save the WebP file
+        Storage::disk('public')->put($parent->webp_full_path, $webpContent);
 
-        // Generating thumbnail         
-        // Save thumb         
+        // Generate and save thumbnail
         Storage::disk('public')->put($parent->thumb_full_path, $img->scale(width: 500)->encodeByExtension('webp', 80));
 
         $this->success(__('Image added successfully!'));
@@ -289,6 +313,11 @@ new class extends Component {
 
 }; 
 ?>
+
+@push('head')
+<link rel="icon" href="{{ asset('favicon-ubi.svg') }}">
+@endpush
+
 
 <!-- Page title -->
 @if ($wall->posting_page_text)
@@ -478,11 +507,13 @@ new class extends Component {
                 @endif
 
 
-
-
                 <!-- We add the Terms checkbox if needed, depends if some data is asked to submitter -->
-                @if($this->terms_checkbox_display_card === 'submitter')
-                    <x-checkbox label="{{__('I agree with terms')}}" wire:model="terms" required />
+                @if($this->terms_checkbox_display_card === 'submitter') 
+                    <x-checkbox wire:model="terms" required>
+                        <x-slot:label>
+                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" target="_blank" class="underline">{{ __('terms.title') }}</a>
+                        </x-slot:label>
+                    </x-checkbox>
                 @endif
                 
                 <x-slot:actions>
@@ -509,10 +540,10 @@ new class extends Component {
 
         <x-card x-show="currentCard === 'upload'" x-cloak  class="flex items-center justify-center">
             @if($this->wall->posting_page_text_visibility)
-                <h1 class="mb-4 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
+                <h1 class="mb-3 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
             @endif
                 @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto object-cover " />
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mt-1 mb-2 mx-auto object-cover " />
             @endif
 
             <!-- Submitter data display
@@ -531,31 +562,25 @@ new class extends Component {
             @endphp
 
             @if($label)
-                <a role="button" class="flex justify-center items-center mb-1" @click="currentCard = 'submitter';">
+                <a role="button" class="flex justify-center items-center mb-3" @click="currentCard = 'submitter';">
                     <x-icon name="o-user-circle" title="Change" />
                     {{ $label }}
                     <x-icon name="o-pencil-square" class="text-gray-500 ml-2" title="Change" />
                 </a>
             @endif
 
-            <x-form wire:submit="uploadImage"> 
 
-                <!-- Check if there's a capture attribute -->
-                @if($this->captureValue)
-                    <x-file wire:model="image" label="{{__('Take a photo or choose from gallery')}}" 
-                    accept="image/png, image/jpeg, image/jpg"
-                    capture="{{ $this->captureValue }}"
-                    class="mb-3 {{ $this->wall->posting_page_buttons_color ? 'custom-file-input' : '' }}"/>
-                @else
-                    <x-file wire:model="image" label="{{__('Take a photo or choose from gallery')}}" 
-                    accept="image/png, image/jpeg, image/jpg"
-                    class="mb-3 {{ $this->wall->posting_page_buttons_color ? 'custom-file-input' : '' }}"/>
-                @endif
+            <x-form x-data="uploadImage" wire:submit="uploadImage"> 
 
-                <x-progress wire:loading wire:target="image" class="progress-primary h-0.5 -mt-3" indeterminate />
+                <input class="file-input w-full" type="file" @change="selectFile" x-ref="fileInput" accept="image/*">
+
+                <!-- Barre de progression -->
+                <x-loading x-show="processing" class="justify-self-center loading-ring" />
 
                 @if($image)
-                    <img src="{{ $image->temporaryUrl() }}" class="-mt-3 max-w-[30vw] max-h-[30vh] mx-auto shadow-md object-cover" />
+                    <div x-show="showPreview">
+                        <img src="{{ $image->temporaryUrl() }}" class="max-w-9/10 max-h-[30vh] mx-auto shadow-md object-cover" />
+                    </div> 
                 @endif
 
                 @if($wall->allow_captions)
@@ -564,14 +589,21 @@ new class extends Component {
                 
                 <!-- We add the Terms checkbox if needed, depends if some data is asked to submitter -->
                 @if($this->terms_checkbox_display_card === 'upload')
-                    <x-checkbox label="{{__('I agree with terms')}}" wire:model="terms" required />
+                    <x-checkbox wire:model="terms" required>
+                        <x-slot:label>
+                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" target="_blank" class="underline">{{ __('terms.title') }}</a>
+                        </x-slot:label>
+                    </x-checkbox>
                 @endif
 
                 <x-slot:actions>
                     <x-button label="{{__('Send')}}" icon="o-paper-airplane" spinner="uploadImage, image" type="submit"
+                    x-bind:disabled="processing"
+                    @click="if (processing) $event.preventDefault();"
                     wire:loading.attr="disabled"
                     wire:target="image, uploadImage"
                     wire:loading.class="opacity-50"
+                    x-bind:class="{ 'opacity-50': processing }"
                     class="{{ $this->wall->posting_page_buttons_color ? '' : 'btn-primary' }}"
                     style="{{ $this->wall->posting_page_buttons_color ? '
                     border-color: ' .$this->wall->posting_page_buttons_color. '; 
@@ -579,6 +611,96 @@ new class extends Component {
                     background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
                 </x-slot:actions>
             </x-form>
+
+
+            <script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('uploadImage', () => ({
+        processing: false,
+        showPreview: true,
+
+        async selectFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file (JPG, PNG, WebP, etc.)');
+                event.target.value = '';
+                return;
+            }
+
+            this.processing = true;
+            // Hide preview immediately while processing new file
+            this.showPreview = false;
+
+            // Convert file to WEBP and resize
+            const webpFile = await this.convertToWebp(file);
+
+            // Send to Livewire
+            this.$wire.upload('image', webpFile, 
+                () => {
+                    // Success callback
+                    this.processing = false;
+                    this.showPreview = true;
+                }, 
+                () => {
+                    // Error callback
+                    this.processing = false;
+                    this.showPreview = true;
+                }
+            );
+        },
+
+        convertToWebp(file) {
+            return new Promise(resolve => {
+                const img = new Image();
+                
+                img.onload = () => {
+                    const maxSize = 2048;
+                    const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1); // Max 1 so we don't upscale smaller images
+                    const newWidth = img.width * ratio;
+                    const newHeight = img.height * ratio;
+
+                    // If WebP and already small, skip conversion
+                    if (file.type === 'image/webp' && ratio === 1) {
+                        console.log("Image already in WebP format and within size limit");
+                        resolve(file);
+                        return;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+                    const type = 'image/webp';
+                    const quality = 0.8; // Between 0 and 1
+
+                    canvas.toBlob(blob => {
+                        const name = file.type === 'image/webp'
+                            ? file.name
+                            : file.name.replace(/\.\w+$/, '.webp');
+
+                        resolve(new File([blob], name, { type }));
+                    }, type, quality);
+                };
+
+                img.onerror = () => {
+                    // Fallback to original file if image fails to load
+                    console.error("Failed to load image, using original file");
+                    resolve(file);
+                };
+
+                img.src = URL.createObjectURL(file);
+            });
+        }
+    }));
+});
+</script>
+
 
             <div class="w-full flex justify-center pt-0 mt-4 -mb-4">
                 @include('partials.language-switcher')

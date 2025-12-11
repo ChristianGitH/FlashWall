@@ -29,7 +29,7 @@ new class extends Component {
         $images = Image::where('wall_id', $this->wall->id)
                     ->where('permanent', 1)
                     ->where('status', '!=', 5)
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('created_at', 'asc')
                     ->paginate(20, pageName: 'unprocessed-images');
 
         $this->unprocessedImagesPageCount = $images->count();
@@ -47,12 +47,6 @@ new class extends Component {
 
 
         Image::whereIn('id', $imageIds)->update(['status' => 5]); // 0 = unprocessed. 1 = approved. 2 = archived.
-
-        // Updating the copies
-        Image::where('wall_id', $this->wall->id)
-            ->where('permanent', false)
-            ->whereIn('parent_id', $imageIds)
-            ->update(['status' => 5]);
 
         // Pagination reset if all images were deleted
         if ($this->unprocessedImagesPageCount <= count($imageIds)) {
@@ -224,7 +218,7 @@ new class extends Component {
                 </a>
             <input 
                 type="checkbox" 
-                class="checkbox checkbox-sm unprocessed-image-checkbox"
+                class="checkbox checkbox-sm bg-[#f8f8f8] dark:bg-[#191e24] unprocessed-image-checkbox"
                 :value="{{ $image->id }}"
                 x-model="selected"
                 id="checkbox-{{ $image->id }}"

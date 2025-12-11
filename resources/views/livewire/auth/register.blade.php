@@ -11,6 +11,10 @@ new
 #[Title('Register')]
 class extends Component {
  
+ 
+    #[Rule('required|string|max:50|in:FlashWall2025!')]
+    public string $code = '';
+
     #[Rule('required|string|max:255|unique:users')]
     public string $name = '';
  
@@ -26,6 +30,11 @@ class extends Component {
     public function register()
     {
         $data = $this->validate();
+
+        if ($this->code !== 'FlashWall2025!') {
+            $this->addError('code', 'Invalid invitation code.');
+            return;
+        }
  
         $data['password'] = Hash::make($data['password']);
  
@@ -43,6 +52,8 @@ class extends Component {
     <x-card class="flex items-center justify-center p-5 lg:px-10 lg:py-5" title="{{__('Register')}}" shadow separator>
  
         <x-form wire:submit="register">
+            <x-input label="{{__('Invitation code')}}" placeholder="{{__('Invitation code')}}" wire:model="code" inline />
+
             <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" icon="o-user" inline />
             <x-input label="{{__('E-mail')}}" placeholder="{{__('E-mail')}}" wire:model="email" icon="o-envelope" inline />
             <x-input label="{{__('Password')}}" placeholder="{{__('Password')}}" wire:model="password" type="password" icon="o-key" inline />

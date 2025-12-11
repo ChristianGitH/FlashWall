@@ -47,6 +47,10 @@ new class extends Component
                 </x-list-item>
             <x-menu-separator />
 
+        <x-menu-item title="{{__('Home')}}" icon="o-home" link="{{ route('home') }}" />
+
+        <x-menu-item title="{{__('Create Wall')}}" icon="o-plus" link="{{ route('create-wall') }}" />
+
         {{-- Affichage des Walls de l'utilisateur --}}
         @if(count($walls) > 0)
                 @foreach($walls as $wall)
@@ -63,12 +67,10 @@ new class extends Component
         @endif
 
         @else
-            <x-menu-item title="Hello" icon="o-sparkles" link="/" />
+            <x-menu-item title="{{__('Home')}}" icon="o-home" link="{{ route('home') }}" />
             <x-menu-item title="{{__('Login')}}" icon="o-user" link="{{ route('login') }}" />                   
         @endif
 
-
-        <x-menu-item title="Create Wall" icon="o-plus" link="{{ route('create-wall') }}" />
                     
     </x-menu>
     <x-menu class="justify-end grow">
