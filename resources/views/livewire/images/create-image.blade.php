@@ -315,7 +315,11 @@ new class extends Component {
 ?>
 
 @push('head')
-<link rel="icon" href="{{ asset('favicon-ubi.svg') }}">
+    <link rel="icon" type="image/png" href="{{ asset('/storage/favicon_ubi/ubi-favicon-96x96.png') }}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{{ asset('/storage/favicon_ubi/ubi-favicon.svg') }}" />
+    <link rel="shortcut icon" href="{{ asset('/storage/favicon-ubi/ubi_favicon.ico') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('/storage/favicon_ubi/ubi-apple-touch-icon.png') }}" />
+    <link rel="manifest" href="{{ asset('/storage/favicon_ubi/ubi-site.webmanifest') }}" />
 @endpush
 
 

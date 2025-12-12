@@ -26,7 +26,7 @@ class AppBrand extends Component
                     <!-- Hidden when collapsed -->
                     <div {{ $attributes->class(["hidden-when-collapsed"]) }}>
                         <div class="flex items-center gap-2">
-                            <img src="../favicon.svg" class="h-8 -mt-3" />
+                            <img src="../favicon.svg" class="h-8 -mt-2" />
                             <div class="flex items-end flex-col">
                                 <span style="font-family: Figtree;" class="font-bold text-4xl tracking-tighter bg-linear-to-r from-purple-500 to-pink-300 bg-clip-text text-transparent ">
                                     Flashwall

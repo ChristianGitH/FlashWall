@@ -1,24 +1,7 @@
 TO DEPLOY :
-language-switcher : color change for dark mode
-create-image : changed some labels positions, language switcher position, margins between elements.
-    changed capture_mode_options input, to completly remove capture attribute from input when default.
-    Fixed bug, impossible to send submitterData form because no avatar, added default.
-    Custom end page/card Title and Message
-localization.php : added getPreferredLanguage to get browser language.
-setup-wall : fixed spinner bug on some cards/forms.
-    Changed font family selector to sort by popularity.
-    Added inputs for custom end page/card Title and Message.
-    Added font unit, and seperate size and color for name.
-home : changed content and added a newsletter subscribe form.
-navigation : minor changes.
-submitters_terms : added terms for content submission.
-lang : added terms and home translate.
-favicon : added Fhlashwall favicon, and UBI Favicon on create-image.
-register : added a invitation code to prevent unwanted registration
-moderation : wrapped all collapse in an accordion, changed images order in tabs.
-    Dark style minor fixes (checkbox, modal).
-    Removed Copies Creation scripts from all components.
-    
+index : newsletter button small screen display fix
+navigation : new button order, now walls sub-menu are open depending on which wall we are working
+favicon : changed ubi-favicon folder and path
 
 NEXT TO DO :
 Bug sur display-image lors de l'archivage ou Suppression d'image.
