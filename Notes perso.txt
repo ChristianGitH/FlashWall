@@ -1,7 +1,10 @@
 TO DEPLOY :
-index : newsletter button small screen display fix
-navigation : new button order, now walls sub-menu are open depending on which wall we are working
-favicon : changed ubi-favicon folder and path
+create-image : moved spinner/loading script to the top to avoid unset var on load (x-data).
+    Added dark style to avatar selection modal
+slideshow : changed Alpine Js script. big diffence between now and 
+slideshow-slow : added a version without propel function. 
+    In "slow" the Alpine JS calculates if markImageAsDisplayed needed to be called (every x slide).
+
 
 NEXT TO DO :
 Bug sur display-image lors de l'archivage ou Suppression d'image.
@@ -24,8 +27,9 @@ moderation : fix caption display, overlay bug with side menu drawer
 slideshow : verifier que la boucle du slideshow fonctionne bien,
     qu'il n y a pas de décalage entre le fait d'attente le chargement de l'image et le départ des async.
     Saut d'image car parfois deux refresh à la suite : DEPLACER this.lastTime = now; ??
-
-
+slideshow : WackLock, try to activate only if tab is active
+create-image : avatar select dark mode
+slideshow : create a version whithout propel. More stable.
 
 
 /*\ COMMAND LINES /*\

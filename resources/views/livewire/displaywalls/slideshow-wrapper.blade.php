@@ -80,6 +80,44 @@ public function computeWallSettings(): array
 
 }; ?>
 
+@push('head')
+<script>
+(function(){
+    let wakeLock = null;
+
+    async function requestWakeLock(){
+        try {
+            if (!('wakeLock' in navigator)) return;
+            if (document.visibilityState !== 'visible') return; // avoid DOMException
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => { wakeLock = null; console.log('Wake Lock released'); });
+            console.log('Wake Lock acquired');
+        } catch (err) {
+            // DOMException: The requesting document is hidden.
+            console.warn('Unable to acquire Wake Lock:', err);
+            wakeLock = null;
+        }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            requestWakeLock();
+        } else {
+            // when hidden, wake lock is released automatically
+            wakeLock = null;
+        }
+    });
+
+    // Try once on load; many browsers require a user gesture — also attempt on first interaction
+    window.addEventListener('load', () => requestWakeLock());
+    ['click', 'keydown', 'touchstart'].forEach(ev => {
+        const handler = () => { requestWakeLock(); window.removeEventListener(ev, handler); };
+        window.addEventListener(ev, handler, { once: true });
+    });
+})();
+</script>
+@endpush
+
 <div x-data="{ ready: false }" x-init="ready = true" class="w-screen h-screen">
     <!-- Loading spinner -->
     <div x-show="!ready" class="absolute inset-0 flex items-center justify-center z-50">
@@ -91,6 +129,8 @@ public function computeWallSettings(): array
         <!-- Slideshow bellow -->
         @if($mode === 'dev')
             <livewire:displaywalls.slideshow-dev :wall="$wall" :displaySettings="$displaySettings" />
+        @elseif($mode === 'slow')
+            <livewire:displaywalls.slideshow-slow :wall="$wall" :displaySettings="$displaySettings" />
         @elseif($mode === 'oldcaption')
             <livewire:displaywalls.slideshow-stable-classic-caption :wall="$wall" :displaySettings="$displaySettings" />
         @else

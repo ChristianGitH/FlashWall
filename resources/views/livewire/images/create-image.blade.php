@@ -320,6 +320,94 @@ new class extends Component {
     <link rel="shortcut icon" href="{{ asset('/storage/favicon-ubi/ubi_favicon.ico') }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('/storage/favicon_ubi/ubi-apple-touch-icon.png') }}" />
     <link rel="manifest" href="{{ asset('/storage/favicon_ubi/ubi-site.webmanifest') }}" />
+    
+    <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('uploadImage', () => ({
+            processing: false,
+            showPreview: true,
+
+            async selectFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file (JPG, PNG, WebP, etc.)');
+                    event.target.value = '';
+                    return;
+                }
+
+                this.processing = true;
+                // Hide preview immediately while processing new file
+                this.showPreview = false;
+
+                // Convert file to WEBP and resize
+                const webpFile = await this.convertToWebp(file);
+
+                // Send to Livewire
+                this.$wire.upload('image', webpFile, 
+                    () => {
+                        // Success callback
+                        this.processing = false;
+                        this.showPreview = true;
+                    }, 
+                    () => {
+                        // Error callback
+                        this.processing = false;
+                        this.showPreview = true;
+                    }
+                );
+            },
+
+            convertToWebp(file) {
+                return new Promise(resolve => {
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        const maxSize = 2048;
+                        const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1); // Max 1 so we don't upscale smaller images
+                        const newWidth = img.width * ratio;
+                        const newHeight = img.height * ratio;
+
+                        // If WebP and already small, skip conversion
+                        if (file.type === 'image/webp' && ratio === 1) {
+                            console.log("Image already in WebP format and within size limit");
+                            resolve(file);
+                            return;
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = newWidth;
+                        canvas.height = newHeight;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+                        const type = 'image/webp';
+                        const quality = 0.8; // Between 0 and 1
+
+                        canvas.toBlob(blob => {
+                            const name = file.type === 'image/webp'
+                                ? file.name
+                                : file.name.replace(/\.\w+$/, '.webp');
+
+                            resolve(new File([blob], name, { type }));
+                        }, type, quality);
+                    };
+
+                    img.onerror = () => {
+                        // Fallback to original file if image fails to load
+                        console.error("Failed to load image, using original file");
+                        resolve(file);
+                    };
+
+                    img.src = URL.createObjectURL(file);
+                });
+            }
+        }));
+    });
+    </script>
 @endpush
 
 
@@ -450,7 +538,7 @@ new class extends Component {
                         class="fixed z-50 inset-0 flex items-center justify-center"
                     >
 
-                        <div @click.outside="open = false" class="relative p-4 mx-2 max-w-md h-[50svh] bg-white border rounded shadow-lg">
+                        <div @click.outside="open = false" class="relative p-4 mx-2 max-w-md h-[50svh] bg-white dark:bg-gray-800 border rounded-lg shadow-lg">
                             <!-- Close button -->
                             <button
                                 @click="open = false" 
@@ -469,25 +557,25 @@ new class extends Component {
                                 <button
                                     type="button"
                                     class="p-2 border hover:bg-base-200 bg-base-300 rounded-t-lg" 
-                                    :class="current === 'smileys' && 'tab-active bg-white border-b-transparent'"
+                                    :class="current === 'smileys' && 'tab-active bg-white dark:bg-gray-800 border-b-transparent'"
                                     @click="current = 'smileys'"
                                 >😄</button>
                                 <button
                                     type="button"
                                     class="p-2 border hover:bg-base-200 bg-base-300 rounded-t-lg"
-                                    :class="current === 'animals' && 'tab-active bg-white border-b-transparent'"
+                                    :class="current === 'animals' && 'tab-active bg-white dark:bg-gray-800 border-b-transparent'"
                                     @click="current = 'animals'"
                                 >🐾</button>
                                 <button
                                     type="button"
                                     class="p-2 border hover:bg-base-200 bg-base-300 rounded-t-lg"
-                                    :class="current === 'flags' && 'tab-active bg-white border-b-transparent'"
+                                    :class="current === 'flags' && 'tab-active bg-white dark:bg-gray-800 border-b-transparent'"
                                     @click="current = 'flags'"
                                 >🏁</button>
                                 <button
                                     type="button"
                                     class="p-2 border hover:bg-base-200 bg-base-300 rounded-t-lg"
-                                    :class="current === 'objects' && 'tab-active bg-white border-b-transparent'"
+                                    :class="current === 'objects' && 'tab-active bg-white dark:bg-gray-800 border-b-transparent'"
                                     @click="current = 'objects'"
                                 >✨</button>
                             </div>
@@ -615,95 +703,6 @@ new class extends Component {
                     background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
                 </x-slot:actions>
             </x-form>
-
-
-            <script>
-document.addEventListener('alpine:init', () => {
-    Alpine.data('uploadImage', () => ({
-        processing: false,
-        showPreview: true,
-
-        async selectFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                alert('Please select an image file (JPG, PNG, WebP, etc.)');
-                event.target.value = '';
-                return;
-            }
-
-            this.processing = true;
-            // Hide preview immediately while processing new file
-            this.showPreview = false;
-
-            // Convert file to WEBP and resize
-            const webpFile = await this.convertToWebp(file);
-
-            // Send to Livewire
-            this.$wire.upload('image', webpFile, 
-                () => {
-                    // Success callback
-                    this.processing = false;
-                    this.showPreview = true;
-                }, 
-                () => {
-                    // Error callback
-                    this.processing = false;
-                    this.showPreview = true;
-                }
-            );
-        },
-
-        convertToWebp(file) {
-            return new Promise(resolve => {
-                const img = new Image();
-                
-                img.onload = () => {
-                    const maxSize = 2048;
-                    const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1); // Max 1 so we don't upscale smaller images
-                    const newWidth = img.width * ratio;
-                    const newHeight = img.height * ratio;
-
-                    // If WebP and already small, skip conversion
-                    if (file.type === 'image/webp' && ratio === 1) {
-                        console.log("Image already in WebP format and within size limit");
-                        resolve(file);
-                        return;
-                    }
-
-                    const canvas = document.createElement('canvas');
-                    canvas.width = newWidth;
-                    canvas.height = newHeight;
-
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, newWidth, newHeight);
-
-                    const type = 'image/webp';
-                    const quality = 0.8; // Between 0 and 1
-
-                    canvas.toBlob(blob => {
-                        const name = file.type === 'image/webp'
-                            ? file.name
-                            : file.name.replace(/\.\w+$/, '.webp');
-
-                        resolve(new File([blob], name, { type }));
-                    }, type, quality);
-                };
-
-                img.onerror = () => {
-                    // Fallback to original file if image fails to load
-                    console.error("Failed to load image, using original file");
-                    resolve(file);
-                };
-
-                img.src = URL.createObjectURL(file);
-            });
-        }
-    }));
-});
-</script>
 
 
             <div class="w-full flex justify-center pt-0 mt-4 -mb-4">

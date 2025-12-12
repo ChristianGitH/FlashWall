@@ -67,12 +67,12 @@ public function markImageAsDisplayed($imageId, $nextImageId)
     }
 
 
-    // Refresh the image list every totalImages ÷ 4 images displayed, but never more frequently than every 2 images.
+    // Refresh the image list every totalImages ÷ 4 images displayed, but never more frequently than every 3 images.
     $totalImages = $this->approvedImages->count();
-    $refreshEvery = max(2, (int) floor($totalImages / 4));
+    $refreshEvery = max(3, (int) floor($totalImages / 4));
 
     // For dev front
-    $this->refreshEvery = max(2, (int) floor($totalImages / 4));
+    $this->refreshEvery = max(3, (int) floor($totalImages / 4));
 
     if ($this->countImageDisplay % $refreshEvery == 0 || $this->countImageDisplay >= $totalImages) {
             // For dev front
@@ -228,19 +228,6 @@ public function markImageAsDisplayed($imageId, $nextImageId)
     />
 </div>
 
-<!-- For DEV and testing -->
-<div x-show="showDebug" style="z-index: 100; opacity: 0.7;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
-    <p>Displayed : {{ $countImageDisplay }}. IDs to display ({{ count($approvedImages) }}) : 
-    @foreach ($approvedImages as $index => $image)
-        <span style="color: {{ $image->permanent ? 'green' : 'blue' }}; background-color: {{ $image->priority == 1 ? 'orange' : 'transparent' }}">
-            {{ $image->id }}
-        </span>@if (!$loop->last), @endif
-    @endforeach
-    </p>
-    <p>Already displayed IDs : {{ implode(', ', $displayedImageIds) }}</p>
-    <p>Refresh every : {{ $refreshEvery }}. Last DB check: {{ $lastDBCheckAt ?? 'Never' }}</p>
-</div>
-<!-- For dev and testing -->
 
 @if($approvedImages->isEmpty())
     <p class="text-center text-gray-500">{{ __('No image. Reload the page to start the slideshow.') }}</p>
@@ -253,61 +240,42 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         isUpdating: false,
         lastTime: performance.now(),
         isFullscreen: false,
-        wakeLock: null,
-
-        // WAKE LOCK : Keep screen active !
-        async requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator) {
-                    if (this.wakeLock) return; // évite les doublons
-
-                    this.wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('✅ Wake Lock activé');
-
-                    this.wakeLock.addEventListener('release', async () => {
-                        console.log('⚠️ Wake Lock relâché, tentative de réactivation...');
-                        try {
-                            this.wakeLock = await navigator.wakeLock.request('screen');
-                            console.log('🔁 Wake Lock réactivé');
-                        } catch (e) {
-                            console.warn('Impossible de relancer le Wake Lock:', e);
-                        }
-                    });
-                } else {
-                    console.warn('Wake Lock API non supportée sur ce navigateur.');
-                }
-            } catch (err) {
-                console.error('Erreur activation Wake Lock:', err);
-            }
-        },
+        elapsed: 0,
 
         async nextFrame(now) {
             const duration = {{ $displaySettings['duration'] }};
-            if (!this.lastTime) this.lastTime = now;
 
-            if (now - this.lastTime >= duration) {
+            if (!Number.isFinite(this.lastTime)) this.lastTime = now;
+
+            if (!this.slides || this.slides <= 0) {
+                requestAnimationFrame(this.nextFrame.bind(this));
+                return;
+            }
+
+            this.elapsed = now - this.lastTime;
+            if (this.elapsed >= duration) {
                 if (!this.isUpdating) {
                     this.isUpdating = true;
+                    try {
+                        const currentRef = this.$refs['image-' + this.currentSlide];
+                        const imageId = currentRef ? parseInt(currentRef.dataset.imageId, 10) : NaN;
+                        const nextIndex = (this.currentSlide + 1) % this.slides;
+                        const nextRef = this.$refs['image-' + nextIndex];
+                        const nextImageId = nextRef ? parseInt(nextRef.dataset.imageId, 10) : NaN;
 
-                    // On récupère l'ID de l'image affichée
-                    let imageId = parseInt(this.$refs['image-' + this.currentSlide]?.dataset?.imageId);
-                    let nextIndex  = (this.currentSlide + 1) % this.slides;
-                    let nextImageId = parseInt(this.$refs['image-' + nextIndex]?.dataset?.imageId);
-
-                    if (imageId) {
-                        try {
-                            await $wire.markImageAsDisplayed(imageId, nextImageId);
-                        } catch (e) {
-                            console.error('Erreur markImageAsDisplayed:', e);
+                        if (Number.isFinite(imageId)) {
+                            await $wire.markImageAsDisplayed(imageId, Number.isFinite(nextImageId) ? nextImageId : null);
                         }
+
+                        this.currentSlide = nextIndex;
+                        this.lastTime = performance.now();
+                    } catch (e) {
+                        console.error('Erreur markImageAsDisplayed:', e);
+                    } finally {
+                        this.isUpdating = false;
                     }
-
-                    // On passe à la diapo suivante
-                    this.currentSlide = nextIndex;
-                    this.isUpdating = false;
                 }
-
-                this.lastTime = now;
+                
             }
 
             requestAnimationFrame(this.nextFrame.bind(this));
@@ -327,14 +295,6 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         },
 
         init() {
-            this.requestWakeLock();
-
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') {
-                    this.requestWakeLock(); // Réactive dès que la page devient visible
-                }
-            });
-
             requestAnimationFrame(this.nextFrame.bind(this));
                 
             document.addEventListener('fullscreenchange', () => {
@@ -349,6 +309,22 @@ public function markImageAsDisplayed($imageId, $nextImageId)
     wire:key="slideshow-{{ implode(',', $approvedImages->pluck('id')->toArray()) }}"
     class="relative w-full h-screen flex items-center justify-center" style="{{ $displaySettings['background'] }}"
 >
+
+
+<!-- For DEV and testing -->
+<div x-show="showDebug" style="z-index: 100; opacity: 0.7;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
+    <p>Displayed : {{ $countImageDisplay }}. IDs to display ({{ count($approvedImages) }}) : 
+    @foreach ($approvedImages as $index => $image)
+        <span style="color: {{ $image->permanent ? 'green' : 'blue' }}; background-color: {{ $image->priority == 1 ? 'orange' : 'transparent' }}">
+            {{ $image->id }}
+        </span>@if (!$loop->last), @endif
+    @endforeach
+    </p>
+    <p>Already displayed IDs : {{ implode(', ', $displayedImageIds) }}. Elapsed : <span x-text="elapsed.toFixed(0)"></span></p>
+    <p>Refresh every : {{ $refreshEvery }}. Last DB check: {{ $lastDBCheckAt ?? 'Never' }}</p>
+</div>
+<!-- For dev and testing -->
+
 
 
     <!-- FULLSCREEN BUTTON -->
@@ -425,7 +401,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                         <div x-data="{ showCaption: false, showCaptionContent: false }"
                             x-init="
                             const duration = {{ $displaySettings['duration'] }};
-                            showCaptionDelay = duration/3;
+                            showCaptionDelay = duration/2;
                             showCaptionContentDelay = showCaptionDelay+700
                             if ({{ $index }} === 0) {
                                 setTimeout(() => showCaption = true, showCaptionDelay);
