@@ -1,11 +1,4 @@
 TO DEPLOY :
-slideshow : WakeLock was mooved to wlideshow-wrapper in the previous push.
-slideshow-wrapper : added overflow hidden to avoid scroll bar.
-setup-wall : posting_page_end_title was missing in the model before testing "is dirty".
-submitters-terms : fixed dark mode style, lang switcher and return button
-legal : added Legal Notices page and lang files.
-create-image : swapped logo and custom title order.
-    Resized all cards on small devices
 
 
 NEXT TO DO :

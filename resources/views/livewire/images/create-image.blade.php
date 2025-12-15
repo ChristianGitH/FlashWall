@@ -451,7 +451,7 @@ new class extends Component {
                 <h1 class="mb-4 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
             @endif
 
-            <x-form wire:submit="saveSubmitterData" class="mt-6 max-w-full"> 
+            <x-form wire:submit="saveSubmitterData" class="mt-6 max-w-full w-full"> 
 
                 <!-- Name input display -->
                 @if ($this->wall->ask_name_submitter && !$this->wall->require_name_submitter)
@@ -663,7 +663,7 @@ new class extends Component {
             @endif
 
 
-            <x-form x-data="uploadImage" wire:submit="uploadImage" class="max-w-full"> 
+            <x-form x-data="uploadImage" wire:submit="uploadImage" class="max-w-full w-full"> 
 
                 <input class="file-input w-full" type="file" @change="selectFile" x-ref="fileInput" accept="image/*">
 
