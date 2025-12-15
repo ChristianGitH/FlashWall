@@ -445,7 +445,7 @@ new class extends Component {
 
         <x-card x-show="currentCard === 'submitter'" x-cloak class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
             @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-full md:max-w-xs mb-2 mx-auto object-cover " />
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto object-cover " />
             @endif
             @if($this->wall->posting_page_text_visibility)
                 <h1 class="mb-4 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
@@ -632,7 +632,7 @@ new class extends Component {
 
         <x-card x-show="currentCard === 'upload'" x-cloak  class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
             @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-full md:max-w-xs mt-1 mb-2 mx-auto object-cover " />
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mt-1 mb-2 mx-auto object-cover " />
             @endif
             @if($this->wall->posting_page_text_visibility)
                 <h1 class="mb-3 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
