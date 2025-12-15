@@ -1,9 +1,11 @@
 TO DEPLOY :
-create-image : moved spinner/loading script to the top to avoid unset var on load (x-data).
-    Added dark style to avatar selection modal
-slideshow : changed Alpine Js script. big diffence between now and 
-slideshow-slow : added a version without propel function. 
-    In "slow" the Alpine JS calculates if markImageAsDisplayed needed to be called (every x slide).
+slideshow : WakeLock was mooved to wlideshow-wrapper in the previous push.
+slideshow-wrapper : added overflow hidden to avoid scroll bar.
+setup-wall : posting_page_end_title was missing in the model before testing "is dirty".
+submitters-terms : fixed dark mode style, lang switcher and return button
+legal : added Legal Notices page and lang files.
+create-image : swapped logo and custom title order.
+    Resized all cards on small devices
 
 
 NEXT TO DO :
@@ -27,9 +29,6 @@ moderation : fix caption display, overlay bug with side menu drawer
 slideshow : verifier que la boucle du slideshow fonctionne bien,
     qu'il n y a pas de décalage entre le fait d'attente le chargement de l'image et le départ des async.
     Saut d'image car parfois deux refresh à la suite : DEPLACER this.lastTime = now; ??
-slideshow : WackLock, try to activate only if tab is active
-create-image : avatar select dark mode
-slideshow : create a version whithout propel. More stable.
 
 
 /*\ COMMAND LINES /*\

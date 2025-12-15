@@ -118,7 +118,7 @@ public function computeWallSettings(): array
 </script>
 @endpush
 
-<div x-data="{ ready: false }" x-init="ready = true" class="w-screen h-screen">
+<div x-data="{ ready: false }" x-init="ready = true" class="w-screen h-screen overflow-hidden">
     <!-- Loading spinner -->
     <div x-show="!ready" class="absolute inset-0 flex items-center justify-center z-50">
         <x-loading class="loading-ring" />

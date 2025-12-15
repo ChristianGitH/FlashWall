@@ -437,21 +437,21 @@ new class extends Component {
 <div x-data="{ currentCard: @entangle('currentCard') }"
     class="min-h-screen flex flex-col" style="{{ $background }}">
     <!-- Main content centered -->
-    <main class="flex-1 flex flex-col items-center justify-center p-5 lg:px-10 lg:py-5">
+    <main class="flex-1 flex flex-col items-center justify-center p-5 md:py-5 px-2 lg:px-10">
         <div x-show="currentCard === 'loading'" class="absolute inset-0 flex items-center justify-center z-50">
             <x-loading class="loading-ring" />
         </div>
 
 
-        <x-card x-show="currentCard === 'submitter'" x-cloak class="flex items-center justify-center">
+        <x-card x-show="currentCard === 'submitter'" x-cloak class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
+            @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto object-cover " />
+            @endif
             @if($this->wall->posting_page_text_visibility)
                 <h1 class="mb-4 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
             @endif
-                @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto object-cover " />
-            @endif
 
-            <x-form wire:submit="saveSubmitterData" class="mt-6"> 
+            <x-form wire:submit="saveSubmitterData" class="mt-6 max-w-full"> 
 
                 <!-- Name input display -->
                 @if ($this->wall->ask_name_submitter && !$this->wall->require_name_submitter)
@@ -603,7 +603,7 @@ new class extends Component {
                 @if($this->terms_checkbox_display_card === 'submitter') 
                     <x-checkbox wire:model="terms" required>
                         <x-slot:label>
-                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" target="_blank" class="underline">{{ __('terms.title') }}</a>
+                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" class="underline">{{ __('terms.title') }}</a>
                         </x-slot:label>
                     </x-checkbox>
                 @endif
@@ -630,13 +630,14 @@ new class extends Component {
 
 
 
-        <x-card x-show="currentCard === 'upload'" x-cloak  class="flex items-center justify-center">
+        <x-card x-show="currentCard === 'upload'" x-cloak  class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
+            @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mt-1 mb-2 mx-auto object-cover " />
+            @endif
             @if($this->wall->posting_page_text_visibility)
                 <h1 class="mb-3 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
             @endif
-                @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mt-1 mb-2 mx-auto object-cover " />
-            @endif
+
 
             <!-- Submitter data display
                 IF askName & askEmail = false, we don't display anything
@@ -654,7 +655,7 @@ new class extends Component {
             @endphp
 
             @if($label)
-                <a role="button" class="flex justify-center items-center mb-3" @click="currentCard = 'submitter';">
+                <a role="button" class="flex justify-center items-center mb-3 max-w-full" @click="currentCard = 'submitter';">
                     <x-icon name="o-user-circle" title="Change" />
                     {{ $label }}
                     <x-icon name="o-pencil-square" class="text-gray-500 ml-2" title="Change" />
@@ -662,7 +663,7 @@ new class extends Component {
             @endif
 
 
-            <x-form x-data="uploadImage" wire:submit="uploadImage"> 
+            <x-form x-data="uploadImage" wire:submit="uploadImage" class="max-w-full"> 
 
                 <input class="file-input w-full" type="file" @change="selectFile" x-ref="fileInput" accept="image/*">
 
@@ -683,7 +684,7 @@ new class extends Component {
                 @if($this->terms_checkbox_display_card === 'upload')
                     <x-checkbox wire:model="terms" required>
                         <x-slot:label>
-                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" target="_blank" class="underline">{{ __('terms.title') }}</a>
+                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" class="underline">{{ __('terms.title') }}</a>
                         </x-slot:label>
                     </x-checkbox>
                 @endif
@@ -711,7 +712,7 @@ new class extends Component {
         </x-card>
 
 
-        <x-card x-show="currentCard === 'message'" x-cloak class="flex flex-col items-center justify-center text-center p-6">
+        <x-card x-show="currentCard === 'message'" x-cloak class="flex flex-col max-w-full md:max-w-none px-2 md:px-5 items-center justify-center">
             <h1 class="text-2xl font-bold mb-4" style="{{ $this->posting_page_font_style }}">
                 {{ $messageHeader }}
             </h1>

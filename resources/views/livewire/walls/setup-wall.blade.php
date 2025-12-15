@@ -362,8 +362,8 @@ class extends Component {
         // Remplit le modèle avec les données validées
         $this->wall->posting_page_text = $this->posting_page_text;
         $this->wall->posting_page_text_visibility = $this->posting_page_text_visibility;
+        $this->wall->posting_page_end_title = $this->posting_page_end_title;
         $this->wall->posting_page_end_text = $this->posting_page_end_text;
-        $this->wall->posting_page_text = $this->posting_page_text;
         $this->wall->posting_page_font = $this->posting_page_font;
         $this->wall->posting_page_buttons_color = $this->posting_page_buttons_color;
         $this->wall->posting_page_buttons_font_color = $this->posting_page_buttons_font_color;
@@ -696,9 +696,9 @@ class extends Component {
             </div>
             <!-- END CUSTOM FONT SELECTOR INPUT -->
 
-            <hr>
+            <x-menu-separator />
 
-                <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }"class="flex flex-row gap-x-3 items-end justify-between">
+                <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }" class="flex flex-row gap-x-3 items-end justify-between">
                     <x-input class="whitespace-nowrap overflow-visible" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" >
                         <x-slot:prefix>Hex</x-slot:prefix>
                         <x-slot:suffix>
