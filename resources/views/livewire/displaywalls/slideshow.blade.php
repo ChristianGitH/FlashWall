@@ -400,10 +400,10 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                             <div class="flex justify-center items-center gap-2">
                                 @if($wall->require_avatar_submitter && $image->submitter_avatar)
                                 <span class="emoji_font bg-base-300 rounded-full inline-flex items-center justify-center"
-                                    style="font-size: 0.75em; width: 1.7em; height: 1.7em;">{{ $image->submitter_avatar }}</span>
+                                    style="font-size: 1em; width: 1.7em; height: 1.7em;">{{ $image->submitter_avatar }}</span>
                                 @endif
                                 @if($wall->submitter_name_on_wall && $image->submitter_name)
-                                    <span class="ml-2 uppercase" style="font-size: {{ $displaySettings['submitter_name_font_size'] . $displaySettings['caption_font_unit'] }};
+                                    <span class="ml-3 uppercase" style="font-size: {{ $displaySettings['submitter_name_font_size'] . $displaySettings['caption_font_unit'] }};
                                     color: {{ $displaySettings['submitter_name_font_color'] }};
                                     ">
                                         {{ $image->submitter_name }}
