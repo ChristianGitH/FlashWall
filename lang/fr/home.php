@@ -12,7 +12,7 @@ return [
     'tool_description' => 'Un outil évolutif, rapide et facile à utiliser, conçu par et pour les organisateurs d’événements.',
     'receive_moderate_display' => "Recevez, modérez et affichez le contenu de votre public sans effort.",
     'experience' => "Une expérience qui s’intègre parfaitement à votre événement.",
-    'experience_details' => 'Avec les options de personnalisation les plus avancées : couleur, mise en page, animations ; de l’affichage à l’écran à l’accueil des utilisateurs, vous obtenez exactement ce que vous souhaitez.',
+    'experience_details' => 'Avec les options de personnalisation les plus avancées : couleur, mise en page, animations ; de l’affichage à l’écran, à l’accueil des utilisateurs, vous obtenez exactement ce que vous souhaitez.',
     'flashwall_custom' => 'donnera l’impression d’avoir été conçu spécialement pour votre événement !',
     'newsletter_input' => 'Pour ne pas manquer la suite :',
     'email_exemple' => 'adresse-email@domaine.com',

@@ -394,16 +394,16 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                             :class="{ 'opacity-0': !showCaptionContent, 'opacity-100': showCaptionContent }"
                             style="background-color: {{ $displaySettings['caption_background'] }};
                             max-width: {{ $displaySettings['caption_max_width'] }}%;
-                            display: inline-block;">
+                            display: inline-block;
+                            font-size: {{ $displaySettings['submitter_name_font_size'] . $displaySettings['caption_font_unit'] }};">
 
                             <div class="flex justify-center items-center gap-2">
                                 @if($wall->require_avatar_submitter && $image->submitter_avatar)
                                 <span
-                                    class="emoji_font bg-base-300 rounded-full inline-flex items-center justify-center"
-                                    style="
-                                        font-size: {{ $displaySettings['submitter_name_font_size'] . $displaySettings['caption_font_unit'] }};
-                                        width: 2em;
-                                        height: 2em;
+                                    class="emoji_font bg-base-300 rounded-full inline-flex mt-2 mr-2 items-center justify-center"
+                                    style="font-size: 0.5em;
+                                        width: 1.7em;
+                                        height: 1.7em;
                                     "
                                 >
                                     {{ $image->submitter_avatar }}

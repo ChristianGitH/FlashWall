@@ -724,4 +724,6 @@ new class extends Component {
     </main>
 
 </div>
+    <!-- Hidden theme toggle so the page gets the user choosed theme -->
+    <x-theme-toggle class="hidden" />
 </div>

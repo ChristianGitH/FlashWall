@@ -10,7 +10,6 @@ return [
     'editor' => [
         'title' => 'Editor',
         'text' => 'The website editor is :',
-        'email' => 'christianc.dev@gmail.com',
     ],
 
     'intellectual_property' => [

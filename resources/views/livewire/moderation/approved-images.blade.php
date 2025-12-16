@@ -266,7 +266,7 @@ new class extends Component {
             }}">
 
             @if($this->ApprovedImages->isEmpty())
-                <p class="text-center">{{ __('No approved image.') }}</p>
+                <p class="text-center">{{ __('No approved image') }}</p>
             @else
             @foreach($this->ApprovedImages as $image)
 

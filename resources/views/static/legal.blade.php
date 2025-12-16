@@ -17,7 +17,7 @@
     <!-- Editor section -->
     <h2 class="text-2xl font-bold mt-8 mb-4">{{ __('legal.editor.title') }}</h2>
     <p class="mb-6 leading-relaxed">
-        {{ __('legal.editor.text') }} {{ __('legal.editor.email') }}
+        {{ __('legal.editor.text') }} : contact@flashwall.app
     </p>
 
     <!-- Intellectual property section -->

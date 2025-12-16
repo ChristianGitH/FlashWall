@@ -16,7 +16,7 @@ class extends Component {
     use Toast;
 
     public Wall $wall;
-    public string $mordeation_tabs_group = 'unprocessed_images';
+    public string $moderation_tabs_group = 'unprocessed_images';
         
 }; ?>
 
@@ -101,7 +101,7 @@ class extends Component {
     </div>
 
     @if ($wall->moderation)
-    <x-accordion wire:model="mordeation_tabs_group">
+    <x-accordion wire:model="moderation_tabs_group" wire:ignore>
         <livewire:moderation.unprocessed-images :wall="$wall" />
         <livewire:moderation.approved-images :wall="$wall" />
         <livewire:moderation.archived-images :wall="$wall" />

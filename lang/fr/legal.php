@@ -10,7 +10,6 @@ return [
     'editor' => [
         'title' => 'Éditeur',
         'text' => 'L’éditeur du site est :',
-        'email' => 'christianc.dev@gmail.com',
     ],
 
     'intellectual_property' => [

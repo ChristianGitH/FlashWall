@@ -428,7 +428,7 @@ new class extends Component {
 
         <div class="gallery_wrapper">
             @if($this->images->isEmpty())
-                <p class="text-center text-gray-500">{{ __('No image pending.') }}</p>
+                <p class="text-center text-gray-500">{{ __('No image pending') }}</p>
             @else
                 @foreach($this->images as $image)
             

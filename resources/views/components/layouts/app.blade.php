@@ -22,7 +22,7 @@
 
 
 <!-- NO MENU : If it's not one of these pages we use the normal layout -->
-@if (!Request::is('display/*') && !Request::is('display-dev/*') && !Route::is('create-image'))
+@if (!Request::is('display/*') && !Route::is('create-image'))
     {{-- NAVBAR mobile only --}}
     <x-nav sticky class="lg:hidden">
         <x-slot:brand>

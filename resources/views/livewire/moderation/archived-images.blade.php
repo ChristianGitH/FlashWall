@@ -253,7 +253,7 @@ new class extends Component {
         <div class="gallery_wrapper">
 
             @if($this->ArchivedImages->isEmpty())
-                    <p class="text-center text-gray-500">{{ __('No archived image.') }}</p>
+                    <p class="text-center text-gray-500">{{ __('No archived image') }}</p>
                 @else
                     @foreach($this->ArchivedImages as $image)
                     @php
