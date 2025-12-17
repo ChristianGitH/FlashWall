@@ -158,6 +158,7 @@ new class extends Component {
             }
 
             $count = Image::where('wall_id', $this->wall->id)
+                ->where('status', '!=', 5)
                 ->where('permanent', true)
                 ->where('visitor_token', $this->visitorToken)
                 ->count();
