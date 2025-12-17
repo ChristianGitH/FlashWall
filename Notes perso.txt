@@ -1,6 +1,6 @@
 TO DEPLOY :
-create-image : fixed dark-theme error by adding a hidden theme-toggle.
-moderation : fixed accordion closing on btn clic, added wire:ignore.
+moderation : Quick setup view - fixed allow_captions toggle var.
+slideshow : Fullscreen btn was showing again if refresh while Fullscreen.
 
 NEXT TO DO :
 Bug sur display-image lors de l'archivage ou Suppression d'image.

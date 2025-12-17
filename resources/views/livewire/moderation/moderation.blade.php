@@ -65,7 +65,7 @@ class extends Component {
                         <legend class="fieldset-legend">{{ __('Settings quick view') }}</legend>
                         <label class="label">{{ __('Caption enabled') }} :
                             <input type="checkbox" class="toggle toggle-success" disabled
-                                {{ $wall->caption ? 'checked' : '' }}
+                                {{ $wall->allow_captions ? 'checked' : '' }}
                             />
                         </label>
                         <label class="label">{{ __('Caption displayed on wall') }} :

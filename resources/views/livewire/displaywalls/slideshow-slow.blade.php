@@ -175,7 +175,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         slides: {{ $approvedImages->count() }},
         isUpdating: false,
         lastTime: performance.now(),
-        isFullscreen: false,
+        isFullscreen: !!document.fullscreenElement,
         displayedCount: 0,
         refreshEvery: {{ max(3, floor($approvedImages->count() / 4)) }},
         displayedIds: [],

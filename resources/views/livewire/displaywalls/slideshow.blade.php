@@ -228,7 +228,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         slides: {{ $approvedImages->count() }},
         isUpdating: false,
         lastTime: performance.now(),
-        isFullscreen: false,
+        isFullscreen: !!document.fullscreenElement,
 
         async nextFrame(now) {
             const duration = {{ $displaySettings['duration'] }};

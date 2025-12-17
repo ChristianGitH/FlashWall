@@ -239,7 +239,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         slides: {{ $approvedImages->count() }},
         isUpdating: false,
         lastTime: performance.now(),
-        isFullscreen: false,
+        isFullscreen: !!document.fullscreenElement,
         elapsed: 0,
 
         async nextFrame(now) {
