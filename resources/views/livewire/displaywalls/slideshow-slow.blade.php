@@ -14,9 +14,6 @@ new class extends Component {
     public int $countImageDisplay = 0;
     public int $countImageDisplayBeforeRefresh = 0;
 
-    /* For dev and testing */
-    public $lastDBCheckAt = '';
-    public $refreshEvery = '';
 
     public function mount(Wall $wall, array $displaySettings)
     {
@@ -39,7 +36,6 @@ public function loadApprovedImages()
 
     return $query
         ->where('status', '!=', 5)->where('permanent', 1)->orderBy('updated_at', 'asc')->get();
-        // For priority : ->orderBy('priority', 'desc') For exemple priority = 1 : push forward
 }
 
 
@@ -49,37 +45,22 @@ public function loadApprovedImages()
  */
 public function markImageAsDisplayed($imageId, $nextImageId)
 {
-    $this->countImageDisplay++;
-    
+    // Si un seul ID est passé, le transformer en tableau
+    if (!is_array($imageId)) {
+        $imageId = [$imageId];
+    }
+
+    // We push each id
+    foreach ($imageId as $imageId) {
+        // We remove the ID from the array and put it back at the end
+        $this->displayedImageIds = [...array_filter($this->displayedImageIds, fn($id) => $id !== $imageId), $imageId];
+    }
     // We keep the next image data in case it will not be in the next load.
     // If last image, will keep displaying it.
     $nextImage = $this->approvedImages->firstWhere('id', $nextImageId);
+    $this->lastDBCheckAt = now()->format('H:i:s'); // stocke l'heure pour l'affichage front
 
-    // We add the image id in displayedImageIds, unique id and at the end of array 
-        $this->displayedImageIds = [...array_filter($this->displayedImageIds, fn($id) => $id !== $imageId), $imageId];
-        // If priority = 1, we change it back to 0
-        Image::where('id', $imageId)->where('priority', 1)->update(['priority' => 0]);
-
-
-    // We check is there's a propelled image
-    if ($this->checkForPropelledImage($nextImage)) {
-        return;
-    }
-
-
-    // Refresh the image list every totalImages ÷ 4 images displayed, but never more frequently than every 3 images.
-    $totalImages = $this->approvedImages->count();
-    $refreshEvery = max(3, (int) floor($totalImages / 4));
-
-    // For dev front
-    $this->refreshEvery = max(3, (int) floor($totalImages / 4));
-
-    if ($this->countImageDisplay % $refreshEvery == 0 || $this->countImageDisplay >= $totalImages) {
-            // For dev front
-            $this->lastDBCheckAt = now()->format('H:i:s'); // stocke l'heure pour l'affichage front
-        
-        $this->checkForChangesInDatabase($nextImage);
-    }
+    $this->checkForChangesInDatabase($nextImage);
 
 }
 
@@ -177,56 +158,11 @@ public function markImageAsDisplayed($imageId, $nextImageId)
 
 
 
-
-
-
-
-    public function checkForPropelledImage($nextImage): bool
-    {
-        $propelled = $this->wall->images()
-            ->where('priority', 1)
-            ->where('status', 1)
-            ->first();
-
-        // We check is the propelled image is not allready the nextImage
-        if ($propelled && (!$nextImage || $propelled->id !== $nextImage->id)) {
-            $newCollection = collect();
-
-            // Push nextImage
-            if ($nextImage) {
-                $newCollection->push($nextImage);
-            }
-            // Push propelled behind nextImage
-            $newCollection->push($propelled);
-
-            $remaining = $this->approvedImages
-                ->reject(fn($img) => in_array($img->id, [$nextImage?->id, $propelled->id]))
-                ->values();
-
-            $this->approvedImages = $newCollection->concat($remaining)->values();
-            
-            return true;
-        }
-        return false;
-    }
-
-
 }; ?>
 
 @section('title', 'Display ' . $wall->name)
 
-<div x-data="{
-    showDebug: false, // FOR DEV ONLY
-    }">
-
-<!-- DEV TOGGLE BUTTON -->
-<div class="fixed top-5 left-5" style="z-index: 100;">
-    <x-button 
-        @click="showDebug = !showDebug"
-        class="btn btn-xs"
-        x-text="showDebug ? 'Masquer debug' : 'Afficher debug'"
-    />
-</div>
+<div>
 
 
 @if($approvedImages->isEmpty())
@@ -240,6 +176,9 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         isUpdating: false,
         lastTime: performance.now(),
         isFullscreen: !!document.fullscreenElement,
+        displayedCount: 0,
+        refreshEvery: {{ max(3, floor($approvedImages->count() / 4)) }},
+        displayedIds: [],
         elapsed: 0,
 
         async nextFrame(now) {
@@ -264,7 +203,16 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                         const nextImageId = nextRef ? parseInt(nextRef.dataset.imageId, 10) : NaN;
 
                         if (Number.isFinite(imageId)) {
-                            await $wire.markImageAsDisplayed(imageId, Number.isFinite(nextImageId) ? nextImageId : null);
+                            this.displayedCount++;
+
+                            this.displayedIds.push(imageId);
+
+                            // Call markImageAsDisplayed only if we reach refreshEvery
+                            if (this.displayedCount % this.refreshEvery === 0 || this.displayedCount >= this.slides) {
+                                await $wire.markImageAsDisplayed(this.displayedIds, Number.isFinite(nextImageId) ? nextImageId : null);
+                                this.displayedIds = [];
+                                this.displayedCount = 0;
+                            }
                         }
 
                         this.currentSlide = nextIndex;
@@ -309,22 +257,6 @@ public function markImageAsDisplayed($imageId, $nextImageId)
     wire:key="slideshow-{{ implode(',', $approvedImages->pluck('id')->toArray()) }}"
     class="relative w-full h-screen flex items-center justify-center" style="{{ $displaySettings['background'] }}"
 >
-
-
-<!-- For DEV and testing -->
-<div x-show="showDebug" style="z-index: 100; opacity: 0.7;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
-    <p>Displayed : {{ $countImageDisplay }}. IDs to display ({{ count($approvedImages) }}) : 
-    @foreach ($approvedImages as $index => $image)
-        <span style="color: {{ $image->permanent ? 'green' : 'blue' }}; background-color: {{ $image->priority == 1 ? 'orange' : 'transparent' }}">
-            {{ $image->id }}
-        </span>@if (!$loop->last), @endif
-    @endforeach
-    </p>
-    <p>Already displayed IDs : {{ implode(', ', $displayedImageIds) }}. Elapsed : <span x-text="elapsed.toFixed(0)"></span></p>
-    <p>Refresh every : {{ $refreshEvery }}. Last DB check: {{ $lastDBCheckAt ?? 'Never' }}</p>
-</div>
-<!-- For dev and testing -->
-
 
 
     <!-- FULLSCREEN BUTTON -->
@@ -401,7 +333,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                         <div x-data="{ showCaption: false, showCaptionContent: false }"
                             x-init="
                             const duration = {{ $displaySettings['duration'] }};
-                            showCaptionDelay = duration/2;
+                            showCaptionDelay = duration/3;
                             showCaptionContentDelay = showCaptionDelay+700
                             if ({{ $index }} === 0) {
                                 setTimeout(() => showCaption = true, showCaptionDelay);
@@ -458,11 +390,6 @@ public function markImageAsDisplayed($imageId, $nextImageId)
         </div>
     @endforeach
 
-        <!-- Debug panel -->
-    <div x-show="showDebug" style="z-index: 150;" class="fixed bottom-2 right-2 bg-white text-xs text-gray-700 shadow p-2 rounded max-w-xs z-50">
-        <p><strong>currentSlide:</strong> <span x-text="currentSlide"></span></p>
-        <p><strong>slides:</strong> <span x-text="JSON.stringify(slides)"></span></p>
-    </div>
 </div>
 
 @endif

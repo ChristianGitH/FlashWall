@@ -28,7 +28,7 @@ new class extends Component {
         $ArchivedImages = Image::where('wall_id', $this->wall->id)
                     ->where('status', 2) // 0 = unprocessed. 1 = approved. 2 = archived.
                     ->where('permanent', 1)
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('updated_at', 'asc')
                     ->paginate(30, pageName: 'archived-images');
 
         $this->archivedImagesPageCount = $ArchivedImages->count();
@@ -36,33 +36,6 @@ new class extends Component {
     }
 
     protected $listeners = ['reset-selection-archived' => '$refresh', 'archived-images-updated' => '$refresh',];
-
-
-    // This updates the parent image and creates copies if needed
-    private function approveAndCopy(Image $parent, int $copiesToCreate, array &$copies): void
-    {
-        // Updating image satus
-        $parent->status = 1;
-        $parent->save();
-
-        if ($parent->permanent && $copiesToCreate > 0) {
-            $now = now();
-            for ($k = 0; $k < $copiesToCreate; $k++) {
-                $copies[] = [
-                    'wall_id'    => $parent->wall_id,
-                    'parent_id'  => $parent->id,
-                    'name'       => $parent->name,
-                    'webp_name'       => $parent->webp_name,
-                    'thumb'      => $parent->thumb,
-                    'caption'    => $parent->caption,
-                    'status'     => 1,
-                    'permanent'  => false,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-            }
-        }
-    }
 
 
     /* Approving images */
@@ -83,23 +56,9 @@ new class extends Component {
         $parent = Image::find($id);
         if (!$parent) return; 
 
-        // Creating copies for image display functionality
-        if ($parent && $parent->permanent) {
-            // Get all parent images (permanent = true) which are not approved (status != 1)
-            $parentsCount = Image::where('wall_id', $parent->wall_id)
-                ->where('permanent', true)
-                ->where('status', 1)
-                ->count();
-
-            $copiesToCreate = (int) round($parentsCount * 0.2);
-            $copies = [];
-            $this->approveAndCopy($parent, $copiesToCreate, $copies);
-
-            // Insert in database, instead of create to limit requests
-            if (!empty($copies)) {
-                Image::insert($copies);
-            }
-        }
+        // Updating image satus
+        $parent->status = 1;
+        $parent->save();
 
         // Removing image from selection browser side
         $this->dispatch('action-on-archived-image', id: $id);
@@ -118,23 +77,13 @@ new class extends Component {
         // Get all selected images
         $images = Image::whereIn('id', $selectedImages)->get();
 
-        // Get all parent images (permanent = true) which are not approved (status != 1)
-        $parentsCount = Image::where('wall_id', $this->wall->id)
-            ->where('permanent', true)
-            ->where('status', 1)
-            ->count();
-
-        $copiesToCreate = (int) round($parentsCount * 0.2);
-        $copies = [];
 
         foreach ($images as $parent) {
-            $this->approveAndCopy($parent, $copiesToCreate, $copies);
+            // Updating image satus
+            $parent->status = 1;
+            $parent->save();
         }
 
-        // Insert in database, instead of create to limit requests
-        if (!empty($copies)) {
-            Image::insert($copies);
-        }
 
         // Reset sélection browser side
         $this->dispatch('reset-selection-archived');
@@ -171,7 +120,6 @@ new class extends Component {
 
         // Delete files using accessors
         Storage::disk('public')->delete([
-            $image->original_full_path,
             $image->webp_full_path,
             $image->thumb_full_path,
         ]);
@@ -197,7 +145,6 @@ new class extends Component {
 
         // Build all file paths using accessors
         $paths = $images->flatMap(fn($image) => [
-            $image->original_full_path,
             $image->webp_full_path,
             $image->thumb_full_path,
         ])->toArray();
@@ -241,7 +188,7 @@ new class extends Component {
         }"
 >
 
-<x-collapse separator>
+<x-collapse name="archived_images" separator>
     <x-slot:heading>{{ __( 'Archived images' ) . ' (' . $this->ArchivedImages->total() }})</x-slot:heading>
 
     <x-slot:content>
@@ -306,7 +253,7 @@ new class extends Component {
         <div class="gallery_wrapper">
 
             @if($this->ArchivedImages->isEmpty())
-                    <p class="text-center text-gray-500">{{ __('No archived image.') }}</p>
+                    <p class="text-center text-gray-500">{{ __('No archived image') }}</p>
                 @else
                     @foreach($this->ArchivedImages as $image)
                     @php
@@ -332,7 +279,7 @@ new class extends Component {
                         </svg>
                     <input 
                         type="checkbox" 
-                        class="checkbox checkbox-sm archived-image-checkbox"
+                        class="checkbox checkbox-sm bg-[#f8f8f8] dark:bg-[#191e24] archived-image-checkbox"
                         :value="{{ $image->id }}"
                         x-model="selectedArchived"
                         id="checkbox-{{ $image->id }}"

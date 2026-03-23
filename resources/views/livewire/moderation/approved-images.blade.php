@@ -29,7 +29,7 @@ new class extends Component {
         $ApprovedImages = Image::where('wall_id', $this->wall->id)
                     ->where('status', 1) // 0 = unprocessed. 1 = approved. 2 = archived.
                     ->where('permanent', 1)
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('updated_at', 'asc')
                     ->paginate(30, pageName: 'approved-images');
         
         $this->approvedImagesPageCount = $ApprovedImages->count();
@@ -51,12 +51,6 @@ new class extends Component {
         }
 
         Image::whereIn('id', $imageIds)->update(['status' => 2]); // 0 = unprocessed. 1 = approved. 2 = archived.
-
-        // Updating the copies
-        Image::where('wall_id', $this->wall->id)
-            ->where('permanent', false)
-            ->whereIn('parent_id', $imageIds)
-            ->update(['status' => 5]);
 
         // Pagination reset if all images were archived
         if ($this->approvedImagesPageCount <= count($imageIds)) {
@@ -96,12 +90,6 @@ new class extends Component {
 
 
         Image::whereIn('id', $imageIds)->update(['status' => 5]); // 0 = unprocessed. 1 = approved. 2 = archived.
-
-        // Updating the copies
-        Image::where('wall_id', $this->wall->id)
-            ->where('permanent', false)
-            ->whereIn('parent_id', $imageIds)
-            ->update(['status' => 5]);
 
         // Pagination reset if all images were deleted
         if ($this->approvedImagesPageCount <= count($imageIds)) {
@@ -206,7 +194,7 @@ new class extends Component {
         }"
     >
 
-<x-collapse separator>
+<x-collapse name="approved_image" separator>
     <x-slot:heading>{{ __( 'Approved images' ) . ' (' . $this->ApprovedImages->total() }})
         <span class="text-gray-500">{{ __('These images are displayed')}}</span>
     </x-slot:heading>
@@ -278,7 +266,7 @@ new class extends Component {
             }}">
 
             @if($this->ApprovedImages->isEmpty())
-                <p class="text-center">{{ __('No approved image.') }}</p>
+                <p class="text-center">{{ __('No approved image') }}</p>
             @else
             @foreach($this->ApprovedImages as $image)
 
@@ -331,7 +319,7 @@ new class extends Component {
                         </a>
                     <input 
                         type="checkbox" 
-                        class="checkbox checkbox-sm approved-image-checkbox"
+                        class="checkbox checkbox-sm bg-[#f8f8f8] dark:bg-[#191e24] approved-image-checkbox"
                         :value="{{ $image->id }}"
                         x-model="selectedApproved"
                         id="checkbox-{{ $image->id }}"

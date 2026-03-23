@@ -30,6 +30,8 @@ new class extends Component {
     public ?string $avatar = '';
     public string $posting_page_font_link = '';
     public string $posting_page_font_style = '';
+    public string $posting_page_end_title = '';
+    public string $posting_page_end_text = '';
     public ?string $visitorToken = '';
     public string $currentCard = 'loading';
 
@@ -39,12 +41,13 @@ new class extends Component {
     public string $messageHeader = '';
     public string $terms_checkbox_display_card = '';
 
-    public function mount(wall $wall)
+    public function mount(Wall $wall)
     {
         $this->wall = $wall;
 
         $this->initBackground();
         $this->initFont();
+        $this->initEndMessage();
         $this->initVisitorToken();
         $this->initSubmitterData();
         $this->getSubmitterRequirements();
@@ -71,10 +74,27 @@ new class extends Component {
             $this->posting_page_font_style = "font-family: {$font}, sans-serif;";
     }
 
+    private function initEndMessage(): void
+    {
+        $this->posting_page_end_title = $this->wall->posting_page_end_title;
+        $this->posting_page_end_text = $this->wall->posting_page_end_text;
+    }
+
     private function initVisitorToken(): void
     {
         $this->visitorToken = request()->cookie('visitor_token') ?? (string) \Str::uuid();
-        cookie()->queue(cookie('visitor_token', $this->visitorToken, 60 * 24 * 31, null, null, false, true));
+        cookie()->queue(
+            cookie(
+                name: 'visitor_token',
+                value: $this->visitorToken,
+                minutes: 60 * 24 * 31,
+                path: '/',
+                domain: null,
+                secure: app()->environment('production'),
+                httpOnly: true,
+                sameSite: 'Lax',
+            )
+        );    
     }
 
     private function initSubmitterData(): void
@@ -83,8 +103,11 @@ new class extends Component {
             $this->submitter = Submitter::find($submitterId);
             $this->name = $this->submitter?->name ?? '';
             $this->email = $this->submitter?->email ?? '';
-            $this->avatar = $this->submitter?->avatar ?? '';
-        }
+            $this->avatar = $this->submitter?->avatar ?? '😊';
+        } else {
+        // si pas de submitter existant
+        $this->avatar = '😊';
+    }
     }
 
 
@@ -113,7 +136,7 @@ new class extends Component {
         return match($this->wall->capture_mode) {
             1 => 'user',        // Front camera
             2 => 'environment', // Rear camera
-            default => '',      // Gallery ou aucune capture forcée
+            default => null,      // Gallery ou aucune capture forcée
         };
     }
 
@@ -135,6 +158,7 @@ new class extends Component {
             }
 
             $count = Image::where('wall_id', $this->wall->id)
+                ->where('status', '!=', 5)
                 ->where('permanent', true)
                 ->where('visitor_token', $this->visitorToken)
                 ->count();
@@ -174,7 +198,7 @@ new class extends Component {
     {
         // Build validation rules dynamically
         $rules = [
-            'name' => ($this->wall->require_name_submitter ? 'required|' : 'nullable|') . 'string|max:50',
+            'name' => ($this->wall->require_name_submitter ? 'required|' : 'nullable|') . 'string|max:15',
             'email' => ($this->wall->require_email_submitter ? 'required|' : 'nullable|') . 'email|max:150',
             'avatar' => ($this->wall->require_avatar_submitter ? 'required|' : 'nullable|') . 'string|max:4',
         ];
@@ -199,7 +223,18 @@ new class extends Component {
         } else {
             // Creating new submitter
             $this->submitter = Submitter::create($data);
-            cookie()->queue(cookie('submitter_id', $this->submitter->id, 60 * 24 * 31, null, null, false, true));
+            cookie()->queue(
+                cookie(
+                    name: 'submitter_id',
+                    value: $this->submitter->id,
+                    minutes: 60 * 24 * 31,
+                    path: '/',
+                    domain: null,
+                    secure: app()->environment('production'),
+                    httpOnly: true,
+                    sameSite: 'Lax',
+                )
+            ); 
             $this->req_data_status = true;
         }
         $this->req_data_status = true;
@@ -215,7 +250,7 @@ new class extends Component {
         if (!$this->canPostImage()) return;
 
         $rules = [
-            'image' => 'required|image|max:10240|dimensions:max_width=12000,max_height=10000',
+            'image' => 'required|image|max:10240|dimensions:max_width=2100,max_height=2100',
             'caption' => 'nullable|string|max:' . $this->wall->caption_max_characters,
         ];
         // We add the Terms checkbox validation if the checkbox is displayed on the submitter card.
@@ -225,33 +260,36 @@ new class extends Component {
     
         $data = $this->validate($rules);
 
+        // File is already optimized on client side (converted to WebP, resized to 2048px)
+        // But we add fallback processing in case client-side conversion failed
         // Convert to intervention image element
         $img = InterventionImage::read($this->image->getRealPath());
         
-        // Reduce image size, limit max 2048px
-        $max = 2048;
+        // Safety check: Ensure image isn't larger than expected (fallback if JS didn't resize)
+        $max = 2100;
         $width = $img->width();
         $height = $img->height();
-        // Check if we need to scale
         if ($width > $max || $height > $max) {
-            $img->scale($max); // réduit la plus grande dimension à $max
+            $img->scale($max); // Scales down longest side to $max
         }
 
-        // Saving image with original format but resized if it was to big
-        $filename = $this->image->hashName(); // Unique name
-        $path = 'walls_images/images_submitters/' . $filename;
-        Storage::disk('public')->put($path, $img->encode());
+        // Generate WebP filename
+        $webpFilename = pathinfo($this->image->hashName(), PATHINFO_FILENAME) . '.webp';
 
-        $originalFilename = basename($path);
+        // Check if file is already WebP, if not convert it
+        $clientMimeType = $this->image->getMimeType();
+        if ($clientMimeType !== 'image/webp') {
+            // JS conversion failed, encode to WebP on server
+            $webpContent = $img->encodeByExtension('webp', 80);
+        } else {
+            // File is already WebP, store it as-is
+            $webpContent = $this->image->get();
+        }
 
-        // Creating file names for WebP and thumbnail
-        $baseName = pathinfo($originalFilename, PATHINFO_FILENAME);
-        $webpFilename = $baseName . '.webp';
-
-        // Saving in database first, to get the $parent model
+        // Save to database first to get the model
         $parent = Image::create([
             'wall_id' => $this->wall->id,
-            'name' => $originalFilename,
+            'name' => $webpFilename,
             'webp_name' => $webpFilename,
             'thumb' => $webpFilename,
             'caption' => $this->caption,
@@ -262,44 +300,117 @@ new class extends Component {
             'permanent' => true,
         ]);
 
-        // Save WebP version
-        Storage::disk('public')->put($parent->webp_full_path, $img->encodeByExtension('webp', 80));
+        // Save the WebP file
+        Storage::disk('public')->put($parent->webp_full_path, $webpContent);
 
-        // Generating thumbnail         
-        // Save thumb         
+        // Generate and save thumbnail
         Storage::disk('public')->put($parent->thumb_full_path, $img->scale(width: 500)->encodeByExtension('webp', 80));
 
-
-        // COPIES CREATION
-        /*if (!$this->wall->moderation) {
-            // Calculating the number of iterence of non-permanent image we need to add
-            $wallImagesCount = Image::where('wall_id', $this->wall->id)->where('permanent', true)->count();
-            $j = round($wallImagesCount*0.2);
-            for ($k = 0; $k < $j; $k++) {
-                // Saving in database
-                Image::create([
-                    'wall_id' => $this->wall->id,
-                    'parent_id' => $parent->id,
-                    'name' => $originalFilename,
-                    'webp_name' => $webpFilename,
-                    'thumb' => $webpFilename,
-                    'caption' => $this->caption,
-                    'status' => 1,
-                    'visitor_token' => $this->visitorToken,
-                    'submitter_id' => $this->submitter->id ?? null,
-                    'submitter_name' => $this->submitter->name ?? null,
-                    'permanent' => false,
-                ]);
-            }
-        }*/
-
         $this->success(__('Image added successfully!'));
-        $this->showMessage('The submission was successful', 'Thank you');
+        $this->showMessage($this->posting_page_end_text, $this->posting_page_end_title);
         $this->reset('image', 'caption');
     }
+    
 
 }; 
 ?>
+
+@push('head')
+    <link rel="icon" type="image/png" href="{{ asset('/storage/favicon_ubi/ubi-favicon-96x96.png') }}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{{ asset('/storage/favicon_ubi/ubi-favicon.svg') }}" />
+    <link rel="shortcut icon" href="{{ asset('/storage/favicon-ubi/ubi_favicon.ico') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('/storage/favicon_ubi/ubi-apple-touch-icon.png') }}" />
+    <link rel="manifest" href="{{ asset('/storage/favicon_ubi/ubi-site.webmanifest') }}" />
+    
+    <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('uploadImage', () => ({
+            processing: false,
+            showPreview: true,
+
+            async selectFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file (JPG, PNG, WebP, etc.)');
+                    event.target.value = '';
+                    return;
+                }
+
+                this.processing = true;
+                // Hide preview immediately while processing new file
+                this.showPreview = false;
+
+                // Convert file to WEBP and resize
+                const webpFile = await this.convertToWebp(file);
+
+                // Send to Livewire
+                this.$wire.upload('image', webpFile, 
+                    () => {
+                        // Success callback
+                        this.processing = false;
+                        this.showPreview = true;
+                    }, 
+                    () => {
+                        // Error callback
+                        this.processing = false;
+                        this.showPreview = true;
+                    }
+                );
+            },
+
+            convertToWebp(file) {
+                return new Promise(resolve => {
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        const maxSize = 2048;
+                        const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1); // Max 1 so we don't upscale smaller images
+                        const newWidth = img.width * ratio;
+                        const newHeight = img.height * ratio;
+
+                        // If WebP and already small, skip conversion
+                        if (file.type === 'image/webp' && ratio === 1) {
+                            console.log("Image already in WebP format and within size limit");
+                            resolve(file);
+                            return;
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = newWidth;
+                        canvas.height = newHeight;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+                        const type = 'image/webp';
+                        const quality = 0.8; // Between 0 and 1
+
+                        canvas.toBlob(blob => {
+                            const name = file.type === 'image/webp'
+                                ? file.name
+                                : file.name.replace(/\.\w+$/, '.webp');
+
+                            resolve(new File([blob], name, { type }));
+                        }, type, quality);
+                    };
+
+                    img.onerror = () => {
+                        // Fallback to original file if image fails to load
+                        console.error("Failed to load image, using original file");
+                        resolve(file);
+                    };
+
+                    img.src = URL.createObjectURL(file);
+                });
+            }
+        }));
+    });
+    </script>
+@endpush
+
 
 <!-- Page title -->
 @if ($wall->posting_page_text)
@@ -327,27 +438,27 @@ new class extends Component {
 <div x-data="{ currentCard: @entangle('currentCard') }"
     class="min-h-screen flex flex-col" style="{{ $background }}">
     <!-- Main content centered -->
-    <main class="flex-1 flex items-center justify-center p-5 lg:px-10 lg:py-5">
+    <main class="flex-1 flex flex-col items-center justify-center p-5 md:py-5 px-2 lg:px-10">
         <div x-show="currentCard === 'loading'" class="absolute inset-0 flex items-center justify-center z-50">
             <x-loading class="loading-ring" />
         </div>
 
 
-        <x-card x-show="currentCard === 'submitter'" x-cloak class="flex items-center justify-center">
+        <x-card x-show="currentCard === 'submitter'" x-cloak class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
+            @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mb-2 mx-auto object-cover " />
+            @endif
             @if($this->wall->posting_page_text_visibility)
                 <h1 class="mb-4 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
             @endif
-                @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mb-2 mx-auto object-cover " />
-            @endif
 
-            <x-form wire:submit="saveSubmitterData"> 
+            <x-form wire:submit="saveSubmitterData" class="mt-6 max-w-full w-full"> 
 
                 <!-- Name input display -->
                 @if ($this->wall->ask_name_submitter && !$this->wall->require_name_submitter)
-                    <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline />
+                    <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" maxlength="15" inline />
                 @elseif ($this->wall->ask_name_submitter && $this->wall->require_name_submitter)
-                    <x-input label="{{__('Name')}} *" placeholder="{{__('Name')}}" wire:model="name" maxlength="50" inline required />
+                    <x-input label="{{__('Name')}} *" placeholder="{{__('Name')}}" wire:model="name" maxlength="15" inline required />
                 @endif
 
                 <!-- Email input display -->
@@ -428,7 +539,7 @@ new class extends Component {
                         class="fixed z-50 inset-0 flex items-center justify-center"
                     >
 
-                        <div @click.outside="open = false" class="relative p-4 mx-2 max-w-md h-[50svh] bg-white border rounded shadow-lg">
+                        <div @click.outside="open = false" class="relative p-4 mx-2 max-w-md h-[50svh] bg-white dark:bg-gray-800 border rounded-lg shadow-lg">
                             <!-- Close button -->
                             <button
                                 @click="open = false" 
@@ -447,25 +558,25 @@ new class extends Component {
                                 <button
                                     type="button"
                                     class="p-2 border hover:bg-base-200 bg-base-300 rounded-t-lg" 
-                                    :class="current === 'smileys' && 'tab-active bg-white border-b-transparent'"
+                                    :class="current === 'smileys' && 'tab-active bg-white dark:bg-gray-800 border-b-transparent'"
                                     @click="current = 'smileys'"
                                 >😄</button>
                                 <button
                                     type="button"
                                     class="p-2 border hover:bg-base-200 bg-base-300 rounded-t-lg"
-                                    :class="current === 'animals' && 'tab-active bg-white border-b-transparent'"
+                                    :class="current === 'animals' && 'tab-active bg-white dark:bg-gray-800 border-b-transparent'"
                                     @click="current = 'animals'"
                                 >🐾</button>
                                 <button
                                     type="button"
                                     class="p-2 border hover:bg-base-200 bg-base-300 rounded-t-lg"
-                                    :class="current === 'flags' && 'tab-active bg-white border-b-transparent'"
+                                    :class="current === 'flags' && 'tab-active bg-white dark:bg-gray-800 border-b-transparent'"
                                     @click="current = 'flags'"
                                 >🏁</button>
                                 <button
                                     type="button"
                                     class="p-2 border hover:bg-base-200 bg-base-300 rounded-t-lg"
-                                    :class="current === 'objects' && 'tab-active bg-white border-b-transparent'"
+                                    :class="current === 'objects' && 'tab-active bg-white dark:bg-gray-800 border-b-transparent'"
                                     @click="current = 'objects'"
                                 >✨</button>
                             </div>
@@ -489,11 +600,13 @@ new class extends Component {
                 @endif
 
 
-
-
                 <!-- We add the Terms checkbox if needed, depends if some data is asked to submitter -->
-                @if($this->terms_checkbox_display_card === 'submitter')
-                    <x-checkbox label="{{__('I agree with terms')}}" wire:model="terms" required />
+                @if($this->terms_checkbox_display_card === 'submitter') 
+                    <x-checkbox wire:model="terms" required>
+                        <x-slot:label>
+                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" class="underline">{{ __('terms.title') }}</a>
+                        </x-slot:label>
+                    </x-checkbox>
                 @endif
                 
                 <x-slot:actions>
@@ -508,13 +621,24 @@ new class extends Component {
                     background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
                 </x-slot:actions>
             </x-form>
+
+            <div class="w-full flex justify-center pt-0 mt-4 -mb-4">
+                @include('partials.language-switcher')
+            </div>
         </x-card>
 
-        <x-card x-show="currentCard === 'upload'" x-cloak  class="flex items-center justify-center">
-            <h1 class="text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
+
+
+
+
+        <x-card x-show="currentCard === 'upload'" x-cloak  class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
             @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-xs mx-auto shadow-md object-cover " />
+                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mt-1 mb-2 mx-auto object-cover " />
             @endif
+            @if($this->wall->posting_page_text_visibility)
+                <h1 class="mb-3 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
+            @endif
+
 
             <!-- Submitter data display
                 IF askName & askEmail = false, we don't display anything
@@ -532,40 +656,48 @@ new class extends Component {
             @endphp
 
             @if($label)
-                <a role="button" class="flex justify-start items-center" @click="currentCard = 'submitter';">
+                <a role="button" class="flex justify-center items-center mb-3 max-w-full" @click="currentCard = 'submitter';">
                     <x-icon name="o-user-circle" title="Change" />
                     {{ $label }}
                     <x-icon name="o-pencil-square" class="text-gray-500 ml-2" title="Change" />
                 </a>
             @endif
 
-            <x-form wire:submit="uploadImage"> 
 
-                <x-file wire:model="image" label="{{__('Image')}}" hint="{{__('Take a photo or choose from gallery')}}" 
-                accept="image/png, image/jpeg, image/jpg"
-                capture="{{ $this->captureValue }}"
-                class="{{ $this->wall->posting_page_buttons_color ? 'custom-file-input' : '' }}"/>
+            <x-form x-data="uploadImage" wire:submit="uploadImage" class="max-w-full w-full"> 
 
-                <x-progress wire:loading wire:target="image" class="progress-primary h-0.5" indeterminate />
+                <input class="file-input w-full" type="file" @change="selectFile" x-ref="fileInput" accept="image/*">
+
+                <!-- Barre de progression -->
+                <x-loading x-show="processing" class="justify-self-center loading-ring" />
 
                 @if($image)
-                    <img src="{{ $image->temporaryUrl() }}" class="max-w-[30vw] max-h-[30vh] mx-auto shadow-md object-cover " />
+                    <div x-show="showPreview">
+                        <img src="{{ $image->temporaryUrl() }}" class="max-w-9/10 max-h-[30vh] mx-auto shadow-md object-cover" />
+                    </div> 
                 @endif
 
                 @if($wall->allow_captions)
-                <x-input label="{{__('Caption')}}" placeholder="{{__('Caption')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" inline />
+                <x-input label="{{__('Write your message here')}}" placeholder="{{__('Write your message here')}}" wire:model="caption" hint="Max : {{ $wall->caption_max_characters }}" maxlength="{{ $wall->caption_max_characters }}" inline />
                 @endif
                 
                 <!-- We add the Terms checkbox if needed, depends if some data is asked to submitter -->
                 @if($this->terms_checkbox_display_card === 'upload')
-                    <x-checkbox label="{{__('I agree with terms')}}" wire:model="terms" required />
+                    <x-checkbox wire:model="terms" required>
+                        <x-slot:label>
+                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" class="underline">{{ __('terms.title') }}</a>
+                        </x-slot:label>
+                    </x-checkbox>
                 @endif
 
                 <x-slot:actions>
                     <x-button label="{{__('Send')}}" icon="o-paper-airplane" spinner="uploadImage, image" type="submit"
+                    x-bind:disabled="processing"
+                    @click="if (processing) $event.preventDefault();"
                     wire:loading.attr="disabled"
                     wire:target="image, uploadImage"
                     wire:loading.class="opacity-50"
+                    x-bind:class="{ 'opacity-50': processing }"
                     class="{{ $this->wall->posting_page_buttons_color ? '' : 'btn-primary' }}"
                     style="{{ $this->wall->posting_page_buttons_color ? '
                     border-color: ' .$this->wall->posting_page_buttons_color. '; 
@@ -573,20 +705,26 @@ new class extends Component {
                     background-color:'.$this->wall->posting_page_buttons_color : '' }}" />
                 </x-slot:actions>
             </x-form>
+
+
+            <div class="w-full flex justify-center pt-0 mt-4 -mb-4">
+                @include('partials.language-switcher')
+            </div>
         </x-card>
 
 
-        <x-card x-show="currentCard === 'message'" x-cloak class="flex flex-col items-center justify-center text-center p-6">
+        <x-card x-show="currentCard === 'message'" x-cloak class="flex flex-col max-w-full md:max-w-none px-2 md:px-5 items-center justify-center">
             <h1 class="text-2xl font-bold mb-4" style="{{ $this->posting_page_font_style }}">
                 {{ $messageHeader }}
             </h1>
             <p class="text-lg mb-6">{{ $messageText }}</p>
         </x-card>
+
+
+
     </main>
 
-    
-    <div class="mt-auto w-full flex justify-end pt-0">
-        @include('partials.language-switcher')
-    </div>
 </div>
+    <!-- Hidden theme toggle so the page gets the user choosed theme -->
+    <x-theme-toggle class="hidden" />
 </div>

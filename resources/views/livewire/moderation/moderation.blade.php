@@ -16,6 +16,7 @@ class extends Component {
     use Toast;
 
     public Wall $wall;
+    public string $moderation_tabs_group = 'unprocessed_images';
         
 }; ?>
 
@@ -64,7 +65,7 @@ class extends Component {
                         <legend class="fieldset-legend">{{ __('Settings quick view') }}</legend>
                         <label class="label">{{ __('Caption enabled') }} :
                             <input type="checkbox" class="toggle toggle-success" disabled
-                                {{ $wall->caption ? 'checked' : '' }}
+                                {{ $wall->allow_captions ? 'checked' : '' }}
                             />
                         </label>
                         <label class="label">{{ __('Caption displayed on wall') }} :
@@ -100,9 +101,11 @@ class extends Component {
     </div>
 
     @if ($wall->moderation)
+    <x-accordion wire:model="moderation_tabs_group" wire:ignore>
         <livewire:moderation.unprocessed-images :wall="$wall" />
         <livewire:moderation.approved-images :wall="$wall" />
         <livewire:moderation.archived-images :wall="$wall" />
+    </x-accordion>
     @else
         <livewire:moderation.all-images :wall="$wall" />
     @endif
@@ -131,13 +134,13 @@ class extends Component {
         x-init="$watch('showConfirmModal', value => { if(value) $nextTick(() => $refs.confirmButton.focus()) })"
         class="fixed inset-0 bg-gray-900/70 flex items-center justify-center z-50"
     >
-        <div class="bg-white p-6 rounded-lg shadow-lg w-96 overflow-auto relative">
+        <div class="bg-white dark:bg-black p-6 rounded-lg shadow-lg w-96 overflow-auto relative">
             <h2 class="text-lg font-semibold" x-text="modalTitle"></h2>
-            <p class="mt-2 text-gray-600" x-text="modalMessage"></p>
-            <p class="mt-3 text-gray-500" ><x-kbd class="text-gray-500 kbd-sm">Esc</x-kbd> : {{ __('Cancel') }}. <x-kbd class="kbd-sm">↵</x-kbd> : {{ __('Confirm') }}.</p>
+            <p class="mt-2" x-text="modalMessage"></p>
+            <p class="mt-3" ><x-kbd class="text-gray-500 kbd-sm">Esc</x-kbd> : {{ __('Cancel') }}. <x-kbd class="kbd-sm">↵</x-kbd> : {{ __('Confirm') }}.</p>
 
             <div class="mt-4 flex justify-end space-x-2">
-                <button @click="showConfirmModal = false" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                <button @click="showConfirmModal = false" class="px-4 py-2 rounded btn">
                     {{ __('Cancel') }}
                 </button>
                 <button x-ref="confirmButton" @click="confirmAction(); showConfirmModal = false" class="px-4 py-2 text-white rounded" :class="modalConfirmClass">
