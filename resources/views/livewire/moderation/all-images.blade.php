@@ -2,7 +2,7 @@
 
 // This is a component for walls>moderation.blade.php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use App\Models\Wall;
 use App\Models\Image;
 use Intervention\Image\ImageManager;
@@ -27,7 +27,6 @@ new class extends Component {
     public function getImagesProperty()
     {
         $images = Image::where('wall_id', $this->wall->id)
-                    ->where('permanent', 1)
                     ->where('status', '!=', 5)
                     ->orderBy('created_at', 'asc')
                     ->paginate(20, pageName: 'unprocessed-images');

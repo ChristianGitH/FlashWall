@@ -1,15 +1,11 @@
 TO DEPLOY :
-moderation : Quick setup view - fixed allow_captions toggle var.
-slideshow : Fullscreen btn was showing again if refresh while Fullscreen.
+composer.json : updated to laravel 13 and livewire 4. Not using Volt anymore, livewire does the same natively. Changes in routes and layout.
+Images : removed field "permanent", not used anymore (old copies slideshow method), from DB and from all files.
+AppServiceProvider.php : Now force main domaine and HTTPS for all generated URLs.
+.htaccess : added redirection from www and http to main URL and https.
+
 
 NEXT TO DO :
-Bug sur display-image lors de l'archivage ou Suppression d'image.
-    Lié à la Suppression des copies lors de l'archivage d'une image.
-    Solution trouvée : Changer le status '5' puis supprimer la copie ulterieurement.
-Trouver une solution pour supprimer les copies d'images avec status = 5 à un moment
-Maybe change possibility of using copies system only if slideshow started playing, 
-    or add a option to use slideshow without the copies creations.
-    copies usage on page : setup-wall, moderation:all components, displaywall:slideshow
     CSRF on slideshow
 
 moderation : refactor moderation components, DRY, uper_image_data, mayby also bulk_actions
@@ -18,11 +14,16 @@ setup-wall + display-wall : Video as background on wall display
 display-image : Add possibility to display QR code on display-image
 moderation : fix caption display, overlay bug with side menu drawer
 languages : fix the problem due to two different maners of using languages, fr/terms for some pages and language/fr for switcher
-slideshow : verifier que la boucle du slideshow fonctionne bien,
-    qu'il n y a pas de décalage entre le fait d'attente le chargement de l'image et le départ des async.
-    Saut d'image car parfois deux refresh à la suite : DEPLACER this.lastTime = now; ??
-moderation : ajouter un champ status_last_update pour eviter que les intéractions sur les légendes changent last_update 
+moderation : ajouter un champ status_last_update pour eviter que les intéractions sur les légendes changent last_update
 
+Espace insécables dans les légendes avant la ponctuation
+Echap to close Image Preview in Moderation
+End message style (not center now)
+Epingler image dans moderation pour eviter actions
+Allow possibility to add a frame around submitter image, and then download
+Email for password reset and email confirmation
+New moderation page for mobile, one iamge at a time, with swipe for example
+Save submitter image at original format for user/sumbitter download
 
 
 

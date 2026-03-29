@@ -1,6 +1,6 @@
 <?php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use App\Models\Newsletter;
 use Livewire\Attributes\Rule;
 use Mary\Traits\Toast;

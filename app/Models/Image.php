@@ -22,7 +22,6 @@ class Image extends Model
         'submitter_name',
         'submitter_avatar',
         'priority',
-        'permanent',
         'parent_id',
     ];
 
@@ -30,7 +29,6 @@ class Image extends Model
         'wall_id',
         'visitor_token',
         'priority',
-        'permanent',
     ];
 
     // Relations : An image belong to a wall.

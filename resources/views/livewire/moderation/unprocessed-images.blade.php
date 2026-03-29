@@ -2,7 +2,7 @@
 
 // This is a component for walls>moderation.blade.php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use App\Models\Wall;
 use App\Models\Image;
 use Intervention\Image\ImageManager;

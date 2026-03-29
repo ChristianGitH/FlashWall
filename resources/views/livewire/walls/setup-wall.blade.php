@@ -7,7 +7,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Rule;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Mary\Traits\Toast;
 
 // For QR Code

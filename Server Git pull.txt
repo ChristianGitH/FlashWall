@@ -28,6 +28,9 @@ Stage changes = > Commit => Pull and push.
 If local server doesn't show the lastest change that have been push/pulled : php artisan optimize:clear. It clears cache and else.
 
 
+On OVH VPS : 
+cd var/www/flashwall
+
 OVH VPS :
 Log : ssh username@ip4 -p port
 Port : 52777

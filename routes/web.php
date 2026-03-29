@@ -1,7 +1,5 @@
 <?php
 
-use Livewire\Volt\Volt;
-
 /* Route for register, login, forgot password */
 use Illuminate\Support\Facades\Route;
 
@@ -11,10 +9,10 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    Volt::route('/login', 'auth.login')->name('login');
-    Volt::route('/register', 'auth.register');
-    Volt::route('/forgot-password', 'auth.forgot-password');
-    Volt::route('/reset-password/{token}', 'auth.reset-password')->name('password.reset');
+    Route::livewire('/login', 'auth.login')->name('login');
+    Route::livewire('/register', 'auth.register');
+    Route::livewire('/forgot-password', 'auth.forgot-password');
+    Route::livewire('/reset-password/{token}', 'auth.reset-password')->name('password.reset');
 });
 /*
 |--------------------------------------------------------------------------
@@ -22,9 +20,9 @@ Route::middleware('guest')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    Volt::route('/create-wall', 'walls.create-wall')->name('create-wall');
-    Volt::route('/setup-wall/{wall}', 'walls.setup-wall')->name('setup-wall');
-    Volt::route('/moderation/{wall}', 'moderation.moderation')->name('moderation');
+    Route::livewire('/create-wall', 'walls.create-wall')->name('create-wall');
+    Route::livewire('/setup-wall/{wall}', 'walls.setup-wall')->name('setup-wall');
+    Route::livewire('/moderation/{wall}', 'moderation.moderation')->name('moderation');
 
 });
 
@@ -75,11 +73,11 @@ Route::redirect('/legal', '/en/legal');
 |--------------------------------------------------------------------------
 */
 // Home page - index/flashwall.app (must come BEFORE /{wall} route)
-Volt::route('/home', 'index')->name('home');
-Volt::route('/', 'index');
-Volt::route('/display/{wall}', 'displaywalls.slideshow-wrapper', ['mode' => 'prod'])->name('slideshow');
-Volt::route('/display/{wall}/{mode}', 'displaywalls.slideshow-wrapper')->name('slideshow.mode');
+Route::livewire('/home', 'index')->name('home');
+Route::livewire('/', 'index');
+Route::livewire('/display/{wall}', 'displaywalls.slideshow-wrapper', ['mode' => 'prod'])->name('slideshow');
+Route::livewire('/display/{wall}/{mode}', 'displaywalls.slideshow-wrapper')->name('slideshow.mode');
 
 
 // Dynamic wall routes (catch {wall} parameter)
-Volt::route('/{wall}', 'images.create-image')->name('create-image');
+Route::livewire('/{wall}', 'images.create-image')->name('create-image');

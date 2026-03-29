@@ -1,6 +1,6 @@
 <?php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Rule;
 use Illuminate\Support\Facades\Storage;
@@ -159,7 +159,6 @@ new class extends Component {
 
             $count = Image::where('wall_id', $this->wall->id)
                 ->where('status', '!=', 5)
-                ->where('permanent', true)
                 ->where('visitor_token', $this->visitorToken)
                 ->count();
 
@@ -297,7 +296,6 @@ new class extends Component {
             'submitter_id' => $this->submitter->id ?? null,
             'submitter_name' => $this->submitter->name ?? null,
             'submitter_avatar' => $this->submitter->avatar ?? null,
-            'permanent' => true,
         ]);
 
         // Save the WebP file

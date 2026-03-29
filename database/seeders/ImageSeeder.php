@@ -22,7 +22,6 @@ class ImageSeeder extends Seeder
                 'visitor_token' => '1458-afgd',
                 'submitter_name' => 'John '. $i,
                 'submitter_avatar' => '😊',
-                'permanent' => true,
             ]);
             $i++;
         }
