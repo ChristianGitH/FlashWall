@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force main domaine for all generated URLs
+        URL::forceRootUrl('https://flashwall.app');
+
+        // Force HTTPS for all URLs
+        if (config('app.env') !== 'local') {
+            URL::forceScheme('https');
+        }
+
         view()->composer('partials.language-switcher', function ($view) {
             $view->with('current_locale', app()->getLocale());
             $view->with('available_locales', config('app.available_locales'));

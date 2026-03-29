@@ -1,6 +1,6 @@
 <?php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use App\Models\Wall;
 use App\Models\Image;
 
@@ -38,7 +38,7 @@ public function loadApprovedImages()
     }
 
     return $query
-        ->where('status', '!=', 5)->where('permanent', 1)->orderBy('updated_at', 'asc')->get();
+        ->where('status', '!=', 5)->orderBy('updated_at', 'asc')->get();
 }
 
 
@@ -276,7 +276,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
 <div x-show="showDebug" style="z-index: 100; opacity: 0.7;" class="absolute bottom-0 left-0 right-0 bg-white text-center text-gray-600 p-2 text-sm shadow">
     <p>Displayed : <span x-text="displayedCount"></span>. IDs to display ({{ count($approvedImages) }}) : 
     @foreach ($approvedImages as $index => $image)
-        <span style="color: {{ $image->permanent ? 'green' : 'blue' }};">
+        <span style="color: blue;">
             {{ $image->id }}
         </span>@if (!$loop->last), @endif
     @endforeach

@@ -1,6 +1,6 @@
 <?php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use App\Models\Wall;
 use App\Models\Image;
 
@@ -38,7 +38,7 @@ public function loadApprovedImages()
     }
 
     return $query
-        ->where('status', '!=', 5)->where('permanent', 1)->orderBy('updated_at', 'asc')->get();
+        ->where('status', '!=', 5)->orderBy('updated_at', 'asc')->get();
         // For priority : ->orderBy('priority', 'desc') For exemple priority = 1 : push forward
 }
 

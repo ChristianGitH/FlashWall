@@ -2,7 +2,7 @@
 
 // This is a component for walls>moderation.blade.php
 
-use Livewire\Volt\Component;
+use Livewire\Component;
 use App\Models\Wall;
 use App\Models\Image;
 use Mary\Traits\Toast;
@@ -28,7 +28,6 @@ new class extends Component {
     {
         $ApprovedImages = Image::where('wall_id', $this->wall->id)
                     ->where('status', 1) // 0 = unprocessed. 1 = approved. 2 = archived.
-                    ->where('permanent', 1)
                     ->orderBy('updated_at', 'asc')
                     ->paginate(30, pageName: 'approved-images');
         
