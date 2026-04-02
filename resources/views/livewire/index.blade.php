@@ -29,8 +29,6 @@ public $email;
 
 ?>
 
-@section('title', __('Home'))
-
 <div class="mx-auto mt-8 max-w-6xl">
     <section class="">
         <h1 class="mt-2 inline-block text-4xl font-bold tracking-tighter sm:text-6xl md:text-6xl dark:from-gray-50 dark:to-gray-300">

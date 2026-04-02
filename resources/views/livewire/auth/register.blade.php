@@ -15,9 +15,6 @@ class extends Component {
     #[Rule('required|string|max:50|in:FlashWall2025!')]
     public string $code = '';
 
-    #[Rule('required|string|max:255|unique:users')]
-    public string $name = '';
- 
     #[Rule('required|email|unique:users')]
     public string $email = '';
  
@@ -44,6 +41,10 @@ class extends Component {
  
         request()->session()->regenerate();
  
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+ 
         return redirect('/');
     }
 }; ?>
@@ -54,7 +55,6 @@ class extends Component {
         <x-form wire:submit="register">
             <x-input label="{{__('Invitation code')}}" placeholder="{{__('Invitation code')}}" wire:model="code" inline />
 
-            <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name" icon="o-user" inline />
             <x-input label="{{__('E-mail')}}" placeholder="{{__('E-mail')}}" wire:model="email" icon="o-envelope" inline />
             <x-input label="{{__('Password')}}" placeholder="{{__('Password')}}" wire:model="password" type="password" icon="o-key" inline />
             <x-input label="{{__('Confirm Password')}}" placeholder="{{__('Confirm Password')}}" wire:model="password_confirmation" type="password" icon="o-key" inline />
