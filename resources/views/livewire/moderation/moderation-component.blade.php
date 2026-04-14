@@ -3,24 +3,20 @@
 use Livewire\Component;
 use App\Models\Wall;
 use App\Models\Image;
-use Intervention\Image\ImageManager;
 use Mary\Traits\Toast;
-use Illuminate\Support\Facades\Storage;
 use Livewire\WithPagination;
 use Livewire\WithoutUrlPagination;
-use Livewire\Attributes\Title;
+use Illuminate\Support\Facades\Storage;
+
+
 
 /* For fillForDev functionality */
 use Illuminate\Support\Str;
 use Intervention\Image\Laravel\Facades\Image as InterventionImage;
 use Intervention\Image\Drivers\GD\Driver;
 
-
-new
-#[Title('Moderation')]
-
-class extends Component {
-    use Toast, WithPagination, WithoutUrlPagination, \App\Traits\ModerationImageActions;
+new class extends Component {
+    use Toast, WithPagination, WithoutUrlPagination;
 
     public Wall $wall;
 
@@ -108,10 +104,8 @@ class extends Component {
         'reset-selection-all' => '$refresh',
     ];
 
-
     /* -------------------- ACTIONS -------------------- */
 
-    // Calls function from trait ModerationImageActions
     public function changeStatusFrom(string $context, int|array $ids, int $status)
     {
         $map = [
@@ -140,7 +134,6 @@ class extends Component {
         $this->loadCounts();
     }
 
-    // Calls function from trait ModerationImageActions
     public function deleteFrom(string $context, int|array $ids)
     {
         $map = [
@@ -169,6 +162,141 @@ class extends Component {
     }
 
 
+
+    protected function ensureImageIds(array $imageIds): bool
+    {
+        if (empty($imageIds)) {
+            $this->error(__('No item selected'));
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function normalizeImageIds(int|array $imageIds): array
+    {
+        return is_array($imageIds) ? $imageIds : [$imageIds];
+    }
+
+    protected function changeStatus(int|array $imageIds, int $status, string $pageName, int $pageCount, string $actionType, ?string $dispatchEvent = null, ?string $singleRemoveEvent = null): void
+    {
+        $ids = $this->normalizeImageIds($imageIds);
+        
+        if (!$this->ensureImageIds($ids)) {
+            return;
+        }
+
+        Image::whereIn('id', $ids)->update(['status' => $status]);
+
+        $message = match($actionType) {
+            'archived' => count($ids) === 1 ? __('Image successfully archived') : __('Images successfully archived'),
+            'approved' => count($ids) === 1 ? __('Image successfully approved') : __('Images successfully approved'),
+            'deleted' => count($ids) === 1 ? __('Image successfully deleted') : __('Images successfully deleted'),
+            default => count($ids) === 1 ? __('Image successfully updated') : __('Images successfully updated'),
+        };
+
+        $this->success($message);
+
+        if ($pageCount <= count($ids)) {
+            $this->resetPage(pageName: $pageName);
+        }
+
+        if ($dispatchEvent !== null) {
+            $this->dispatch($dispatchEvent);
+        }
+
+        if (count($ids) === 1 && $singleRemoveEvent !== null) {
+            $this->dispatch($singleRemoveEvent, id: $ids[0]);
+        } elseif (count($ids) > 1) {
+            // For multiple items, dispatch a bulk reset event (expected in blade)
+            // This will be handled by component-specific reset event
+        }
+
+    }
+
+    protected function removeImages(int|array $imageIds, string $pageName, int $pageCount, string $actionType, ?string $dispatchEvent = null, ?string $singleRemoveEvent = null): void
+    {
+        $ids = $this->normalizeImageIds($imageIds);
+        
+        if (!$this->ensureImageIds($ids)) {
+            return;
+        }
+
+        $images = Image::whereIn('id', $ids)->get(['id', 'webp_name', 'thumb']);
+        if ($images->isEmpty()) {
+            $this->error(__('No valid images found.'));
+            return;
+        }
+
+        $paths = $images->flatMap(fn($image) => [
+            $image->webp_full_path,
+            $image->thumb_full_path,
+        ])->toArray();
+
+        Storage::disk('public')->delete($paths);
+        Image::whereIn('id', $ids)->delete();
+
+        $message = match($actionType) {
+            'deleted' => count($ids) === 1 ? __('Image successfully deleted') : __('Images successfully deleted'),
+            default => count($ids) === 1 ? __('Image updated') : __('Images updated'),
+        };
+
+        $this->success($message);
+
+        if ($pageCount <= count($ids)) {
+            $this->resetPage(pageName: $pageName);
+        }
+
+        if ($dispatchEvent !== null) {
+            $this->dispatch($dispatchEvent);
+        }
+
+        if (count($ids) === 1 && $singleRemoveEvent !== null) {
+            $this->dispatch($singleRemoveEvent, id: $ids[0]);
+        }
+
+    }
+
+    public function deleteCaption(int $id): void
+    {
+        $image = Image::find($id);
+        if (!$image) {
+            $this->error(__('Image not found'));
+            return;
+        }
+
+        $image->update(['caption' => null]);
+        $this->success(__('Caption successfully deleted'));
+    }
+
+
+    public function propelImage(int $id, ?int $pageCount = null, ?string $pageName = null): void
+    {
+        $image = Image::find($id);
+        if (!$image) {
+            $this->error(__('Image not found'));
+            return;
+        }
+
+        if ($image->priority === 1) {
+            $this->info(__('Image already being propelled'));
+            return;
+        }
+
+        Image::where('wall_id', $this->wall->id)->where('priority', 1)->update(['priority' => 0]);
+        $image->update(['priority' => 1]);
+
+        $this->success(__('Image successfully propelled : will be displayed asap'));
+
+        $this->dispatch('action-on-approved-image', id: $id);
+
+        if ($pageCount !== null && $pageName !== null && $pageCount <= 1) {
+            $this->resetPage(pageName: $pageName);
+        }
+
+    }
+
+
     public function togglePinImage(int $id): void
     {
         $image = Image::find($id);
@@ -177,11 +305,11 @@ class extends Component {
             return;
         }
 
-        if ($image->pinned) {
+        if ($image->pinned) {    
             $image->update(['pinned' => false]);
             $this->success(__('Image successfully unpinned'));
         }
-        else {
+        else {    
             $image->update(['pinned' => true]);
             $this->success(__('Image successfully pinned'));
         }
@@ -190,6 +318,7 @@ class extends Component {
     }
 
 
+    
     /* For testing and dev only */
     public function fillForDev(): void
     {
@@ -222,9 +351,9 @@ class extends Component {
             Image::create([
                 'wall_id' => $this->wall->id,
                 'parent_id' => null,
-                'name' => $filename,
-                'webp_name' => $webpFilename,
-                'thumb' => $thumbFilename,
+                'name' => $filename,       // original
+                'webp_name' => $webpFilename,       // webp
+                'thumb' => $thumbFilename, // miniature WebP
                 'caption' => 'Image : '. $i,
                 'avatar' => 'Image : '. $i,
                 'visitor_token' => '1458-afgd',
@@ -233,109 +362,28 @@ class extends Component {
             ]);
         }
     }
+
 }; ?>
 
-<div 
-    x-data="{
-        showImageZoomModal: false,
-        modalImageUrl: '',
-        showConfirmModal: false,
-        modalTitle: '',
-        modalMessage: '',
-        modalConfirmText: '',
-        modalConfirmClass: '',
-        confirmAction: null
-    }"
-    @open-image-modal.window="modalImageUrl = $event.detail.url; showImageZoomModal = true"
-    @confirm-action.window="
-        modalTitle = $event.detail.title;
-        modalMessage = $event.detail.message;
-        modalConfirmText = $event.detail.confirmText;
-        modalConfirmClass = $event.detail.confirmClass || 'bg-blue-600 hover:bg-blue-700';
-        confirmAction = $event.detail.action;
-        showConfirmModal = true;"
-    x-cloak
-    @keydown.escape.window="
-        if (showConfirmModal) {
-            showConfirmModal = false;
-        }
-        if (showImageZoomModal) {
-            showImageZoomModal = false;
-        }
-    "
+<div x-data="{
+    tab: @js($wall->moderation ? 'unprocessed' : 'all'),
+    selected: { approved: [], unprocessed: [], archived: [], all: [] },
+    allSelected: { approved: false, unprocessed: false, archived: false, all: false },
+    errorMessage: ''
+}"
+
+@reset-selection-approved.window="selected.approved = []; allSelected.approved = false"
+@reset-selection-unprocessed.window="selected.unprocessed = []; allSelected.unprocessed = false"
+@reset-selection-archived.window="selected.archived = []; allSelected.archived = false"
+@reset-selection-all.window="selected.all = []; allSelected.all = false"
+
+@action-on-approved-image.window="selected.approved = selected.approved.filter(id => id != $event.detail.id)"
+@action-on-unprocessed-image.window="selected.unprocessed = selected.unprocessed.filter(id => id != $event.detail.id)"
+@action-on-archived-image.window="selected.archived = selected.archived.filter(id => id != $event.detail.id)"
+@action-on-all-image.window="selected.all = selected.all.filter(id => id != $event.detail.id)"
 >
-    <div class="w-full mb-2">
-        <h1 class="text-2xl md:text-3xl lg:text-4xl">
-            {{ __('Moderation') }} : {{ __( $wall->name ) }}
-        </h1>
-        <div class="flex items-center pb-1.5">
-            <p class="text-sm font-normal lg:text-base xl:text-lg">{{ $wall->description }}</p>
-            
-            <!-- Wall settings quick view popover -->
-            <x-popover>
-                <x-slot:trigger>
-                    <x-icon name="o-information-circle" class="text-gray-700 ml-2" title="Wall settings quick view" />
-                </x-slot:trigger>
-                <x-slot:content>
-                    <!-- This code bellow is using Daisy UI, not Mary UI. -->
-                    <fieldset class="fieldset">
-                        
-                        <legend class="fieldset-legend">{{ __('Settings quick view') }}</legend>
-                        <label class="label">{{ __('Caption enabled') }} :
-                            <input type="checkbox" class="toggle toggle-success" disabled
-                                {{ $wall->allow_captions ? 'checked' : '' }}
-                            />
-                        </label>
-                        <label class="label">{{ __('Caption displayed on wall') }} :
-                            <input type="checkbox" class="toggle toggle-success" disabled
-                                {{ $wall->caption_on_wall ? 'checked' : '' }}
-                            />
-                        </label>
-
-                        <legend class="fieldset-legend">{{ __('Requested user information') }}</legend>
-                        <label class="label">{{ __('Name') }} :
-                            <input type="checkbox" class="toggle toggle-success" disabled
-                                {{ $wall->ask_name_submitter ? 'checked' : '' }}
-                            />
-                            {{ $wall->require_name_submitter ? __('and required') : '' }}
-                        </label>
-                        <label class="label">{{ __('Email') }} :
-                            <input type="checkbox" class="toggle toggle-success" disabled
-                                {{ $wall->ask_email_submitter ? 'checked' : '' }}
-                            />
-                            {{ $wall->require_email_submitter ? __('and required') : '' }}
-                        </label>
-                        <label class="label">{{ __('Name displayed on wall') }} :
-                            <input type="checkbox" class="toggle toggle-success" disabled
-                                {{ $wall->submitter_name_on_wall ? 'checked' : '' }}
-                            />
-                        </label>
-                    </fieldset>
-                    
-                </x-slot:content>
-            </x-popover>
-
-        </div>
-    </div>
 
 
-    <div x-data="{
-        tab: @js($wall->moderation ? 'unprocessed' : 'all'),
-        selected: { approved: [], unprocessed: [], archived: [], all: [] },
-        allSelected: { approved: false, unprocessed: false, archived: false, all: false },
-        errorMessage: ''
-    }"
-
-    @reset-selection-approved.window="selected.approved = []; allSelected.approved = false"
-    @reset-selection-unprocessed.window="selected.unprocessed = []; allSelected.unprocessed = false"
-    @reset-selection-archived.window="selected.archived = []; allSelected.archived = false"
-    @reset-selection-all.window="selected.all = []; allSelected.all = false"
-
-    @action-on-approved-image.window="selected.approved = selected.approved.filter(id => id != $event.detail.id)"
-    @action-on-unprocessed-image.window="selected.unprocessed = selected.unprocessed.filter(id => id != $event.detail.id)"
-    @action-on-archived-image.window="selected.archived = selected.archived.filter(id => id != $event.detail.id)"
-    @action-on-all-image.window="selected.all = selected.all.filter(id => id != $event.detail.id)"
-    >
 
     @php
         $tabs = $wall->moderation
@@ -349,7 +397,7 @@ class extends Component {
 
     @if ($wall->moderation)
     <!-- TABS -->
-    <div class="flex flex-wrap space-x-2 mb-4 border-b text-gray-600 border-gray-500">
+    <div class="flex space-x-2 mb-4 border-b text-gray-600 border-gray-500">
         <button class="p-1 border-b-1 hover:text-black hover:border-gray-500" :class="tab === 'unprocessed' ? 'text-black border-gray-500' : ''" 
             @click="tab='unprocessed'">{{ __('Pending images') }} ({{ $unprocessedCountTotal }})
         </button>
@@ -364,12 +412,14 @@ class extends Component {
         <p class="p-1 mb-4 border-b-1 hover:text-black hover:border-gray-500">{{ __('All images') }} ({{ $allCountTotal }})</p>
     @endif
 
+    
+    
     @foreach($tabs as $context => $images)
 
     <div x-show="tab === '{{ $context }}'">
 
         <!-- BULK ACTIONS -->
-        <div class="flex items-center space-x-2"
+        <div class="bulk-actions flex items-center space-x-2"
             x-data="{
                 handleSelection(action, status = null, actionTitle, confirmClass) {
                     if (selected['{{ $context }}'].length === 0) {
@@ -461,7 +511,7 @@ class extends Component {
         </div>
 
         <!-- GALLERY -->
-        <div class="w-full flex justify-start flex-wrap gap-x-4 gap-y-8 py-5">
+        <div class="gallery_wrapper">
 
             @if($images->isEmpty())
                 <p class="text-center">No images</p>
@@ -496,10 +546,8 @@ class extends Component {
                 }
             @endphp
 
-            <div class="{{ ( $caption_tooltip_classes ) }}" data-tip="{!! $caption_tooltip_content !!}" wire:key="image-{{ $context }}-{{ $image->id }}">
-        
-        <!-- Upper buttons -->
-                <div class="flex justify-between w-full -mb-[35px] text-right px-2">
+            <div class="image_wrapper {{ ( $caption_tooltip_classes ) }}" data-tip="{!! $caption_tooltip_content !!}" wire:key="image-{{ $context }}-{{ $image->id }}">
+                <div class="uper_image_data justify-between">
                     <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })" class="tooltip tooltip-top" data-tip="Zoom">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
@@ -522,13 +570,13 @@ class extends Component {
                     </a>
 
                     @if ($image->pinned)
-                        <a role="button" wire:click="togglePinImage({{ $image->id }})" class="tooltip tooltip-top" data-tip="{{ __('Unpin') }}" aria-label="{{ __('UnPin') }}">
+                        <a role="button" wire:click="togglePinImage({{ $image->id }})" class="tooltip tooltip-top" data-tip="{{ __('Unpin') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" class="size-6">
                                 <path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" />
                             </svg>
                         </a>
                     @else
-                        <a role="button" wire:click="togglePinImage({{ $image->id }})" class="tooltip tooltip-top" data-tip="{{ __('Pin') }}" aria-label="{{ __('Pin') }}">
+                        <a role="button" wire:click="togglePinImage({{ $image->id }})" class="tooltip tooltip-top" data-tip="{{ __('Pin') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m3 3 1.664 1.664M21 21l-1.5-1.5m-5.485-1.242L12 17.25 4.5 21V8.742m.164-4.078a2.15 2.15 0 0 1 1.743-1.342 48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185V19.5M4.664 4.664 19.5 19.5" />
                             </svg>
@@ -547,11 +595,10 @@ class extends Component {
                 </div>
 
                 <label for="checkbox-{{ $context }}-{{ $image->id }}">
-                    <img class="object-cover w-[10em] h-[10em]" src="{{ asset('storage/' . $image->thumb_full_path) }}"/>
+                    <img src="{{ asset('storage/' . $image->thumb_full_path) }}" />
                 </label>
 
-        <!-- Moderation Buttons -->
-                <div class="w-full -mt-[30px] px-2 flex justify-between">
+                <div class="moderation_buttons flex justify-between">
 
                     @if($context === 'approved')
                         <x-button wire:click="changeStatusFrom('{{ $context }}', {{ $image->id }}, 2)" 
@@ -640,43 +687,4 @@ class extends Component {
 
     @endforeach
 
-</div>
-
-    <!-- Image zoom Modal -->
-    <div 
-        x-show="showImageZoomModal"
-        @click="showImageZoomModal = false"
-        x-transition 
-        class="fixed inset-0 bg-gray-900/70 flex items-center justify-center z-50"
-    >
-        <div class="shadow-lg overflow-auto relative">
-            <div class="top-5 absolute right-1 text-right">
-                <x-button @click="showImageZoomModal = false" class="btn btn-sm" icon="o-x-mark" />
-            </div>
-            <img :src="modalImageUrl" alt="Image Preview" class="w-full h-auto mt-4 max-w-[80vw] et max-h-[80vh]" />
-        </div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div 
-        x-show="showConfirmModal"
-        x-transition
-        x-init="$watch('showConfirmModal', value => { if(value) $nextTick(() => $refs.confirmButton.focus()) })"
-        class="fixed inset-0 bg-gray-900/70 flex items-center justify-center z-50"
-    >
-        <div class="bg-white dark:bg-black p-6 rounded-lg shadow-lg w-96 overflow-auto relative">
-            <h2 class="text-lg font-semibold" x-text="modalTitle"></h2>
-            <p class="mt-2" x-text="modalMessage"></p>
-            <p class="mt-3" ><x-kbd class="text-gray-500 kbd-sm">Esc</x-kbd> : {{ __('Cancel') }}. <x-kbd class="kbd-sm">↵</x-kbd> : {{ __('Confirm') }}.</p>
-
-            <div class="mt-4 flex justify-end space-x-2">
-                <button @click="showConfirmModal = false" class="px-4 py-2 rounded btn">
-                    {{ __('Cancel') }}
-                </button>
-                <button x-ref="confirmButton" @click="confirmAction(); showConfirmModal = false" class="px-4 py-2 text-white rounded" :class="modalConfirmClass">
-                    <span x-text="modalConfirmText"></span>
-                </button>
-            </div>
-        </div>
-    </div>
 </div>

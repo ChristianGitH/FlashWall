@@ -10,6 +10,13 @@ class Image extends Model
 {
     use HasFactory;
 
+    protected static function booted()
+    {
+        static::creating(function ($image) {
+            $image->last_status_update = now();
+        });
+    }
+
     protected $fillable = [
         'wall_id',
         'name',
@@ -23,6 +30,8 @@ class Image extends Model
         'submitter_avatar',
         'priority',
         'parent_id',
+        'pinned',
+        'last_status_update',
     ];
 
     protected $hidden = [

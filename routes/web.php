@@ -42,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('/create-wall', 'walls.create-wall')->name('create-wall');
     Route::livewire('/setup-wall/{wall}', 'walls.setup-wall')->name('setup-wall');
     Route::livewire('/moderation/{wall}', 'moderation.moderation')->name('moderation');
+    Route::livewire('/moderation-mobile/{wall}', 'moderation.moderation-mobile')->name('moderation-mobile');
 });
 /*
 |--------------------------------------------------------------------------
