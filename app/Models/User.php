@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
- 
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -21,7 +20,6 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
         'name',
-        'first_name',
         'email',
         'password',
     ];
@@ -50,12 +48,5 @@ class User extends Authenticatable implements MustVerifyEmail
     public function walls(): HasMany
     {
         return $this->hasMany(Wall::class);
-    }
-
-    // Accessor for display name, which prioritizes first_name over name, then null.
-    public function getDisplayNameAttribute()
-    {
-        return $this->first_name 
-            ?: ($this->name ?: null);
     }
 }

@@ -94,3 +94,49 @@
 .mary-table-pagination button {
     @apply bg-base-100
 }
+
+.gallery_wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    row-gap: 30px;
+    column-gap: 20px;
+    padding: 35px 0px;
+}
+
+.gallery_wrapper .wall_data {
+    width: 100%;
+    display: block;
+}
+
+
+.gallery_wrapper .image_wrapper img {
+    object-fit: cover;
+    width: 10em;
+    height: 10em;
+}
+.gallery_wrapper .moderation_buttons {
+    width: 100%;
+    margin-top: -30px;
+    padding: 0px 5px 0px 5px;
+}
+.gallery_wrapper .uper_image_data {
+    display: flex;
+    width: 100%;
+    margin-bottom: -35px;
+    position: relative;
+    text-align: right;
+    padding: 0px 5px 0px 5px;
+}
+
+.close-button-wrapper {
+    top: 1.5em;
+    position: absolute;
+    right: 0.5em;
+    text-align: right;
+}
+
+.galerie-navigation div div div {
+    padding: 0 5px;
+}

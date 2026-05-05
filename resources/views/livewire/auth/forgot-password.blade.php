@@ -2,11 +2,8 @@
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Password;
-use Livewire\Attributes\Title;
 
-new 
-#[Title('Password renewal')]
-class extends Component {
+new class extends Component {
 
     public string $email = '';
 
@@ -21,7 +18,8 @@ class extends Component {
         );
 
         if ($status != Password::RESET_LINK_SENT) {
-            session()->flash('status', __($status));
+            $this->addError('email', __($status));
+
             return;
         }
 
