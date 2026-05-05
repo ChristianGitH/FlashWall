@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-BdLSXx8A.css",
+    "file": "assets/app-DgYil2e4.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -21,7 +21,7 @@
     "src": "resources/fonts/NotoColorEmoji-Regular.woff2"
   },
   "resources/js/app.js": {
-    "file": "assets/app-Bj43h_rG.js",
+    "file": "assets/app-BjqOcoUn.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true

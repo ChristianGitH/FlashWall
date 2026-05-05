@@ -21,7 +21,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Force main domaine for all generated URLs
-        URL::forceRootUrl('https://flashwall.app');
+        if (config('app.env') !== 'local') {
+            URL::forceRootUrl('https://flashwall.app');
+        }
 
         // Force HTTPS for all URLs
         if (config('app.env') !== 'local') {

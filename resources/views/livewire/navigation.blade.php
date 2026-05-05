@@ -29,7 +29,7 @@ new class extends Component
     }
 
 
-    // Refresh navigation when a wall name is updated.
+    // Refresh navigation when a wall name or user information is updated.
     protected $listeners = ['refreshNavigation' => '$refresh'];
 
 }; ?>
@@ -40,7 +40,7 @@ new class extends Component
 
         {{-- Vérifie si l'utilisateur est connecté --}}
         @if($user = auth()->user())
-                <x-list-item :item="$user" value="name" sub-value="email" no-separator no-hover class="-mx-2 -my-2! rounded">
+                <x-list-item :item="$user" value="display_name" sub-value="email" link="{{ route('profile') }}" no-separator no-hover class="-mx-2 -my-2! rounded">
                     <x-slot:actions>
                         <x-button icon="o-power" wire:click="logout" class="btn-circle btn-ghost btn-xs" tooltip-left="{{__('Logout')}}" no-wire-navigate spinner="logout" />
                     </x-slot:actions>
@@ -57,6 +57,7 @@ new class extends Component
                     <x-menu-sub :title="$wall->name" icon="o-sparkles" :open="request()->is($wall->slug . '/*')">
                         <x-menu-item title="{{__('Settings')}}" icon="o-cog-6-tooth" link="{{ route('setup-wall', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="{{__('Moderation')}}" icon="o-magnifying-glass-circle" link="{{ route('moderation', ['wall' => $wall->slug]) }}"  />
+                        <x-menu-item title="{{__('Moderation M')}}" icon="o-magnifying-glass-circle" link="{{ route('moderation-mobile', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="{{__('Post image')}}" icon="o-plus" link="{{ route('create-image', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="Display" icon="o-tv" link="{{ route('slideshow', ['wall' => $wall->slug]) }}" external />
                         <x-menu-item title="Display Dev" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'dev']) }}" external />
