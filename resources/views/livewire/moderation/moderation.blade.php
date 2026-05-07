@@ -39,6 +39,14 @@ class extends Component {
         $this->loadCounts();
     }
 
+    /* -- Added so number of images is updated when refresh button is clicked -- */
+    public function render()
+    {
+        $this->loadCounts();
+
+        return view('livewire.moderation.moderation');
+    }
+
     /* -------------------- QUERIES -------------------- */
 
     public function loadCounts()
@@ -349,19 +357,19 @@ class extends Component {
 
     @if ($wall->moderation)
     <!-- TABS -->
-    <div class="flex flex-wrap space-x-2 mb-4 border-b text-gray-600 border-gray-500">
-        <button class="p-1 border-b-1 hover:text-black hover:border-gray-500" :class="tab === 'unprocessed' ? 'text-black border-gray-500' : ''" 
+    <div class="flex flex-wrap space-x-2 mb-4 border-b-1 text-gray-600 dark:text-gray-400 dark:border-gray-500">
+        <button class="p-1 mr-2 border-b-1 -m-px dark:border-gray-500 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white " :class="tab === 'unprocessed' ? 'text-black border-black dark:text-white dark:border-white' : ''" 
             @click="tab='unprocessed'">{{ __('Pending images') }} ({{ $unprocessedCountTotal }})
         </button>
-        <button class="p-1 border-b-1 hover:text-black hover:border-gray-500" :class="tab === 'approved' ? 'text-black border-gray-500' : ''" 
+        <button class="p-1 mr-2 border-b-1 -m-px dark:border-gray-500 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white" :class="tab === 'approved' ? 'text-black border-black dark:text-white dark:border-white' : ''" 
             @click="tab='approved'">{{ __('Approved images') }} ({{ $approvedCountTotal }})
         </button>
-        <button class="p-1 border-b-1 hover:text-black hover:border-gray-500" :class="tab === 'archived' ? 'text-black border-gray-500' : ''" 
+        <button class="p-1 mr-2 border-b-1 -m-px dark:border-gray-500 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white" :class="tab === 'archived' ? 'text-black border-black dark:text-white dark:border-white' : ''" 
             @click="tab='archived'">{{ __('Archived images') }} ({{ $archivedCountTotal }})
         </button>
     </div>
     @else
-        <p class="p-1 mb-4 border-b-1 hover:text-black hover:border-gray-500">{{ __('All images') }} ({{ $allCountTotal }})</p>
+        <p class="p-1 mb-4 border-b-1 -m-px text-gray-700 border-gray-700 dark:text-white dark:border-white">{{ __('All images') }} ({{ $allCountTotal }})</p>
     @endif
 
     @foreach($tabs as $context => $images)
@@ -396,7 +404,8 @@ class extends Component {
             }">
 
             <button class="btn btn-sm"
-                @click="allSelected['{{ $context }}'] = !allSelected['{{ $context }}']; selected['{{ $context }}'] = allSelected['{{ $context }}'] ? [...document.querySelectorAll('.{{ $context }}-checkbox')].filter(cb => !cb.disabled).map(cb => cb.value) : []">
+                @click="allSelected['{{ $context }}'] = !allSelected['{{ $context }}']; selected['{{ $context }}'] = allSelected['{{ $context }}'] ? [...document.querySelectorAll('.{{ $context }}-checkbox')].filter(cb => !cb.disabled).map(cb => cb.value) : []"
+                wire:loading.attr="disabled">
                 Select all
                 <input type="checkbox" class="checkbox" x-model="allSelected['{{ $context }}']" wire:loading.attr="disabled"/>
             </button>
@@ -423,12 +432,6 @@ class extends Component {
                 wire:loading.attr="disabled"
                 tooltip="{{ __('Archive') }}"
                 aria-label="{{ __('Archive') }}"/>
-
-                <x-button @click="$wire.$refresh()" icon="o-arrow-path" class="btn btn-sm" wire:click.prevent=""
-                    tooltip="{{ __('Refresh') }}"
-                    aria-label="{{ __('Refresh') }}"
-                    wire:loading.attr="disabled"
-                />
             @endif
 
             @if($context === 'archived')
@@ -442,20 +445,38 @@ class extends Component {
 
             <x-button @click="handleSelection('{{ __('delete') }}', 5, '{{ __('Delete') }}', 'bg-red-600 hover:bg-red-700')"
                 icon="o-trash"
-                class="btn btn-xs btn-danger"
+                class="btn btn-sm btn-danger"
                 tooltip="{{ __('Delete') }}"
                 aria-label="{{ __('Delete') }}"
                 wire:loading.attr="disabled"
             />
 
+            @if($context === 'unprocessed')
+            <x-button link="{{ route('moderation-mobile', ['wall' => $wall->slug]) }}"
+                icon="o-device-phone-mobile"
+                class="btn btn-sm" 
+                tooltip="{{ __('Swipe moderation') }}"
+                aria-label="{{ __('Swipe moderation') }}"
+                wire:loading.attr="disabled"
+            />
+            @endif
+
+            <x-button @click="$wire.$refresh()" icon="o-arrow-path" class="btn btn-sm"
+                tooltip="{{ __('Refresh') }}"
+                aria-label="{{ __('Refresh') }}"
+                wire:loading.attr="disabled"
+            />
+            
+            @if(app()->environment('local') && $context === 'unprocessed')
             <x-button
-                wire:click="fillForDev()"
+                @click="$wire.fillForDev()"
                 icon="o-photo"
                 class="btn btn-sm bg-green-600 hover:bg-green-700"
                 tooltip="{{ __('Fill with dev images') }}"
                 aria-label="{{ __('Fill with dev images') }}"
                 wire:loading.attr="disabled"
             />
+            @endif
 
             <p x-show="errorMessage" x-text="errorMessage" class="text-red-500"></p>
         </div>
@@ -464,7 +485,7 @@ class extends Component {
         <div class="w-full flex justify-start flex-wrap gap-x-4 gap-y-8 py-5">
 
             @if($images->isEmpty())
-                <p class="text-center">No images</p>
+                <p class="text-center">{{ __('No pending images') }}</p>
             @else
 
             @foreach($images as $image)
@@ -500,7 +521,12 @@ class extends Component {
         
         <!-- Upper buttons -->
                 <div class="flex justify-between w-full -mb-[35px] text-right px-2">
-                    <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })" class="tooltip tooltip-top" data-tip="Zoom">
+                    <a role="button" @click="$dispatch('open-image-modal', { url: '{{ asset('storage/' . $image->webp_full_path) }}' })"
+                        class="tooltip tooltip-top" 
+                        data-tip="Zoom" 
+                        wire:loading.attr="disabled" 
+                        wire:loading.class="pointer-events-none opacity-50"
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                         </svg>
@@ -508,6 +534,8 @@ class extends Component {
                     
                     <a role="button" class="{{ ( $caption_tooltip_icon_visibility ) }} tooltip tooltip-top"
                         data-tip="{{ __('Delete caption') }}"
+                        wire:loading.attr="disabled"
+                        wire:loading.class="pointer-events-none opacity-50"
                         @click="$dispatch('confirm-action', {
                                 title: '{{ __('Delete caption') }}',
                                 message: '{{ __('Are you sure you want to delete the caption attached to this image?') }}',
@@ -522,13 +550,25 @@ class extends Component {
                     </a>
 
                     @if ($image->pinned)
-                        <a role="button" wire:click="togglePinImage({{ $image->id }})" class="tooltip tooltip-top" data-tip="{{ __('Unpin') }}" aria-label="{{ __('UnPin') }}">
+                        <a role="button" @click="$wire.call('togglePinImage', {{ $image->id }})"
+                            class="tooltip tooltip-top"
+                            data-tip="{{ __('Unpin') }}" 
+                            aria-label="{{ __('UnPin') }}" 
+                            wire:loading.attr="disabled" 
+                            wire:loading.class="pointer-events-none opacity-50"
+                        >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" class="size-6">
                                 <path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" />
                             </svg>
                         </a>
                     @else
-                        <a role="button" wire:click="togglePinImage({{ $image->id }})" class="tooltip tooltip-top" data-tip="{{ __('Pin') }}" aria-label="{{ __('Pin') }}">
+                        <a role="button" @click="$wire.call('togglePinImage', {{ $image->id }})"
+                            class="tooltip tooltip-top"
+                            data-tip="{{ __('Pin') }}"
+                            aria-label="{{ __('Pin') }}"
+                            wire:loading.attr="disabled"
+                            wire:loading.class="pointer-events-none opacity-50"
+                        >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m3 3 1.664 1.664M21 21l-1.5-1.5m-5.485-1.242L12 17.25 4.5 21V8.742m.164-4.078a2.15 2.15 0 0 1 1.743-1.342 48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185V19.5M4.664 4.664 19.5 19.5" />
                             </svg>
@@ -541,6 +581,7 @@ class extends Component {
                         :value="{{ $image->id }}"
                         x-model="selected['{{ $context }}']"
                         id="checkbox-{{ $context }}-{{ $image->id }}"
+                        wire:loading.attr="disabled"
                         @if($image->pinned) disabled @endif
                     />
 
@@ -554,7 +595,7 @@ class extends Component {
                 <div class="w-full -mt-[30px] px-2 flex justify-between">
 
                     @if($context === 'approved')
-                        <x-button wire:click="changeStatusFrom('{{ $context }}', {{ $image->id }}, 2)" 
+                        <x-button @click="$wire.changeStatusFrom('{{ $context }}', {{ $image->id }}, 2)"
                         icon="o-archive-box" 
                         class="btn btn-xs"
                         tooltip="{{ __('Archive') }}"
@@ -576,20 +617,19 @@ class extends Component {
                                     action: () => $wire.call('propelImage',{{ $image->id }},{{ $this->approvedCount  }},'approved-images')
                                 })
                             "
-                            wire:target="propelImage"
                             wire:loading.attr="disabled"
                             x-init="{{ $image->priority == 1 ? 'removeHighlight(' . $image->id . ')' : '' }}"
                         />
                     @endif
 
                     @if($context === 'unprocessed')
-                        <x-button wire:click="changeStatusFrom('{{ $context }}', {{ $image->id }}, 1)" 
+                        <x-button @click="$wire.changeStatusFrom('{{ $context }}', {{ $image->id }}, 1)"
                         icon="o-check" 
                         class="btn btn-xs" 
                         tooltip="{{ __('Approve') }}"
                         aria-label="{{ __('Approve') }}"
                         wire:loading.attr="disabled"/>
-                        <x-button wire:click="changeStatusFrom('{{ $context }}', {{ $image->id }}, 2)" 
+                        <x-button @click="$wire.changeStatusFrom('{{ $context }}', {{ $image->id }}, 2)" 
                         icon="o-archive-box" 
                         class="btn btn-xs" 
                         tooltip="{{ __('Archive') }}"
@@ -598,7 +638,7 @@ class extends Component {
                     @endif
 
                     @if($context === 'archived')
-                        <x-button wire:click="changeStatusFrom('{{ $context }}', {{ $image->id }}, 1)" 
+                        <x-button @click="$wire.changeStatusFrom('{{ $context }}', {{ $image->id }}, 1)" 
                         icon="o-check" 
                         class="btn btn-xs" 
                         tooltip="{{ __('Approve') }}"

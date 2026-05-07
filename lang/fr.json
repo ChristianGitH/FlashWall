@@ -27,6 +27,7 @@
     "Are you sure you want to delete the caption attached to this image?": "Êtes-vous sûr de vouloir supprimer la légende associée à cette image ?",
     "Caption successfully deleted": "Légende supprimée avec succès",
     "None": "Aucun",
+    "No pending images": "Aucune image en attente",
     "To manage how names are displayed, go to captions options": "Pour gérer l’affichage des noms, accédez aux options des légendes.",
     "Captions styles also applies to names display": "Le style des légendes s’applique également à l’affichage des noms",
     "Images display": "Affichage des images",

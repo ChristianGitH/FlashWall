@@ -38,7 +38,7 @@ class AppBrand extends Component
 
                     <!-- Display when collapsed -->
                     <div class="display-when-collapsed hidden mx-5 mt-4 lg:mb-6 h-[28px]">
-                        <x-icon name="s-square-3-stack-3d" class="w-6 -mb-1 text-purple-500" />
+                        <img src="../favicon.svg" class="h-8 -mt-2" />
                     </div>
                 </a>
             HTML;
