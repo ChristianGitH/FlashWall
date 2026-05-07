@@ -145,6 +145,18 @@ class extends Component {
                 this.offsetX = direction === 'right' ? 500 : -500
                 this.isTransitioning = true
 
+                // Change image immediately when card leaves screen
+                this.currentIndex++
+                this.offsetX = 0
+                this.isZoomingIn = true
+                this.displayArchiveSVG = false
+
+                setTimeout(() => {
+                    this.isTransitioning = false
+                    this.isZoomingIn = false
+                }, 50)
+
+                // Call action after image has changed
                 setTimeout(() => {
                     if (direction === 'right') {
                         this.$wire.approve(image.id)
@@ -158,17 +170,7 @@ class extends Component {
                         this.$wire.delete(image.id)
                     }
 
-                    this.currentIndex++
-                    this.offsetX = 0
-                    this.isZoomingIn = true
-                    this.displayArchiveSVG = false
-
-                    setTimeout(() => {
-                        this.isTransitioning = false
-                        this.isZoomingIn = false
-                    }, 50)
-
-                    if (this.images.length - this.currentIndex < 18) {
+                    if (this.images.length - this.currentIndex < 5) {
                         this.loadImages()
                     }
                 }, 150)
@@ -268,12 +270,11 @@ class extends Component {
             <template x-if="current">
                 <div class="relative w-full h-full z-20">
 
-                    <img :src="current.url" class="w-full h-full object-contain">
+                    <img :src="current.url" class="w-full object-cover h-full">
 
                     <!-- CAPTION WRAPPER -->    
                     <div class="absolute bottom-0 left-0 w-full px-2 py-2 bg-white/80 dark:bg-black/80 text-sm">
-                        <p><span x-text="current.submitter_name"></span> : <span x-text="current.caption"></span></p>
-                        <p x-text="current.id"></p>
+                        <p><span x-text="current.submitter_name" class="font-bold"></span> : <span x-text="current.caption"></span></p>
                     </div>
 
                 </div>
