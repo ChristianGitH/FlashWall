@@ -377,7 +377,7 @@ class extends Component {
     <div x-show="tab === '{{ $context }}'">
 
         <!-- BULK ACTIONS -->
-        <div class="flex items-center space-x-2"
+        <div class="flex flex-wrap items-center space-x-2 space-y-2 w-full"
             x-data="{
                 handleSelection(action, status = null, actionTitle, confirmClass) {
                     if (selected['{{ $context }}'].length === 0) {
@@ -588,11 +588,11 @@ class extends Component {
                 </div>
 
                 <label for="checkbox-{{ $context }}-{{ $image->id }}">
-                    <img class="object-cover w-[10em] h-[10em]" src="{{ asset('storage/' . $image->thumb_full_path) }}"/>
+                    <img class="object-cover w-[7em] sm:w-[10em] h-[7em] sm:h-[10em]" src="{{ asset('storage/' . $image->thumb_full_path) }}"/>
                 </label>
 
         <!-- Moderation Buttons -->
-                <div class="w-full -mt-[30px] px-2 flex justify-between">
+                <div class="w-full -mt-[30px] sm:px-2 flex justify-between">
 
                     @if($context === 'approved')
                         <x-button @click="$wire.changeStatusFrom('{{ $context }}', {{ $image->id }}, 2)"
@@ -618,7 +618,6 @@ class extends Component {
                                 })
                             "
                             wire:loading.attr="disabled"
-                            x-init="{{ $image->priority == 1 ? 'removeHighlight(' . $image->id . ')' : '' }}"
                         />
                     @endif
 

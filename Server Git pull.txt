@@ -34,6 +34,7 @@ cd var/www/flashwall
 OVH VPS :
 Log : ssh username@ip4 -p port
 Port : 52777
+217.182.65.130
 
 Port changé, 
 Par feu iptables paramétré : http, htpps, ssh, sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
