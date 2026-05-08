@@ -14,7 +14,6 @@ class ImageSeeder extends Seeder
         while ($i < 30) {
             Image::create([
                 'wall_id' => 1,
-                'parent_id' => null,
                 'name' => 'N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
                 'webp_name' => 'N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',
                 'thumb' => 'N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg',

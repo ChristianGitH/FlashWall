@@ -277,50 +277,6 @@ class extends Component {
         }
     }
 
-    /****** FOR WALL DISPLAY WITH COPIES ******/
-    /*protected function handleModerationChange()
-    {
-        if ($this->wall->moderation) {
-        // Moderation has been activated
-        // Delete all images copies (permanent = flase) with a parent not approved (status != 1).
-            $copiesToDelete = Image::where('wall_id', $this->wall->id)
-            ->where('permanent', false)
-            ->whereHas('parent', function ($query) {
-                $query->where('status', '!=', 1);
-            })
-            ->pluck('id');      
-
-            Image::whereIn('id', $copiesToDelete)->update(['status' => 5]);
-
-        } else {
-            // Moderation has been desactivated
-             // Get all parent images (permanent = true) which are not approved (status != 1) and not deleted (status != 5)
-            $parents = Image::where('wall_id', $this->wall->id)
-                ->where('permanent', true)
-                ->whereNotIn('status', [1, 5])
-                ->get();
-
-            // Calculate the number of copies to create based on the number of parent image
-            $copiesToCreate = round($parents->count() * 0.2);
-
-            foreach ($parents as $parent) {
-                for ($k = 0; $k < $copiesToCreate; $k++) {
-                    Image::create([
-                        'wall_id' => $this->wall->id,
-                        'parent_id' => $parent->id,
-                        'name' => $parent->name,
-                        'thumb' => $parent->thumb,
-                        'caption' => $parent->caption,
-                        'permanent' => false,
-                    ]);
-                }
-            }
-        }
-    }*/
-
-
-
-
     public function updatePostingPageStyle()
     {
         $data = $this->validate([

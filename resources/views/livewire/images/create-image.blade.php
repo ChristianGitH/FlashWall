@@ -129,6 +129,15 @@ new class extends Component {
         }
     }
 
+    private function addNonBreakingSpaces(string $text): string
+    {
+        return preg_replace(
+            '/\s+([:;!?»])/u',
+            "\u{00A0}$1",
+            $text
+        );
+    }
+
 
     // Computed property for capture_mode group input, General Settings card
     public function getCaptureValueProperty()
@@ -291,7 +300,9 @@ new class extends Component {
             'name' => $webpFilename,
             'webp_name' => $webpFilename,
             'thumb' => $webpFilename,
-            'caption' => $this->caption,
+            'caption' => $this->addNonBreakingSpaces(
+                $this->caption
+            ),
             'visitor_token' => $this->visitorToken,
             'submitter_id' => $this->submitter->id ?? null,
             'submitter_name' => $this->submitter->name ?? null,

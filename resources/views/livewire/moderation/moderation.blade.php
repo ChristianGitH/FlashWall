@@ -229,7 +229,6 @@ class extends Component {
             // Créer l'entrée en base
             Image::create([
                 'wall_id' => $this->wall->id,
-                'parent_id' => null,
                 'name' => $filename,
                 'webp_name' => $webpFilename,
                 'thumb' => $thumbFilename,

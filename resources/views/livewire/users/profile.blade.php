@@ -118,7 +118,7 @@ class extends Component {
     }
 }; ?>
 
-<div class="min-h-screen bg-base-200 py-10">
+<div class="min-h-screen bg-base-200">
     <div class="max-w-3xl mx-auto">
 
         {{-- HEADER + PROGRESS --}}
@@ -198,6 +198,11 @@ class extends Component {
                             wire:model="password_confirmation" 
                             icon="o-lock-closed" inline/>
                 </div>
+
+                <div class="mt-2 text-right">
+                    <x-button label="{{__('Forgot your password?')}}" class="btn-ghost" link="/forgot-password" />
+                </div>
+
             </x-card>
 
             {{-- ACTION --}}

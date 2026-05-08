@@ -13,10 +13,7 @@ return new class extends Migration
     {
         Schema::create('images', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('wall_id')->constrained('walls')->onDelete('cascade');
-
-            $table->foreignId('parent_id')->nullable()->constrained('images')->onDelete('cascade');
-            
+            $table->foreignId('wall_id')->constrained('walls')->onDelete('cascade');            
             $table->string('name');
             $table->string('webp_name');
             $table->string('thumb');
