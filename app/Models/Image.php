@@ -29,7 +29,6 @@ class Image extends Model
         'submitter_name',
         'submitter_avatar',
         'priority',
-        'parent_id',
         'pinned',
         'last_status_update',
     ];
@@ -46,16 +45,6 @@ class Image extends Model
         return $this->belongsTo(Wall::class);
     }
 
-    public function parent()
-    {
-        return $this->belongsTo(Image::class, 'parent_id');
-    }
-
-    public function copies()
-    {
-        return $this->hasMany(Image::class, 'parent_id');
-    }
-    
     public function submitter()
     {
         return $this->belongsTo(Submitter::class);

@@ -57,7 +57,6 @@ new class extends Component
                     <x-menu-sub :title="$wall->name" icon="o-sparkles" :open="request()->is($wall->slug . '/*')">
                         <x-menu-item title="{{__('Settings')}}" icon="o-cog-6-tooth" link="{{ route('setup-wall', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="{{__('Moderation')}}" icon="o-magnifying-glass-circle" link="{{ route('moderation', ['wall' => $wall->slug]) }}"  />
-                        <x-menu-item title="{{__('Moderation M')}}" icon="o-magnifying-glass-circle" link="{{ route('moderation-mobile', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="{{__('Post image')}}" icon="o-plus" link="{{ route('create-image', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="Display" icon="o-tv" link="{{ route('slideshow', ['wall' => $wall->slug]) }}" external />
                         <x-menu-item title="Display Dev" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'dev']) }}" external />

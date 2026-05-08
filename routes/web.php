@@ -13,8 +13,6 @@ use Illuminate\Http\Request;
 Route::middleware('guest')->group(function () {
     Route::livewire('/login', 'auth.login')->name('login');
     Route::livewire('/register', 'auth.register');
-    Route::livewire('/forgot-password', 'auth.forgot-password');
-    Route::livewire('/reset-password/{token}', 'auth.reset-password')->name('password.reset');
 });
 /*
 |--------------------------------------------------------------------------
@@ -96,6 +94,9 @@ Route::livewire('/', 'index');
 Route::livewire('/display/{wall}', 'displaywalls.slideshow-wrapper', ['mode' => 'prod'])->name('slideshow');
 Route::livewire('/display/{wall}/{mode}', 'displaywalls.slideshow-wrapper')->name('slideshow.mode');
 
+// Password reset routes, should be accissible for guests, and users
+Route::livewire('/forgot-password', 'auth.forgot-password');
+Route::livewire('/reset-password/{token}', 'auth.reset-password')->name('password.reset');
 
 // Dynamic wall routes (catch {wall} parameter)
 Route::livewire('/{wall}', 'images.create-image')->name('create-image');

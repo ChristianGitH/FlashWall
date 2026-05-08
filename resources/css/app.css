@@ -1,6 +1,16 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-    themes: light --default, dark --prefersdark;
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+    name: "light";
+    default: true;
+
+    --color-primary: #ae4aff;
+}
+@plugin "daisyui/theme" {
+    name: "dark";
+    prefersdark: true;
+
+    --color-primary: #ae4aff;
 }
 
 @source '../../vendor/robsontenorio/mary/src/View/Components/**/*.php';
