@@ -1,17 +1,22 @@
 TO DEPLOY :
-lang : add missing traduction for emails, reset password, mail verification.
-css : changed primary color.
-create-image : added non breaking spaces to captions.
-migration : droped column parent_id from images table in db.
+web.php : moved language switcher to its own component, added static pages management.
+LanguageController : new - switches the current app locale, translate the current static page URL.
+StaticController : new - render translated static pages, redirect plain slug requests to the current locale version.
+config/pages : list of static pages, and available traduction slugs.
+seo-head-tags : help adding canonical url and hreflang to satic pages for SEO.
+static/en or /fr : folders to drop the static pages.
+helper/LocalizedHelper : Generates a localized URL for static pages based on a page key.
+composer.json : added helper autoload
+index.blade : Moved and changed to static page.
+
 
 NEXT TO DO :
-    CSRF on slideshow
+CSRF on slideshow
 Allow possibility to add a frame around submitter image, and then download
 Save submitter image at original format for user/sumbitter download
 Add fields to user model so user profiles could have more details, sociétés ?
 setup-wall + display-wall : Video as background on wall display
 display-image : Add possibility to display QR code on display-image
-languages : fix the problem due to two different maners of using languages, fr/terms for some pages and language/fr for switcher
 setup-wall : new layout for quick setup, weddings for exemple
 
 /*\ COMMAND LINES /*\

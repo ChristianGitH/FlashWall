@@ -613,7 +613,7 @@ new class extends Component {
                 @if($this->terms_checkbox_display_card === 'submitter') 
                     <x-checkbox wire:model="terms" required>
                         <x-slot:label>
-                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" class="underline">{{ __('terms.title') }}</a>
+                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline">{{ __('terms.title') }}</a>
                         </x-slot:label>
                     </x-checkbox>
                 @endif
@@ -694,7 +694,7 @@ new class extends Component {
                 @if($this->terms_checkbox_display_card === 'upload')
                     <x-checkbox wire:model="terms" required>
                         <x-slot:label>
-                            {{__('I agree with the')}} <a href="{{ route('terms', app()->getLocale()) }}" class="underline">{{ __('terms.title') }}</a>
+                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline">{{ __('terms') }}</a>
                         </x-slot:label>
                     </x-checkbox>
                 @endif

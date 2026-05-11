@@ -37,6 +37,7 @@ new class extends Component
 
 <div class="flex flex-col h-[90%]">
     <x-menu activate-by-route>
+        <x-menu-item title="{{__('Wedding')}}" icon="o-heart" link="{{ localized_page('wedding') }}" />
 
         {{-- Vérifie si l'utilisateur est connecté --}}
         @if($user = auth()->user())
@@ -47,7 +48,7 @@ new class extends Component
                 </x-list-item>
             <x-menu-separator />
 
-        <x-menu-item title="{{__('Home')}}" icon="o-home" link="{{ route('home') }}" />
+        <x-menu-item title="{{__('Home')}}" icon="o-home" link="{{ localized_page('home') }}" />
 
         <x-menu-item title="{{__('Create Wall')}}" icon="o-plus" link="{{ route('create-wall') }}" />
 
@@ -68,7 +69,7 @@ new class extends Component
         @endif
 
         @else
-            <x-menu-item title="{{__('Home')}}" icon="o-home" link="{{ route('home') }}" />
+            <x-menu-item title="{{__('Home')}}" icon="o-home" link="{{ localized_page('home') }}" />
             <x-menu-item title="{{__('Login')}}" icon="o-user" link="{{ route('login') }}" />                   
         @endif
 
