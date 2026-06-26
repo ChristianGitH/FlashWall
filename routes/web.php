@@ -14,7 +14,7 @@ use App\Http\Controllers\LanguageController;
 */
 Route::middleware('guest')->group(function () {
     Route::livewire('/login', 'auth.login')->name('login');
-    Route::livewire('/register', 'auth.register');
+    Route::livewire('/register', 'auth.register')->name('register');
 });
 /*
 |--------------------------------------------------------------------------
@@ -54,8 +54,6 @@ Route::get('language/{locale}', [LanguageController::class, 'switch']);
 
 
 
-
-
 /*
 |--------------------------------------------------------------------------
 | Public pages
@@ -65,9 +63,10 @@ Route::get('language/{locale}', [LanguageController::class, 'switch']);
 //Route::livewire('/', 'index');
 Route::livewire('/display/{wall}', 'displaywalls.slideshow-wrapper', ['mode' => 'prod'])->name('slideshow');
 Route::livewire('/display/{wall}/{mode}', 'displaywalls.slideshow-wrapper')->name('slideshow.mode');
+Route::livewire('/plans', 'plans')->name('plans');
 
 // Password reset routes, should be accissible for guests, and users
-Route::livewire('/forgot-password', 'auth.forgot-password');
+Route::livewire('/forgot-password', 'auth.forgot-password')->name('password.forgot');
 Route::livewire('/reset-password/{token}', 'auth.reset-password')->name('password.reset');
 
 

@@ -30,7 +30,7 @@ new class extends Component
 
 <x-layouts.app :title="'Home'">
 <x-seo-head-tags :locale="$locale" :pageKey="$pageKey" />
-<div class="mx-auto mt-8 max-w-6xl">
+<div class="mx-auto mt-2 max-w-6xl">
     <section class="">
         <h1 class="mt-2 inline-block text-4xl font-bold tracking-tighter sm:text-6xl md:text-6xl dark:from-gray-50 dark:to-gray-300">
             <span class="font-bold">Bienvenue sur</span>
