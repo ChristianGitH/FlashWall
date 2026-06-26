@@ -61,7 +61,7 @@ new class extends Component {
         if ($this->wall->posting_page_background_choice == 0) {    
             $this->background = 'background: ' . $this->wall->posting_page_background_color . ';';
         } else {
-            $url = asset("storage/posting_page_images/background_images/{$this->wall->posting_page_background_image}");
+            $url = asset("storage/{$this->wall->posting_page_background_image}");
             $this->background = "background:  no-repeat center url('{$url}'); background-size: cover;";
         }
     }
@@ -316,7 +316,7 @@ new class extends Component {
         Storage::disk('public')->put($parent->thumb_full_path, $img->scale(width: 500)->encodeByExtension('webp', 80));
 
         $this->success(__('Image added successfully!'));
-        $this->showMessage($this->posting_page_end_text, $this->posting_page_end_title);
+        $this->showMessage(__($this->posting_page_end_text), __($this->posting_page_end_title));
         $this->reset('image', 'caption');
     }
     
@@ -325,12 +325,7 @@ new class extends Component {
 ?>
 
 @push('head')
-    <link rel="icon" type="image/png" href="{{ asset('/storage/favicon_ubi/ubi-favicon-96x96.png') }}" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="{{ asset('/storage/favicon_ubi/ubi-favicon.svg') }}" />
-    <link rel="shortcut icon" href="{{ asset('/storage/favicon-ubi/ubi_favicon.ico') }}" />
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('/storage/favicon_ubi/ubi-apple-touch-icon.png') }}" />
-    <link rel="manifest" href="{{ asset('/storage/favicon_ubi/ubi-site.webmanifest') }}" />
-    
+
     <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('uploadImage', () => ({
@@ -613,7 +608,7 @@ new class extends Component {
                 @if($this->terms_checkbox_display_card === 'submitter') 
                     <x-checkbox wire:model="terms" required>
                         <x-slot:label>
-                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline">{{ __('terms.title') }}</a>
+                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline">{{ __('Terms') }}</a>
                         </x-slot:label>
                     </x-checkbox>
                 @endif
@@ -694,7 +689,7 @@ new class extends Component {
                 @if($this->terms_checkbox_display_card === 'upload')
                     <x-checkbox wire:model="terms" required>
                         <x-slot:label>
-                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline">{{ __('terms') }}</a>
+                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline" target="_blank">{{ __('Terms') }}</a>
                         </x-slot:label>
                     </x-checkbox>
                 @endif

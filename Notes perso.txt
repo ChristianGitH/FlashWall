@@ -1,14 +1,11 @@
 TO DEPLOY :
-web.php : moved language switcher to its own component, added static pages management.
-LanguageController : new - switches the current app locale, translate the current static page URL.
-StaticController : new - render translated static pages, redirect plain slug requests to the current locale version.
-config/pages : list of static pages, and available traduction slugs.
-seo-head-tags : help adding canonical url and hreflang to satic pages for SEO.
-static/en or /fr : folders to drop the static pages.
-helper/LocalizedHelper : Generates a localized URL for static pages based on a page key.
-composer.json : added helper autoload
-index.blade : Moved and changed to static page.
-
+    Changed default wall settings.
+    Added columns to wall, for QR Code and layout.
+slideshow : changed structure, now use layout parameter instead of caption_position.
+    Now can display QR Code.
+walls : removed the column caption_position and added layout.
+setup-wall : new setup page, with steps.
+    Added QR Code display settings, color, size.
 
 NEXT TO DO :
 CSRF on slideshow
@@ -16,8 +13,8 @@ Allow possibility to add a frame around submitter image, and then download
 Save submitter image at original format for user/sumbitter download
 Add fields to user model so user profiles could have more details, sociétés ?
 setup-wall + display-wall : Video as background on wall display
-display-image : Add possibility to display QR code on display-image
-setup-wall : new layout for quick setup, weddings for exemple
+slideshow setup wall : change caption_max_width default value to 70%.
+slideshow : QR Code text color white doesn't work on light color background
 
 /*\ COMMAND LINES /*\
 Reset BDD : 

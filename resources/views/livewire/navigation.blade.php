@@ -37,7 +37,6 @@ new class extends Component
 
 <div class="flex flex-col h-[90%]">
     <x-menu activate-by-route>
-        <x-menu-item title="{{__('Wedding')}}" icon="o-heart" link="{{ localized_page('wedding') }}" />
 
         {{-- Vérifie si l'utilisateur est connecté --}}
         @if($user = auth()->user())
@@ -63,6 +62,7 @@ new class extends Component
                         <x-menu-item title="Display Dev" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'dev']) }}" external />
                         <x-menu-item title="Display Slow" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'slow']) }}" external />
                         <x-menu-item title="Display Old Caption" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'oldcaption']) }}" external />
+                        <x-menu-item title="Display Preview" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'preview']) }}" external />
                     </x-menu-sub>
                 @endforeach
 

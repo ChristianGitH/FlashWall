@@ -8,6 +8,8 @@ use Livewire\Attributes\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Mary\Traits\Toast;
+use App\Services\SubscriptionService;
+
 
 new
 #[Title('Create a Wall')]
@@ -22,6 +24,9 @@ class extends Component {
 
     public function createWall()
     {
+        if (SubscriptionService::canCreateWall(auth()->user())) {
+            // User can create a wall
+
         $data = $this->validate();
 
         // Generate a base slug from the name
@@ -45,6 +50,12 @@ class extends Component {
             __('Wall successfully created!'),
             redirectTo: '/'.$link
         );
+
+        } else {
+            $error = SubscriptionService::getSubscriptionErrorMessage(auth()->user());
+            // $error will contain reason (expired, reached limit, etc.)
+            $this->warning($error);
+        }
     }
 
 }; ?>
@@ -55,9 +66,24 @@ class extends Component {
             <x-input label="{{__('Name')}}" placeholder="{{__('Name')}}" wire:model="name"  inline />
             <x-input label="{{__('Description')}}" placeholder="{{__('Description')}}" wire:model="description" inline separator />
 
-            <x-slot:actions>
-                <x-button label="{{__('Create')}}" type="submit" icon="o-plus" class="btn-primary" spinner="createWall" />
-            </x-slot:actions>
+            @if (auth()->user()->hasReachedWallLimit())
+                <x-alert title="{{ __('You have reached your wall limit') }}" 
+                description="{{ trans_choice(
+                    'With your current plan, you can create :count wall.|With your current plan, you can create :count walls.',
+                    auth()->user()->getFeature('walls'),
+                    ['count' => auth()->user()->getFeature('walls')]
+                ) }}" 
+                icon="o-lock-closed" class="alert-info flex flex-wrap">
+                    <x-slot:actions>
+                        <x-button label="{{ __('Upgrade your plan !') }}" />
+                    </x-slot:actions>
+                </x-alert>
+            @else
+                <x-slot:actions>
+                    <x-button label="{{__('Create')}}" type="submit" icon="o-plus" class="btn-primary" spinner="createWall" />
+                </x-slot:actions>
+            @endif
+
         </x-form>
 
     </x-card>
