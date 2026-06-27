@@ -31,7 +31,7 @@ class extends Component {
     }
 }; ?>
 
-<div class="lg:min-h-screen flex items-center justify-center">
+<div class="lg:min-h-[80vh] flex items-center justify-center">
     <x-card class="flex items-center justify-center p-5 lg:px-10 lg:py-5" title="{{__('Password renewal')}}" subtitle="{{__('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.')}}" shadow separator>
         <x-session-status class="mb-4" :status="session('status')" />
         <x-form wire:submit="sendPasswordResetLink">

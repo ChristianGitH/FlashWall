@@ -1,7 +1,7 @@
 <x-layouts.app :title="'Legal Notice'">
 <x-seo-head-tags :locale="$locale" :pageKey="$pageKey" />
 
-<div class="container mx-auto px-4 py-8 max-w-3xl">
+<div class="container mx-auto px-4 max-w-3xl">
     <!-- Header with back button and language switcher -->
     <div class="flex flex-row justify-between items-center flex-nowrap mb-6 gap-4">
       <a href="{{ url()->previous() ?: route('home') }}" onclick="event.preventDefault(); history.back();">

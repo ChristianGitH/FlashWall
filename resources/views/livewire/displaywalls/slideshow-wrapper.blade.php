@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use App\Models\Wall;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 new class extends Component {
 
@@ -17,9 +18,26 @@ new class extends Component {
         $this->displaySettings = $this->computeWallSettings();
     }
 
+    private function calculateCaptionMargin (int $A): string
+    {
+        if ($A <= 4) {
+            return "2%";
+        }
+        elseif ($A <= 20) {
+            $B = round(1.2 * $A - 2);
+            return "-{$B}%";
+        }
+        else {
+            $B = round(0.433 * $A + 13.33);
+            return "-{$B}%";
+        }
+    }
+
+
 public function computeWallSettings(): array
 {
     $caption_max_width = $this->wall->caption_max_width;
+    $layout = $this->wall->layout;
     $caption_font_unit = $this->wall->caption_font_unit;
     $caption_font_size = $this->wall->caption_font_size;
     $submitter_name_font_size = $this->wall->submitter_name_font_size;
@@ -47,6 +65,9 @@ public function computeWallSettings(): array
         right: {$marginRight}%;
     ";
 
+    
+    $caption_bellow_image_bottom_margin = $this->calculateCaptionMargin($this->wall->margin_bottom);
+
     // BACKGROUND COLOR AND OPACITY. Change the pourcentage of opacity from 0-100 to 0-255
     $caption_background_opacity = (int) round(($caption_background_opacity / 100) * 255);
     // Change from hexadecimal 2 caracters (ex: 0 => "00", 255 => "FF")
@@ -54,27 +75,62 @@ public function computeWallSettings(): array
     // Ad opcity after hex string.
     $caption_background = $caption_background_color . $caption_background_opacity;
 
+    $qr_code_position = $this->wall->qr_code_position ?? 'bottom-right';
+    $qr_code_position_class = match ($qr_code_position) {
+        'top-left' => 'top-4 left-4',
+        'top-right' => 'top-4 right-4',
+        'bottom-left' => 'bottom-4 left-4',
+        'bottom-right' => 'bottom-4 right-4',
+        'none' => 'hidden',
+        default => 'bottom-4 right-4',
+    };
+    $qr_code_size = 'width:' . ($this->wall->qr_code_size ?? 12) . '%;';
+
+    if ($qr_code_position === 'top-left' || $qr_code_position === 'bottom-left') {
+        $qr_code_text_rotate_class = 'rotate-357 text-left';
+    }
+    elseif ($qr_code_position === 'top-right' || $qr_code_position === 'bottom-right') {
+        $qr_code_text_rotate_class = 'rotate-3 text-right';
+    }
+    else {
+        $qr_code_text_rotate_class = 'hidden';
+    }
+
+    $hex = $this->wall->qr_code_color ?? '#000000';
+    [$r, $g, $b] = sscanf($hex, "#%02x%02x%02x");
+
+    $qr_code_svg = (string) QrCode::format('svg')
+        ->size(120)
+        ->color($r, $g, $b)
+        ->generate(route('create-image', ['wall' => $this->wall->slug]));
+
     // BACKGROUND = If background_choice=0 then we set the color. If background_choice=1 we set the url.
     if ($this->wall->background_choice == 0) {    
         $background = 'background: ' . $this->wall->background_color . ';';
     } else {
-        $background = 'background:  no-repeat center url(\''. asset('storage/walls_images/background_images/' . $this->wall->background_image) .'\'); background-size: 100% 100%;';
+        $background = 'background:  no-repeat center url(\''. asset('storage/' . (str_contains($this->wall->background_image, '/') ? $this->wall->background_image : 'walls_images/background_images/' . $this->wall->background_image)) .'\'); background-size: 100% 100%;';
     }
 
     return [
         'caption_max_width' => $caption_max_width,
+        'layout' => $layout,
         'caption_font_unit' => $caption_font_unit,
         'caption_font_size' => $caption_font_size,
         'submitter_name_font_size' => $submitter_name_font_size,
         'background' => $background,
         'duration' => $duration,
         'transition' => $transition,
+        'caption_bellow_image_bottom_margin' => $caption_bellow_image_bottom_margin,
         'caption_font_color' => $caption_font_color,
         'submitter_name_font_color' => $submitter_name_font_color,
         'caption_background' => $caption_background,
         'image_container_style' => $image_container_style,
         'image_height' => $image_height,
         'image_width'  => $image_width,
+        'qr_code_position_class' => $qr_code_position_class,
+        'qr_code_size' => $qr_code_size,
+        'qr_code_svg' => $qr_code_svg,
+        'qr_code_text_rotate_class' => $qr_code_text_rotate_class,
     ];
 }
 
@@ -125,7 +181,7 @@ public function computeWallSettings(): array
     </div>
 
     <!-- Slideshow appears only when ready = true -->
-    <div x-show="ready" x-cloak>
+    <div x-show="ready" x-cloak class="relative">
         <!-- Slideshow bellow -->
         @if($mode === 'dev')
             <livewire:displaywalls.slideshow-dev :wall="$wall" :displaySettings="$displaySettings" />
@@ -133,9 +189,27 @@ public function computeWallSettings(): array
             <livewire:displaywalls.slideshow-slow :wall="$wall" :displaySettings="$displaySettings" />
         @elseif($mode === 'oldcaption')
             <livewire:displaywalls.slideshow-stable-classic-caption :wall="$wall" :displaySettings="$displaySettings" />
+    @elseif($mode === 'preview')
+            <livewire:displaywalls.slideshow-preview :wall="$wall" :displaySettings="$displaySettings" />
         @else
             <livewire:displaywalls.slideshow :wall="$wall" :displaySettings="$displaySettings" />
         @endif
+
+<style>
+    .qr_code_wrapper svg {
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
+        <div style="{{ $displaySettings['qr_code_size'] }}" class="absolute {{ $displaySettings['qr_code_position_class'] }} z-45 aspect-square">
+            <p class="pb-2 text-2xl font-bold text-white {{ $displaySettings['qr_code_text_rotate_class'] }} ">
+                {{ __('Scan to post your photo') }}&nbsp;⤵
+            </p>
+            <div class="qr_code_wrapper p-2 rounded-md bg-white shadow-lg">
+                {!! $displaySettings['qr_code_svg'] !!}
+            </div>
+        </div>
     </div>
 
 </div>
