@@ -1,11 +1,5 @@
 TO DEPLOY :
-    Changed default wall settings.
-    Added columns to wall, for QR Code and layout.
-slideshow : changed structure, now use layout parameter instead of caption_position.
-    Now can display QR Code.
-walls : removed the column caption_position and added layout.
-setup-wall : new setup page, with steps.
-    Added QR Code display settings, color, size.
+navigation : dev-only navigation items are now hidden unless the app is running in a local/testing/debug environment
 
 NEXT TO DO :
 CSRF on slideshow

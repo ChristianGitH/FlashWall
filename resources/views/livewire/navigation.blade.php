@@ -36,6 +36,10 @@ new class extends Component
 
 
 <div class="flex flex-col h-[90%]">
+    @php
+        $showDevLinks = app()->environment(['local', 'testing']) || app()->isLocal() || config('app.debug');
+    @endphp
+
     <x-menu activate-by-route>
 
         {{-- Vérifie si l'utilisateur est connecté --}}
@@ -59,10 +63,12 @@ new class extends Component
                         <x-menu-item title="{{__('Moderation')}}" icon="o-magnifying-glass-circle" link="{{ route('moderation', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="{{__('Post image')}}" icon="o-plus" link="{{ route('create-image', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="Display" icon="o-tv" link="{{ route('slideshow', ['wall' => $wall->slug]) }}" external />
-                        <x-menu-item title="Display Dev" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'dev']) }}" external />
-                        <x-menu-item title="Display Slow" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'slow']) }}" external />
-                        <x-menu-item title="Display Old Caption" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'oldcaption']) }}" external />
-                        <x-menu-item title="Display Preview" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'preview']) }}" external />
+                        @if($showDevLinks)
+                            <x-menu-item title="Display Dev" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'dev']) }}" external />
+                            <x-menu-item title="Display Slow" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'slow']) }}" external />
+                            <x-menu-item title="Display Old Caption" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'oldcaption']) }}" external />
+                            <x-menu-item title="Display Preview" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'preview']) }}" external />
+                        @endif
                     </x-menu-sub>
                 @endforeach
 
