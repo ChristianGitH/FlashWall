@@ -40,7 +40,7 @@ new class extends Component
         $showDevLinks = app()->environment(['local', 'testing']) || app()->isLocal() || config('app.debug');
     @endphp
 
-    <x-menu activate-by-route>
+    <x-menu>
 
         {{-- Vérifie si l'utilisateur est connecté --}}
         @if($user = auth()->user())
@@ -51,7 +51,8 @@ new class extends Component
                 </x-list-item>
             <x-menu-separator />
 
-        <x-menu-item title="{{__('Home')}}" icon="o-home" link="{{ localized_page('home') }}" />
+        
+        <livewire:static-page-navigation :as_sub_menu="true" />
 
         <x-menu-item title="{{__('Create Wall')}}" icon="o-plus" link="{{ route('create-wall') }}" />
 
@@ -82,7 +83,7 @@ new class extends Component
         <x-menu-separator />
 
         <x-menu class="flex flex-row my-0.5 mt-3 py-1.5 px-4 whitespace-nowrap flex flex-row items-center">
-            <x-theme-toggle />
+            <x-theme-toggle class="btn btn-circle btn-ghost btn-sm" />
             @include('partials/language-switcher')
         </x-menu>
     </x-menu>

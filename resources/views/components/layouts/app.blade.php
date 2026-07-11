@@ -62,7 +62,7 @@
                 <x-icon name="o-bars-3" class="cursor-pointer" />
             </label>
             <div class="hidden lg:flex">
-                <livewire:static-page-navigation />
+                <livewire:static-page-navigation :as_sub_menu="false" />
             </div>
         </x-slot:actions>
     </x-nav>
@@ -84,45 +84,34 @@ we display the horizontal navbar only on mobile screens -->
 @endif
 
 {{-- MAIN --}}
-<x-main with-nav full-width>
+<x-main full-width>
 
 
-<!-- If it's a static page AND user is loged in, we display both menus in sidebar :
-    navigation + static-page-navigation -->
-@if($user && $isPublicPage)
-
-{{-- SIDEBAR --}}
-<x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
-    <div class="lg:hidden">
-        {{-- BRAND --}}
-        <x-app-brand class="p-5 pt-3" />
-        {{-- MENU --}}
-        <livewire:static-page-navigation />
-    </div>
-    {{-- MENU --}}
-    <livewire:navigation />
-</x-slot:sidebar>
-
-<!-- If user is loged in but it's not a static page, then we display only the sidebar navigation menu -->
-@elseif($user)
+<!-- If user is loged in, both menus will be in sidebar -->
+@if($user)
 
     {{-- SIDEBAR --}}
     <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-inherit">
-        {{-- BRAND --}}
-        <x-app-brand class="p-5 pt-3" />
+
+        <!--   We hide drawer logo if on static page, so there's not 2 logos -->
+        @if (!$isPublicPage)
+            {{-- BRAND --}}
+            <x-app-brand class="p-5 pt-3" />
+        @endif
+
         {{-- MENU --}}
         <livewire:navigation />
     </x-slot:sidebar>
 
-<!-- If it's a guest and static page, we don't display the sidebar navigation menu -->
-@elseif($isPublicPage)
+<!-- If it's a guest we only display the static-page-navigation -->
+@else
     {{-- SIDEBAR --}}
-    <div class="lg:hidden">
+    <x-slot:sidebar drawer="main-drawer" class="lg:hidden bg-base-100 lg:bg-inherit">
         {{-- BRAND --}}
         <x-app-brand class="p-5 pt-3" />
         {{-- MENU --}}
-        <livewire:static-page-navigation />
-    </div>
+        <livewire:static-page-navigation :as_sub_menu="false" />
+    </x-slot:sidebar>
 @endif
 
     {{-- The `$slot` goes here --}}
