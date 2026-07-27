@@ -29,7 +29,7 @@ return [
             'name' => 'Standard',
             'stripe_price_id' => env('STRIPE_STANDARD_PRICE_ID', 'price_standard'), // Set in .env
             'features' => [
-                'walls' => 5,
+                'walls' => 2,
                 'images_per_wall' => 1000,
                 'advanced_settings' => false,
                 'advanced_moderation' => true,
@@ -44,7 +44,7 @@ return [
             'name' => 'Pro',
             'stripe_price_id' => env('STRIPE_BUSINESS_PRICE_ID', 'price_business'),
             'features' => [
-                'walls' => 20,
+                'walls' => 5,
                 'images_per_wall' => 5000,
                 'advanced_settings' => true,
                 'advanced_moderation' => true,

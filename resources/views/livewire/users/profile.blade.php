@@ -337,18 +337,18 @@ class extends Component {
 
             <x-card shadow separator class="mx-auto max-w-full h-full" title="{{ __('Plans') }}">
                     <x-slot:menu>
-                        <x-button label="{{ __('View plans details') }}" class="btn-sm" />
+                        <x-button label="{{ __('View plans details') }}" class="btn-sm" link="{{ route('plans') }}"/>
                     </x-slot:menu>
 
                 <div class="overflow-x-auto">
                     <table class="mt-4 table table-zebra w-full">
                         <thead>
                             <tr>
-                                <th class="font-bold text-black">{{ __('Feature') }}</th>
+                                <th class="font-bold text-black dark:text-white">{{ __('Feature') }}</th>
 
                                 @foreach(config('plans.plans') as $level => $plan)
                                     <th
-                                        class="text-center text-black {{ $level === $currentPlanLevel ? 'bg-success/10' : '' }}"
+                                        class="text-center text-black dark:text-white {{ $level === $currentPlanLevel ? 'bg-success/10' : '' }}"
                                     >
                                         <div class="flex flex-col items-center">
                                             @if($level === $currentPlanLevel)
@@ -428,7 +428,7 @@ class extends Component {
 
                 
                 <x-slot:actions>
-                    <x-button label="{{ __('View plans details') }}" class="btn-sm" />
+                    <x-button label="{{ __('View plans details') }}" class="btn-sm" link="{{ route('plans') }}"/>
                 </x-slot:actions>
             </x-card>
         </x-tab>
