@@ -11,7 +11,7 @@ return [
     'plans' => [
         // Free Plan
         0 => [
-            'name' => 'Demo',
+            'name' => 'plans.plans.0.name',
             'stripe_price_id' => null, // No Stripe product for free tier
             'features' => [
                 'walls' => 1,
@@ -20,38 +20,38 @@ return [
                 'advanced_moderation' => false,
                 'live_usage_duration' => 0,
             ],
-            'description' => 'Create your free account and try Flashwall : build a wall in just a few clicks and see the result.',
-            'price' => 'Free',
+            'description' => 'plans.plans.0.description',
+            'price' => 'plans.plans.0.price',
         ],
 
         // Standard Plan
         1 => [
-            'name' => 'Standard',
+            'name' => 'plans.plans.1.name',
             'stripe_price_id' => env('STRIPE_STANDARD_PRICE_ID', 'price_standard'), // Set in .env
             'features' => [
-                'walls' => 5,
+                'walls' => 2,
                 'images_per_wall' => 1000,
                 'advanced_settings' => false,
                 'advanced_moderation' => true,
                 'live_usage_duration' => 48,
             ],
-            'description' => 'For growing events and projects',
-            'price' => '95 €',
+            'description' => 'plans.plans.1.description',
+            'price' => 'plans.plans.1.price',
         ],
 
         // Business Plan
         2 => [
-            'name' => 'Pro',
+            'name' => 'plans.plans.2.name',
             'stripe_price_id' => env('STRIPE_BUSINESS_PRICE_ID', 'price_business'),
             'features' => [
-                'walls' => 20,
+                'walls' => 5,
                 'images_per_wall' => 5000,
                 'advanced_settings' => true,
                 'advanced_moderation' => true,
                 'live_usage_duration' => 96,
             ],
-            'description' => 'For teams and enterprises',
-            'price' => '149 €',
+            'description' => 'plans.plans.2.description',
+            'price' => 'plans.plans.2.price',
         ],
     ],
 
