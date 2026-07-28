@@ -57,8 +57,8 @@ class extends Component
             >
                 <div class="flex items-start justify-between gap-4">
                     <div>
-                        <h2 class="text-2xl font-semibold text-zinc-900 dark:text-white">{{ $plan['name'] }}</h2>
-                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{{ $plan['description'] }}</p>
+                        <h2 class="text-2xl font-semibold text-zinc-900 dark:text-white">{{ __($plan['name']) }}</h2>
+                        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{{ __($plan['description']) }}</p>
                     </div>
 
                     @if($level === $currentPlanLevel && $this->user)
@@ -67,7 +67,7 @@ class extends Component
                 </div>
 
                     <p style="font-family: Figtree;" class="mt-2 font-bold text-4xl tracking-tighter bg-linear-to-r from-purple-500 to-pink-300 bg-clip-text text-transparent ">
-                        {{ $plan['price'] }}
+                        {{ __($plan['price']) }}
                     </p>
 
                     @if(($level ?? '') != 0)

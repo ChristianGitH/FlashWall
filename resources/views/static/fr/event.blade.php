@@ -50,7 +50,7 @@
                 <article class="rounded-2xl border border-gray-200 bg-white/70 p-5 dark:border-gray-700 dark:bg-gray-900/70">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">2. Ils envoient photos ou messages</h3>
                     <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
-                        Un moment marquant, une réaction spontanée ou un petit message peuvent être partagés en quelques taps.
+                        Un moment marquant, une réaction spontanée ou un petit message peuvent être partagés en quelques clics.
                     </p>
                 </article>
 
@@ -78,16 +78,13 @@
                         Fini les moments d'attentes ou les temps morts, place à l’interaction et à la participation.
                     </h2>
                     <p class="mt-3 max-w-2xl text-lg text-indigo-50/90">
-                        Rendre chaque événement plus connecté, dynamique et mémorable. 
+                        Rendez chaque événement plus connecté, dynamique et mémorable. 
                         Qu’il s’agisse d’une conférence, d’un lancement, d’un festival ou d’un rassemblement privé, Flashwall transforme la participation en moment visuel partagé.
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <a href="{{ route('register') }}" class="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 font-semibold text-indigo-700 transition hover:bg-indigo-50">
+                    <a href="{{ route('register') }}" class="text-center inline-flex items-center justify-center rounded-full bg-white px-5 py-3 font-semibold text-indigo-700 transition hover:bg-indigo-50">
                         Essayer gratuitement
-                    </a>
-                    <a href="{{ route('register') }}" class="inline-flex items-center justify-center rounded-full border border-white/70 px-5 py-3 font-semibold text-white transition hover:bg-white/10">
-                        Demander une démo
                     </a>
                 </div>
             </div>
@@ -101,7 +98,7 @@
                 Personnalisez le design, les couleurs et la mise en page pour refléter votre image, votre thème et l’ambiance du moment. Flashwall s’adapte aussi bien aux événements intimes qu’aux grands rassemblements.
             </p>
             <p class="mt-6 text-lg text-gray-700 dark:text-gray-300">
-                <a href="{{ route('register') }}" class="font-semibold text-indigo-600 dark:text-indigo-400">Créer un compte</a> et préparez un mur qui colle à votre événement.
+                <a href="{{ route('register') }}" class="font-semibold text-indigo-600 dark:text-indigo-400">Créer un compte</a> et préparez un wall sur mesure pour votre événement.
             </p>
         </section>
     </div>

@@ -50,7 +50,7 @@ new class extends Component
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.3em] text-purple-500">
-                        Comment ça marche
+                        Comment ça marche ?
                     </p>
                     <h3 class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
                         Des téléphones du public au grand écran en quelques étapes simples

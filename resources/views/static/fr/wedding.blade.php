@@ -64,7 +64,7 @@
                 <article class="rounded-2xl border border-gray-200 bg-white/70 p-5 dark:border-gray-700 dark:bg-gray-900/70">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">4. Le contenu apparaît en direct sur l’écran</h3>
                     <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
-                        Votre mur de mariage devient un album vivant qui grandit au fil de la journée.
+                        Votre wall de mariage devient un album vivant qui grandit au fil de la journée.
                     </p>
                 </article>
             </div>
@@ -100,7 +100,7 @@
                 Personnalisez le style visuel, les couleurs et la mise en page pour qu’ils reflètent votre thème, vos prénoms et l'esprit de la journée. Qu'elle soit élégante, romantique ou festive, Flashwall s'intègre naturellement à l'évènement.
             </p>
             <p class="mt-6 text-lg text-gray-700 dark:text-gray-300">
-                <a href="{{ route('register') }}" class="font-semibold text-pink-600 dark:text-pink-400">Créer un compte</a> et préparez un mur qui ressemble à votre journée.
+                <a href="{{ route('register') }}" class="font-semibold text-pink-600 dark:text-pink-400">Créer un compte</a> et préparez un wall à l'image de votre journée.
             </p>
         </section>
     </div>

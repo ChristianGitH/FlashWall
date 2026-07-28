@@ -100,7 +100,7 @@
                 Customize the visual style, colors, and layout to fit your wedding theme, your names, and the mood of the day. Whether your celebration is elegant, romantic, or vibrant, Flashwall fits naturally into the experience.
             </p>
             <p class="mt-6 text-lg text-gray-700 dark:text-gray-300">
-                <a href="{{ route('register') }}" class="font-semibold text-pink-600 dark:text-pink-400">Create an account</a> and prepare a wall that feels made for your special day.
+                <a href="{{ route('register') }}" class="font-semibold text-pink-600 dark:text-pink-400">Create an account</a> and prepare a wall that reflects your special day.
             </p>
         </section>
     </div>

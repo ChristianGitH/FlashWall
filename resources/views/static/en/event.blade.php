@@ -75,18 +75,15 @@
                 <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.3em] text-indigo-100">Why organizers choose it</p>
                     <h2 class="mt-2 text-2xl font-bold">
-                        Make every event feel more connected, dynamic, and memorable.
+                        No more waiting around or downtime – it’s time for interaction and participation.
                     </h2>
                     <p class="mt-3 max-w-2xl text-lg text-indigo-50/90">
-                        Whether it is a conference, a launch, a festival, or a private gathering, Flashwall turns participation into a shared visual moment.
+                        Make every event more connected, dynamic and memorable. Whether it’s a conference, a launch, a festival or a private gathering, Flashwall changes attendance into a shared visual experience.
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <a href="{{ route('register') }}" class="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 font-semibold text-indigo-700 transition hover:bg-indigo-50">
                         Start for free
-                    </a>
-                    <a href="{{ route('register') }}" class="inline-flex items-center justify-center rounded-full border border-white/70 px-5 py-3 font-semibold text-white transition hover:bg-white/10">
-                        Request a demo
                     </a>
                 </div>
             </div>
@@ -100,7 +97,7 @@
                 Customize the design, colors, and layout to reflect your brand, your theme, and the atmosphere of the moment. Flashwall adapts effortlessly to both intimate and large-scale gatherings.
             </p>
             <p class="mt-6 text-lg text-gray-700 dark:text-gray-300">
-                <a href="{{ route('register') }}" class="font-semibold text-indigo-600 dark:text-indigo-400">Create an account</a> and prepare a wall that feels made for your event.
+                <a href="{{ route('register') }}" class="font-semibold text-indigo-600 dark:text-indigo-400">Create an account</a> and set up a custom wall for your event. 
             </p>
         </section>
     </div>
