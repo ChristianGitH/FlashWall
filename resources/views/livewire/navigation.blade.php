@@ -82,10 +82,9 @@ new class extends Component
 
         <x-menu-separator />
 
-        <x-menu class="flex flex-row my-0.5 mt-3 py-1.5 px-4 whitespace-nowrap flex flex-row items-center">
-            <x-theme-toggle class="btn btn-circle btn-ghost btn-sm" />
             @include('partials/language-switcher')
-        </x-menu>
+            <x-theme-toggle class="btn btn-circle btn-ghost btn-sm mx-3" />
+            
     </x-menu>
 
 
