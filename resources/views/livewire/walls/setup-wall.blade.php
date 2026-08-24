@@ -566,12 +566,12 @@ class extends Component {
 };
 
 ?>
-<div x-data="{ step: @entangle('step') }" >
-    <x-header title=" {{ __('Settings') }} : {{ $wall->name }}" use-h1>
-        <x-slot:actions>
-            <x-button title="{{ __('Preview changes') }}" class="btn-circle" icon="o-eye" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'preview']) }}" external />
-        </x-slot:actions>
-    </x-header>
+<div x-data="{ step: @entangle('step') }">
+    <div class="flex flex-row justify-between flex-nowrap">
+        <x-header title=" {{ __('Settings') }} : {{ $wall->name }}" use-h1>
+        </x-header>
+        <x-button title="{{ __('Preview changes') }}" class="btn-circle" icon="o-eye" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'preview']) }}" external />
+    </div>
 
 
     <x-badge x-show="step === 1" value="{{ __('Click on the icons to navigate') }}" 
@@ -607,8 +607,9 @@ class extends Component {
 ----------------->
 <div class="flex-1 flex justify-center mt-3 lg:mt-0 min-w-0">
     <template x-if="step === 1">
-        <div class="flex flex-col justify-center gap-4">
-            <x-card title="{{ __('General settings') }}" class="w-96" shadow separator>
+        <div class="flex justify-center items-start flex-col gap-6">
+            
+            <x-card title="{{ __('General settings') }}" class="min-w-48" shadow separator>
                 <x-form wire:submit="updateGeneralSettings">
                     <x-input label="{{ __('Name') }}" placeholder="{{ __('Name') }}" wire:model="name" inline />
                     <x-input label="{{ __('Description') }}" placeholder="{{ __('Description') }}" wire:model="description" inline />
@@ -623,7 +624,7 @@ class extends Component {
                 </x-form>
             </x-card>
             
-            <x-card title='Danger Zone' class="w-96 border border-error" shadow separator>
+            <x-card title='Danger Zone' class="w-96 border border-error" class="min-w-48" shadow separator>
                 <p>{{__('These actions are irreversible!')}}</p>
                 
                 <x-menu-separator />
@@ -763,7 +764,7 @@ class extends Component {
                 
             </x-card>
 
-            <x-card title="{{ __('Onboarding page style') }}" x-data="{ 'openAdvancedOnboardingStyle': false }" class="min-w-48 max-w-1/3" shadow separator>
+            <x-card title="{{ __('Onboarding page style') }}" x-data="{ 'openAdvancedOnboardingStyle': false }" class="min-w-48 max-w-full md:max-w-1/3" shadow separator>
                 @if(!$hasAdvancedSettings)
                 <x-alert title="{{ __('Advanced settings') }}" description="{{ __('These settings are not available with your current subscription.') }}" class="alert-info flex flex-wrap">
                     <x-slot:actions>
@@ -1170,7 +1171,7 @@ class extends Component {
 ----  STEP 4 : User / Submitter settings.
 ----------------->
     <template x-if="step === 4">
-        <x-card title="{{ __('Users') }}" x-data="{ 'openAdvancedUser': false }" class="min-w-96" shadow separator>
+        <x-card title="{{ __('Users') }}" x-data="{ 'openAdvancedUser': false }" class="min-w-48" shadow separator>
             <x-form wire:submit="updateSubmitterSettings">
             <p class="pb-0 label label-text font-semibold">{{__('Requested user information')}}</p>
                 <div x-data="{
@@ -1214,7 +1215,7 @@ class extends Component {
                     }
                 }" class="space-y-2">
 
-                    <div class="flex items-center gap-4 sm:flex-row flex-col">
+                    <div class="flex items-start gap-4 sm:flex-row flex-col">
                         <x-checkbox label="{{ __('Name') }}" wire:model="ask_name_submitter" />
                         <x-checkbox label="{{ __('Name required') }}" wire:model="require_name_submitter"
                             x-bind:disabled="!hasAdvancedSettings || !ask_name_submitter" />
@@ -1223,7 +1224,7 @@ class extends Component {
                         @endif
                     </div>
 
-                    <div class="flex items-center gap-4 sm:flex-row flex-col">
+                    <div class="flex items-start gap-4 sm:flex-row flex-col">
                         <x-checkbox label="{{ __('Email') }}" wire:model="ask_email_submitter" />
 
                         <x-checkbox label="{{ __('Email required') }}" wire:model="require_email_submitter"
