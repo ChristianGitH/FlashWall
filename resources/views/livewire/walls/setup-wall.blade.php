@@ -382,7 +382,7 @@ class extends Component {
                 $this->qr_code_size = 12;
 
             }
-            $this->caption_max_width = 90;
+            $this->caption_max_width = 70;
             $this->caption_background_opacity = 70;
             $this->caption_font_unit = 'px';
             $this->submitter_name_font_size = $this->caption_font_size; // Mirrors caption font size

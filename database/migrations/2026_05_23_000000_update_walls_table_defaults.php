@@ -19,7 +19,7 @@ return new class extends Migration
             $table->boolean('submitter_name_on_wall')->default(true)->change();
             $table->boolean('caption_on_wall')->default(true)->change();
             $table->string('background_color')->default('#f8f8f8')->change();
-            $table->integer('caption_max_width')->default(90)->change();
+            $table->integer('caption_max_width')->default(70)->change();
             $table->integer('qr_code_size')->default(17)->change();
             $table->integer('caption_font_size')->default(25)->change();
             $table->integer('margin_top')->default(5)->change();
