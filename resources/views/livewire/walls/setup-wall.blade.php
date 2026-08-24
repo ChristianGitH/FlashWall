@@ -89,8 +89,7 @@ class extends Component {
 
     public function mount(Wall $wall)
     {
-        $this->hasAdvancedSettings = true;
-        //$this->hasAdvancedSettings = auth()->user()->hasFeature('advanced_settings');
+        $this->hasAdvancedSettings = auth()->user()->hasFeature('advanced_settings');
         
         $this->wall = $wall;
         $this->name = $wall->name;
@@ -645,7 +644,7 @@ class extends Component {
         <x-form wire:submit="updateOnboardingSettings">
             <div class="flex justify-center items-start flex-col md:flex-row gap-6">
             
-            <x-card title="{{ __('Onboarding settings') }}" x-data="{ 'openAdvancedOnboarding': false }" class="min-w-48" shadow separator>          
+            <x-card title="{{ __('Onboarding settings') }}" class="min-w-48" shadow separator>          
             
                 <x-input label="{{ __('Welcome text') }}" hint="{{ __('It will also be the page title, even if the Welcome text is hidden') }}"
                 placeholder="{{ __('Welcome text') }}" wire:model="posting_page_text" inline />
@@ -672,99 +671,147 @@ class extends Component {
                 <x-menu-separator />
 
                 <!-- ADVANCED ONBOARDING SETTINGS -->
-                <x-button label="{{ __('Advanced settings') }}" @click="openAdvancedOnboarding = !openAdvancedOnboarding" class="btn-ghost mt-2"/>
-                <div x-show="openAdvancedOnboarding" x-transition class="space-y-4 mt-4">
-                    
-                    @if(!$hasAdvancedSettings)
-                    <x-alert title="{{ __('Advanced settings') }}" description="{{ __('These settings are not available with your current subscription.') }}" class="alert-info flex flex-wrap">
-                        <x-slot:actions>
-                            <x-button label="{{ __('Upgrade your plan !') }}" class="btn-sm" />
-                        </x-slot:actions>
-                    </x-alert>
-                    @endif
+                <x-advanced-settings>
 
-                    <div class="flex flex-col gap-y-3 -mt-2 mb-0">
-                        <span class="fieldset-legend text-sm font-medium">{{ __('End page content / Thank you message')}}</span>
-                        <x-input :disabled="!$hasAdvancedSettings" label="{{ __('Title') }}"
-                        placeholder="{{ __('Title') }}" wire:model="posting_page_end_title" inline />
-                        <x-input :disabled="!$hasAdvancedSettings" label="Message" 
-                        placeholder="Message" wire:model="posting_page_end_text" inline />
-                    </div>
-
-                    <!-- CUSTOM FONT SELECTOR INPUT -->
-                    <div x-data="{
-                        open: false,
-                        selectedFont: @entangle('posting_page_font'),
-                        fonts: @js($googleFonts),
-                        hasAdvancedSettings: @js($hasAdvancedSettings),
-                        selectFont(font) {
-                            this.selectedFont = font.name;
-                            this.open = false;
-                        },
-                        clearSelection() {
-                            this.selectedFont = '';
-                        }
-                    }" class="relative">
-
-                        <!-- Clickable fake input -->
-                        <label class="fieldset-legend text-sm font-medium">{{ __('Posting page font') }}</label>
-                        <div tabindex="0" @click="if(!hasAdvancedSettings) return; open = !open"
-                            :class="{
-                                'ring ring-primary ring-opacity-30': open,
-                                'cursor-not-allowed bg-[#f8f8f8] dark:bg-[#191e24]': !hasAdvancedSettings,
-                                'cursor-pointer': hasAdvancedSettings,
-                            }"
-                            class="flex items-center justify-between w-full input"
-                        >
-                            <span x-text="selectedFont || '{{ __('Select a font') }}'" 
-                                class="truncate"
-                                :class="selectedFont ? 'text-black dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'"  
-                                :style="`font-family: ${selectedFont}, sans-serif;`">
-                            </span>
-                            
-                            <div class="flex"> <!-- Clear selection button and arrow -->
-                                <template x-if="selectedFont">
-                                    <button
-                                        @click.stop="if(!hasAdvancedSettings) return; clearSelection()"
-                                        type="button"
-                                        class="text-gray-500 hover:text-gray-black focus:outline-none"
-                                        :class="!hasAdvancedSettings ? 'cursor-not-allowed' : 'cursor-pointer'"
-                                        title="{{ __('Clear selection') }}"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </template>
-
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
+                        <div class="flex flex-col gap-y-3 -mt-2 mb-2">
+                            <span class="fieldset-legend text-sm font-medium">{{ __('End page content / Thank you message')}}</span>
+                            <x-input :disabled="!$hasAdvancedSettings" label="{{ __('Title') }}"
+                            placeholder="{{ __('Title') }}" wire:model="posting_page_end_title" inline />
+                            <x-input :disabled="!$hasAdvancedSettings" label="Message" 
+                            placeholder="Message" wire:model="posting_page_end_text" inline />
                         </div>
 
-                        <!-- Dropdown menu -->
-                        <ul x-show="open" @click.outside="open = false"
-                            class="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto 
-                            bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
-                            rounded-lg shadow-lg">
-                            <template x-for="font in fonts" :key="font.custom_key">
-                                <li @click="selectFont(font)"
-                                    class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm"
-                                    :style="font.style">
-                                    <link rel="stylesheet" :href="font.google_url" />
-                                    <span x-text="font.name"></span>
-                                </li>
-                            </template>
-                        </ul>
-                    </div>
-                    <!-- END CUSTOM FONT SELECTOR INPUT -->
-                </div>
+                        <!-- CUSTOM FONT SELECTOR -->
+                        {{-- Load all Google Fonts once --}}
+                        @foreach ($googleFonts as $font)
+                            <link rel="stylesheet" href="{{ $font['google_url'] }}">
+                        @endforeach
+
+
+                        <!-- CUSTOM FONT SELECTOR INPUT -->
+                        <div
+                            x-data="{
+                                selectedFont: @entangle('posting_page_font'),
+                                hasAdvancedSettings: @js($hasAdvancedSettings),
+
+                                selectFont(font) {
+                                    this.selectedFont = font.name;
+                                    this.open = false;
+                                },
+
+                                clearSelection() {
+                                    this.selectedFont = '';
+                                }
+                            }"
+                            class="[&_.menu]:!z-[99999]"
+                            @click.capture="if (!hasAdvancedSettings) {
+                                $event.stopPropagation();
+                                $event.preventDefault();
+                            }"
+                        >
+                            <x-dropdown
+                                scroll
+                                max-height="max-h-42"
+                                class="[&.menu]:!z-[99999]">
+                                <x-slot:trigger>
+
+                                    <label class="fieldset-legend text-sm font-medium">
+                                        {{ __('Posting page font') }}
+                                    </label>
+
+                                    <div
+                                        tabindex="0"
+                                        @click="if (!hasAdvancedSettings) return;"
+                                        :class="{
+                                            'ring ring-primary ring-opacity-30': open,
+                                            'cursor-not-allowed bg-[#f8f8f8] dark:bg-[#191e24]': !hasAdvancedSettings,
+                                            'cursor-pointer': hasAdvancedSettings
+                                        }"
+                                        class="flex items-center justify-between w-full input"
+                                    >
+                                        <span
+                                            x-text="selectedFont || '{{ __('Select a font') }}'"
+                                            class="truncate"
+                                            :class="selectedFont
+                                                ? 'text-black dark:text-gray-400'
+                                                : 'text-gray-500 dark:text-gray-400'"
+                                            :style="selectedFont
+                                                ? `font-family: '${selectedFont}', sans-serif;`
+                                                : ''"
+                                        ></span>
+
+                                        <div class="flex items-center gap-1">
+
+                                            <template x-if="selectedFont">
+                                                <button
+                                                    @click.stop="if (!hasAdvancedSettings) return; clearSelection()"
+                                                    type="button"
+                                                    class="text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 focus:outline-none"
+                                                    :class="!hasAdvancedSettings
+                                                        ? 'cursor-not-allowed'
+                                                        : 'cursor-pointer'"
+                                                    title="{{ __('Clear selection') }}"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        class="h-5 w-5"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            d="M6 18L18 6M6 6l12 12"
+                                                        />
+                                                    </svg>
+                                                </button>
+                                            </template>
+
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                class="h-5 w-5 text-gray-500 transition-transform duration-150"
+                                                :class="{ 'rotate-180': open }"
+                                                viewBox="0 0 20 20"
+                                                fill="currentColor"
+                                            >
+                                                <path
+                                                    fill-rule="evenodd"
+                                                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                                                    clip-rule="evenodd"
+                                                />
+                                            </svg>
+
+                                        </div>
+                                    </div>
+
+                                </x-slot:trigger>
+
+
+                                {{-- Font options --}}
+                                @foreach ($googleFonts as $font)
+                                    <li
+                                        wire:key="font-{{ $font['custom_key'] }}"
+                                        @click="selectFont(@js($font))"
+                                        style="{{ $font['style'] }}"
+                                        class="px-3 py-2 hover:bg-base-200"
+                                        :class="!hasAdvancedSettings
+                                                        ? 'cursor-not-allowed'
+                                                        : 'cursor-pointer'"
+                                    >
+                                        {{ $font['name'] }}
+                                    </li>
+                                @endforeach
+
+                            </x-dropdown>
+                        </div>
                 
+                </x-advanced-settings>
+
             </x-card>
 
-            <x-card title="{{ __('Onboarding page style') }}" x-data="{ 'openAdvancedOnboardingStyle': false }" class="min-w-48 max-w-full md:max-w-1/3" shadow separator>
+            <x-card title="{{ __('Onboarding page style') }}" class="min-w-48 max-w-full md:max-w-1/3" shadow separator>
                 @if(!$hasAdvancedSettings)
                 <x-alert title="{{ __('Advanced settings') }}" description="{{ __('These settings are not available with your current subscription.') }}" class="alert-info flex flex-wrap">
                     <x-slot:actions>
@@ -773,121 +820,119 @@ class extends Component {
                 </x-alert>
 
                 <x-alert title="{{ __('If these settings are locked, they will inherit the background and colour choices you will make for the slideshow.') }}"
-                class="alert-warning alert-soft mt-2" icon="o-information-circle" />
+                class="alert-warning alert-soft mt-2 mb-2" icon="o-information-circle" />
                 @endif
 
 
             <!-- ADVANCED ONBOARDING SETTINGS -->
-            <x-button label="{{ __('Advanced settings') }}" @click="openAdvancedOnboardingStyle = !openAdvancedOnboardingStyle" class="btn-ghost mt-2"/>
+                <x-advanced-settings>
+                    <div class="max-w-full overflow-hidden" x-data="{ posting_page_choice: @entangle('posting_page_background_choice') }">
+                        <div class="flex justify-center text-center mb-1">
+                            <x-group
+                            label="{{ __('Use as background') }} :"
+                            :options="$background_choice_options"
+                            wire:model="posting_page_background_choice"
+                            :disabled="!$hasAdvancedSettings"
+                            option-value="custom_key"
+                            class="[&:checked]:!btn-primary btn-sm" />
+                        </div>    
+                        <div x-show="posting_page_choice == 0"  x-data="{ posting_page_background_color: @entangle('posting_page_background_color') }"class="flex flex-row items-end justify-between">
+                            <x-input :disabled="!$hasAdvancedSettings" class="w-full" label="{!! __('Page background color')!!}" x-model="posting_page_background_color">
+                                <x-slot:prefix>Hex</x-slot:prefix>
+                            </x-input>
 
-            <div x-show="openAdvancedOnboardingStyle" x-transition class="space-y-4 mt-4">
-                <div class="max-w-full overflow-hidden" x-data="{ posting_page_choice: @entangle('posting_page_background_choice') }">
-                    <div class="flex justify-center text-center mb-1">
-                        <x-group
-                        label="{{ __('Use as background') }} :"
-                        :options="$background_choice_options"
-                        wire:model="posting_page_background_choice"
-                        :disabled="!$hasAdvancedSettings"
-                        option-value="custom_key"
-                        class="[&:checked]:!btn-primary btn-sm" />
-                    </div>    
-                    <div x-show="posting_page_choice == 0"  x-data="{ posting_page_background_color: @entangle('posting_page_background_color') }"class="flex flex-row items-end justify-between">
-                        <x-input :disabled="!$hasAdvancedSettings" class="w-full" label="{!! __('Page background color')!!}" x-model="posting_page_background_color">
+                            <input
+                                type="color"
+                                x-model="posting_page_background_color"
+                                wire:model="posting_page_background_color"
+                                @disabled(!$hasAdvancedSettings)
+                                class="h-8 w-12 mb-[0.46rem] disabled:cursor-not-allowed disabled:opacity-50"
+                                title="{{ __('Choose a color') }}"
+                            >
+                        </div>
+                        @error('posting_page_background_color')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    
+                        <div x-show="posting_page_choice == 1"  class="max-w-full text-center overflow-hidden">
+                            <x-file :disabled="!$hasAdvancedSettings" wire:model="new_posting_page_background_image" style="max-width: 100% !important" label="{!! __('Page background image') !!}" 
+                                hint="{{ __('Only image formats allowed') }}"
+                                accept="image/png, image/jpeg"
+                            />
+                            <x-loading wire:loading wire:target="new_posting_page_background_image" class="loading-ring" indeterminate />
+                            @if($new_posting_page_background_image)
+                                <img src="{{ $new_posting_page_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                            @elseif($posting_page_background_image)
+                                <img src="{{ asset('storage/' . $wall->posting_page_background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                            @endif
+                        </div>
+                    </div>
+
+                    <x-menu-separator />
+
+                    <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }" class="flex flex-row gap-x-3 items-end justify-between">
+                        <x-input :disabled="!$hasAdvancedSettings" class="whitespace-nowrap overflow-visible" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" >
                             <x-slot:prefix>Hex</x-slot:prefix>
+                            <x-slot:suffix>
+                                <button
+                                    type="button"
+                                    class="text-gray-500 hover:text-gray-black focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    title="{{ __('Clear color') }}"
+                                    @disabled(!$hasAdvancedSettings)
+                                    wire:click="$set('posting_page_buttons_color', null)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </x-slot:suffix>
+                        </x-input>
+                        
+                        <input
+                            type="color"
+                            @disabled(!$hasAdvancedSettings)
+                            x-bind:value="posting_page_buttons_color || '#cccccc'"
+                            @input="posting_page_buttons_color = $event.target.value"
+                            wire:model="posting_page_buttons_color"
+                            class="h-8 w-12 mb-[0.46rem] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                            title="{{ __('Choose a color') }}"
+                        >
+                    </div>
+                    @error('posting_page_buttons_color')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
+                
+                    <div x-data="{ posting_page_buttons_font_color: @entangle('posting_page_buttons_font_color') }" class="flex flex-row gap-x-3 items-end justify-between">
+                        <x-input :disabled="!$hasAdvancedSettings" class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" placeholder="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" >
+                            <x-slot:prefix>Hex</x-slot:prefix>
+                            <x-slot:suffix>
+                                <button
+                                    type="button"
+                                    class="text-gray-500 hover:text-gray-black focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                    title="{{ __('Clear color') }}"
+                                    @disabled(!$hasAdvancedSettings)
+                                    wire:click="$set('posting_page_buttons_font_color', null)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </x-slot:suffix>
                         </x-input>
 
                         <input
                             type="color"
-                            x-model="posting_page_background_color"
-                            wire:model="posting_page_background_color"
                             @disabled(!$hasAdvancedSettings)
-                            class="h-8 w-12 mb-[0.46rem] disabled:cursor-not-allowed disabled:opacity-50"
+                            x-bind:value="posting_page_buttons_font_color || '#cccccc'"
+                            @input="posting_page_buttons_font_color = $event.target.value"
+                            wire:model="posting_page_buttons_font_color"
+                            class="h-8 w-12 mb-[0.46rem] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                             title="{{ __('Choose a color') }}"
                         >
                     </div>
-                    @error('posting_page_background_color')
+                    @error('posting_page_buttons_font_color')
                         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                     @enderror
-                
-                    <div x-show="posting_page_choice == 1"  class="max-w-full text-center overflow-hidden">
-                        <x-file :disabled="!$hasAdvancedSettings" wire:model="new_posting_page_background_image" style="max-width: 100% !important" label="{!! __('Page background image') !!}" 
-                            hint="{{ __('Only image formats allowed') }}"
-                            accept="image/png, image/jpeg"
-                        />
-                        <x-loading wire:loading wire:target="new_posting_page_background_image" class="loading-ring" indeterminate />
-                        @if($new_posting_page_background_image)
-                            <img src="{{ $new_posting_page_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
-                        @elseif($posting_page_background_image)
-                            <img src="{{ asset('storage/' . $wall->posting_page_background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
-                        @endif
-                    </div>
-                </div>
 
-                <x-menu-separator />
-
-                <div x-data="{ posting_page_buttons_color: @entangle('posting_page_buttons_color') }" class="flex flex-row gap-x-3 items-end justify-between">
-                    <x-input :disabled="!$hasAdvancedSettings" class="whitespace-nowrap overflow-visible" label="{{ __('Buttons color') }}" placeholder="{{ __('Buttons color') }}" x-model="posting_page_buttons_color" >
-                        <x-slot:prefix>Hex</x-slot:prefix>
-                        <x-slot:suffix>
-                            <button
-                                type="button"
-                                class="text-gray-500 hover:text-gray-black focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                title="{{ __('Clear color') }}"
-                                @disabled(!$hasAdvancedSettings)
-                                wire:click="$set('posting_page_buttons_color', null)">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                        </x-slot:suffix>
-                    </x-input>
-                    
-                    <input
-                        type="color"
-                        @disabled(!$hasAdvancedSettings)
-                        x-bind:value="posting_page_buttons_color || '#cccccc'"
-                        @input="posting_page_buttons_color = $event.target.value"
-                        wire:model="posting_page_buttons_color"
-                        class="h-8 w-12 mb-[0.46rem] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                        title="{{ __('Choose a color') }}"
-                    >
-                </div>
-                @error('posting_page_buttons_color')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
-                
-                <div x-data="{ posting_page_buttons_font_color: @entangle('posting_page_buttons_font_color') }" class="flex flex-row gap-x-3 items-end justify-between">
-                    <x-input :disabled="!$hasAdvancedSettings" class="whitespace-nowrap overflow-visible" label="{{ __('Buttons font color') }}" placeholder="{{ __('Buttons font color') }}" x-model="posting_page_buttons_font_color" >
-                        <x-slot:prefix>Hex</x-slot:prefix>
-                        <x-slot:suffix>
-                            <button
-                                type="button"
-                                class="text-gray-500 hover:text-gray-black focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                title="{{ __('Clear color') }}"
-                                @disabled(!$hasAdvancedSettings)
-                                wire:click="$set('posting_page_buttons_font_color', null)">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                        </x-slot:suffix>
-                    </x-input>
-
-                    <input
-                        type="color"
-                        @disabled(!$hasAdvancedSettings)
-                        x-bind:value="posting_page_buttons_font_color || '#cccccc'"
-                        @input="posting_page_buttons_font_color = $event.target.value"
-                        wire:model="posting_page_buttons_font_color"
-                        class="h-8 w-12 mb-[0.46rem] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                        title="{{ __('Choose a color') }}"
-                    >
-                </div>
-                @error('posting_page_buttons_font_color')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                @enderror
-
-            </div>
+                </x-advanced-settings>
 
             </x-card>
             </div>
@@ -906,7 +951,7 @@ class extends Component {
     <template x-if="step === 3">
         <x-form wire:submit="updateSlideshowSettings">
             <div x-data="{ 'captionFontUnit': @entangle('caption_font_unit') }" class="flex w-full justify-center items-start gap-6 flex-wrap">
-            <x-card title="{{ __('Slideshow settings') }}" x-data="{ 'openAdvancedLayout': false }" shadow separator>
+            <x-card title="{{ __('Slideshow settings') }}" shadow separator>
                 <p class="fieldset-legend text-sm font-medium -mt-4 pb-4">{{ __('Images display') }}</p>
                 <x-input type="number" label="{{ __('Time per image') }}" placeholder="{{ __('Time per image') }}" wire:model="duration" inline >
                     <x-slot:prefix>{{ __('Seconds')}}</x-slot:prefix>
@@ -954,18 +999,10 @@ class extends Component {
                 </div>
 
 
-                <!-- ADVANCED LAYOUT SETTINGS -->
-                <x-button label="{{ __('Advanced settings') }}" @click="openAdvancedLayout = !openAdvancedLayout" class="btn-ghost mt-2"/>
-                <div x-show="openAdvancedLayout" x-transition class="space-y-4 mt-4">
                     <x-menu-separator />
-
-                    @if(!$hasAdvancedSettings).
-                    <x-alert title="{{ __('Advanced settings') }}" description="{{ __('These settings are not available with your current subscription.') }}" icon="o-lock-closed" class="alert-info flex flex-wrap">
-                        <x-slot:actions>
-                            <x-button label="{{ __('Upgrade your plan !') }}" />
-                        </x-slot:actions>
-                    </x-alert>
-                    @endif
+                
+                <!-- ADVANCED LAYOUT SETTINGS -->
+                <x-advanced-settings>
 
                     <div class="flex items-center justify-center gap-4 sm:flex-row flex-col">
                         <x-input :disabled="!$hasAdvancedSettings" class="w-20" type="number" label="{{ __('Top margin') }}" placeholder="{{ __('Top margin') }}" wire:model="margin_top" inline >
@@ -983,7 +1020,7 @@ class extends Component {
                             <x-slot:prefix>%</x-slot:prefix>
                         </x-input>
                     </div>
-                </div>
+                </x-advanced-settings>
             </x-card>
 
             <x-card title="{{ __('Slideshow page style') }}" shadow separator>
@@ -1032,7 +1069,7 @@ class extends Component {
 
 
 
-            <x-card title="{{ __('Captions') }}" x-data="{ 'openAdvancedCaption': false }" shadow separator>
+            <x-card title="{{ __('Captions') }}" shadow separator>
 
                 <x-toggle label="{{__('Display caption?')}}" wire:model="caption_on_wall" right inline/>
 
@@ -1081,81 +1118,72 @@ class extends Component {
                 @enderror
 
 
+                <x-menu-separator />
+                
                 <!-- ADVANCED CAPTION SETTINGS -->
-                <x-button label="{{ __('Advanced settings') }}" @click="openAdvancedCaption = !openAdvancedCaption" class="btn-ghost mt-2"/>
-                <div x-show="openAdvancedCaption" x-transition class="space-y-4 mt-4">
-                    <x-menu-separator />
-
-                    @if(!$hasAdvancedSettings)
-                    <x-alert title="{{ __('Advanced settings') }}" description="{{ __('These settings are not available with your current subscription.') }}" class="alert-info flex flex-wrap">
-                        <x-slot:actions>
-                            <x-button label="{{ __('Upgrade your plan !') }}" />
-                        </x-slot:actions>
-                    </x-alert>
-                    @endif
-                    
-                    <x-input type="number" label="{{ __('Captions box max width') }}" :disabled="!$hasAdvancedSettings" placeholder="{{ __('Captions box max width') }}" wire:model="caption_max_width" inline >
-                        <x-slot:prefix>%</x-slot:prefix>
-                    </x-input>
-
-                    <div x-data="{ opacity: @entangle('caption_background_opacity') }">
-                        <x-range
-                        wire:model.live.debounce="caption_background_opacity"
-                        min="0"
-                        max="100"
-                        step="10"
-                        :disabled="!$hasAdvancedSettings"
-                        label="{!! __('Captions box opacity level') !!}"
-                        class="range-primary range-xs" />
-                        <div class="text-center">
-                            <p>{{ __('Selected') }} : <span x-text="opacity + '%'"></span></p>
-                        </div>
-                    </div>
-
-                    <x-menu-separator />
-                    
-                    @php
-                        $font_unit_options = [
-                            ['custom_key' => 'px' , 'name' => 'Pixels'],
-                            ['custom_key' => '%' , 'name' => '%'],
-                        ];
-                    @endphp
-                    <div class="flex justify-center text-center">
-                        <x-group
-                            label="{{__('Font unit') }} :"
-                            :options="$font_unit_options"
-                            :disabled="!$hasAdvancedSettings"
-                            wire:model="caption_font_unit"
-                            option-value="custom_key"
-                            class="[&:checked]:!btn-primary btn-sm normal-case pt-0" />
-                    </div>
-
-                    <p class="fieldset-legend text-sm font-medium mb-1">{{ __('Names font') }}</p>
-                    <x-input type="number" label="{{ __('Names font size') }}" :disabled="!$hasAdvancedSettings" placeholder="{{ __('Names font size') }}" wire:model="submitter_name_font_size" inline >
-                        <x-slot:prefix>
-                            <span x-text="captionFontUnit === '%' ? '%' : 'Pixels'"></span>
-                        </x-slot:prefix>
-                    </x-input>
-
-                    <div x-data="{ submitter_name_font_color: @entangle('submitter_name_font_color') }" class="-mt-2 flex flex-row items-end justify-between">
-                        <x-input class="w-full" label="{{ __('Names font color')}}" :disabled="!$hasAdvancedSettings" placeholder="{{ __('Names font color')}}" x-model="submitter_name_font_color">
-                            <x-slot:prefix>Hex</x-slot:prefix>
+                    <x-advanced-settings> 
+                        <x-input type="number" label="{{ __('Captions box max width') }}" :disabled="!$hasAdvancedSettings" placeholder="{{ __('Captions box max width') }}" wire:model="caption_max_width" inline >
+                            <x-slot:prefix>%</x-slot:prefix>
                         </x-input>
 
-                        <input
-                            type="color"
-                            x-model="submitter_name_font_color"
-                            wire:model="submitter_name_font_color"
-                            @disabled(!$hasAdvancedSettings)
-                            class="h-8 w-12 mb-[0.46rem] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                            title="{{ __('Choose a color') }}"
-                        >
-                    </div>
-                    @error('submitter_name_font_color')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </x-card>
+                        <div x-data="{ opacity: @entangle('caption_background_opacity') }">
+                            <x-range
+                            wire:model.live.debounce="caption_background_opacity"
+                            min="0"
+                            max="100"
+                            step="10"
+                            :disabled="!$hasAdvancedSettings"
+                            label="{!! __('Captions box opacity level') !!}"
+                            class="range-primary range-xs" />
+                            <div class="text-center">
+                                <p>{{ __('Selected') }} : <span x-text="opacity + '%'"></span></p>
+                            </div>
+                        </div>
+
+                        <x-menu-separator />
+                        
+                        @php
+                            $font_unit_options = [
+                                ['custom_key' => 'px' , 'name' => 'Pixels'],
+                                ['custom_key' => '%' , 'name' => '%'],
+                            ];
+                        @endphp
+                        <div class="flex justify-center text-center">
+                            <x-group
+                                label="{{__('Font unit') }} :"
+                                :options="$font_unit_options"
+                                :disabled="!$hasAdvancedSettings"
+                                wire:model="caption_font_unit"
+                                option-value="custom_key"
+                                class="[&:checked]:!btn-primary btn-sm normal-case pt-0" />
+                        </div>
+
+                        <p class="fieldset-legend text-sm font-medium mb-1">{{ __('Names font') }}</p>
+                        <x-input type="number" label="{{ __('Names font size') }}" :disabled="!$hasAdvancedSettings" placeholder="{{ __('Names font size') }}" wire:model="submitter_name_font_size" inline >
+                            <x-slot:prefix>
+                                <span x-text="captionFontUnit === '%' ? '%' : 'Pixels'"></span>
+                            </x-slot:prefix>
+                        </x-input>
+
+                        <div x-data="{ submitter_name_font_color: @entangle('submitter_name_font_color') }" class="-mt-2 flex flex-row items-end justify-between">
+                            <x-input class="w-full" label="{{ __('Names font color')}}" :disabled="!$hasAdvancedSettings" placeholder="{{ __('Names font color')}}" x-model="submitter_name_font_color">
+                                <x-slot:prefix>Hex</x-slot:prefix>
+                            </x-input>
+
+                            <input
+                                type="color"
+                                x-model="submitter_name_font_color"
+                                wire:model="submitter_name_font_color"
+                                @disabled(!$hasAdvancedSettings)
+                                class="h-8 w-12 mb-[0.46rem] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                title="{{ __('Choose a color') }}"
+                            >
+                        </div>
+                        @error('submitter_name_font_color')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </x-advanced-settings> 
+                </x-card>
             </div>
             
             <x-slot:actions style="justify-content: space-between !important;" class="flex-wrap">
@@ -1171,7 +1199,7 @@ class extends Component {
 ----  STEP 4 : User / Submitter settings.
 ----------------->
     <template x-if="step === 4">
-        <x-card title="{{ __('Users') }}" x-data="{ 'openAdvancedUser': false }" class="min-w-48" shadow separator>
+        <x-card title="{{ __('Users') }}" class="min-w-48" shadow separator>
             <x-form wire:submit="updateSubmitterSettings">
             <p class="pb-0 label label-text font-semibold">{{__('Requested user information')}}</p>
                 <div x-data="{
@@ -1238,15 +1266,8 @@ class extends Component {
                 <x-menu-separator />
                 <x-input type="number" label="{!! __('Max images per user')!!}" placeholder="{!! __('Max images per user')!!}" wire:model="max_images_submitter" max="99" inline required />
 
-                <div x-show="openAdvancedUser" x-transition class="space-y-4 mt-4">
-                    @if(!$hasAdvancedSettings)
-                    <x-alert title="{{ __('Advanced settings') }}" description="{{ __('These settings are not available with your current subscription.') }}" icon="o-lock-closed" class="alert-info flex flex-wrap">
-                        <x-slot:actions>
-                            <x-button label="{{ __('Upgrade your plan !') }}" />
-                        </x-slot:actions>
-                    </x-alert>
-                    @endif
-
+                <!-- ADVANCED USER SETTINGS -->
+                <x-advanced-settings> 
                     <x-toggle label="{{__('Display user name?')}}" wire:model="submitter_name_on_wall" :disabled="!$hasAdvancedSettings" right inline />
                     <x-toggle label="{{__('Enable avatar selection and display?')}}" wire:model="require_avatar_submitter" :disabled="!$hasAdvancedSettings" right inline/>
                     
@@ -1286,11 +1307,10 @@ class extends Component {
                             :disabled="!$hasAdvancedSettings"
                             class="[&:checked]:!btn-primary btn-sm normal-case" />
                     </div>
-                </div>
+                </x-advanced-settings> 
 
                 <x-slot:actions style="justify-content: space-between !important;" class="flex-wrap">
                     <x-button label="{{ __('Go back') }}" @click="step = Math.max(1, step - 1)" type="button" icon="o-arrow-left" class="btn" spinner="updateSubmitterSettings"/>
-                    <x-button label="{{ __('Advanced settings') }}" @click="openAdvancedUser = !openAdvancedUser" class="btn-ghost"/>
                     <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateSubmitterSettings" />
                 </x-slot:actions>
             </x-form>
@@ -1392,7 +1412,7 @@ class extends Component {
             </x-card>
 
 
-            <x-card title="{{ __('Sharing settings') }}" x-data="{ 'openAdvancedSharing': false }" shadow separator>
+            <x-card title="{{ __('Sharing settings') }}" shadow separator>
             <x-form wire:submit="updateShareOptions">   
                 @if(!$hasAdvancedSettings)
                     <x-input label="{{ __('Slug') }}" placeholder="{{ __('Slug') }}" :disabled="!$hasAdvancedSettings" 
@@ -1492,16 +1512,9 @@ class extends Component {
 
 
                 <!-- ADVANCED SHARING / QR CODE SETTINGS -->
-                <div x-show="openAdvancedSharing" x-transition class="space-y-4 mt-4">
-                    @if(!$hasAdvancedSettings)
-                    <x-alert title="{{ __('Advanced settings') }}" description="{{ __('These settings are not available with your current subscription.') }}" icon="o-lock-closed" class="alert-info flex flex-wrap">
-                        <x-slot:actions>
-                            <x-button label="{{ __('Upgrade your plan !') }}" />
-                        </x-slot:actions>
-                    </x-alert>
-                    @endif
+                <x-advanced-settings>
 
-                    <div x-data="{ qr_code_color: @entangle('qr_code_color') }" class="-mt-2 flex flex-row items-end justify-between">
+                    <div x-data="{ qr_code_color: @entangle('qr_code_color') }" class="mt-2 mb-4 flex flex-row items-end justify-between">
                         <x-input class="w-full" label="{{ __('QR Code color')}}" :disabled="!$hasAdvancedSettings" placeholder="{{ __('QR Code color')}}" x-model="qr_code_color">
                             <x-slot:prefix>Hex</x-slot:prefix>
                         </x-input>
@@ -1520,17 +1533,16 @@ class extends Component {
                     @enderror
 
 
-                    <x-input type="number" label="{{ __('QR code size') }}" :disabled="!$hasAdvancedSettings" placeholder="{{ __('Qr code size') }}" wire:model="qr_code_size" inline >
+                    <x-input type="number" label="{{ __('QR code size') }}" :disabled="!$hasAdvancedSettings" placeholder="{{ __('Qr code size') }}" wire:model="qr_code_size" inline>
                         <x-slot:prefix>
                             <span>%</span>
                         </x-slot:prefix>
                     </x-input>
 
-                </div>
+                </x-advanced-settings>
 
                 <x-slot:actions style="justify-content: space-between !important;" class="flex-wrap">
                     <x-button label="{{ __('Go back') }}" @click="step = Math.max(1, step - 1)" type="button" icon="o-arrow-left" class="btn" spinner="updateShareOptions"/>
-                    <x-button label="{{ __('Advanced settings') }}" @click="openAdvancedSharing = !openAdvancedSharing" class="btn-ghost"/>
                     <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateShareOptions" />
                 </x-slot:actions>
             </x-form>
