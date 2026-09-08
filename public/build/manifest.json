@@ -1,8 +1,16 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-GVy0fDi1.css",
+    "file": "assets/app-5wQFEqjz.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
     "src": "resources/css/app.css",
-    "isEntry": true
+    "isEntry": true,
+    "assets": [
+      "assets/Figtree-VariableFont_wght-CQcOzkRQ.woff2",
+      "assets/Lato-Regular-DvzxJk-o.woff2"
+    ]
   },
   "resources/fonts/Figtree-VariableFont_wght.woff2": {
     "file": "assets/Figtree-VariableFont_wght-CQcOzkRQ.woff2",
@@ -12,16 +20,8 @@
     "file": "assets/Lato-Regular-DvzxJk-o.woff2",
     "src": "resources/fonts/Lato-Regular.woff2"
   },
-  "resources/fonts/NotoColorEmoji-Regular.ttf": {
-    "file": "assets/NotoColorEmoji-Regular-YuApCPkg.ttf",
-    "src": "resources/fonts/NotoColorEmoji-Regular.ttf"
-  },
-  "resources/fonts/NotoColorEmoji-Regular.woff2": {
-    "file": "assets/NotoColorEmoji-Regular-B7znpBph.woff2",
-    "src": "resources/fonts/NotoColorEmoji-Regular.woff2"
-  },
   "resources/js/app.js": {
-    "file": "assets/app-Bj43h_rG.js",
+    "file": "assets/app-DIXZbemX.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
