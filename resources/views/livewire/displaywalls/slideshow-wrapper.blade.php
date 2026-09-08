@@ -131,6 +131,7 @@ public function computeWallSettings(): array
         'qr_code_size' => $qr_code_size,
         'qr_code_svg' => $qr_code_svg,
         'qr_code_text_rotate_class' => $qr_code_text_rotate_class,
+        'qr_code_text_color' => $hex,
     ];
 }
 
@@ -203,10 +204,12 @@ public function computeWallSettings(): array
 </style>
 
         <div style="{{ $displaySettings['qr_code_size'] }}" class="absolute {{ $displaySettings['qr_code_position_class'] }} z-45 aspect-square">
-            <p class="pb-2 text-2xl font-bold text-white {{ $displaySettings['qr_code_text_rotate_class'] }} ">
-                {{ __('Scan to post your photo') }}&nbsp;⤵
-            </p>
-            <div class="qr_code_wrapper p-2 rounded-md bg-white shadow-lg">
+            <div class="relative inline-block {{ $displaySettings['qr_code_text_rotate_class'] }}">
+                <div style="color: {{ $displaySettings['qr_code_text_color'] }};" class="font-bold mb-3 inline-block rounded-[20px] border border-white/70 bg-white/95 px-4 py-2 text-xl uppercase tracking-wide shadow-[0_6px_0_0_rgba(15,23,42,0.15)]">
+                    <span class="block leading-tight">{{ __('Scan to post your photo') }}&nbsp;⤵</span>
+                </div>
+            </div>
+            <div class="qr_code_wrapper mt-2 rounded-xl border border-white/70 bg-white p-2 shadow-[0_6px_0_0_rgba(15,23,42,0.15)]">
                 {!! $displaySettings['qr_code_svg'] !!}
             </div>
         </div>
