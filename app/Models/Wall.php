@@ -59,6 +59,7 @@ class Wall extends Model
         'posting_page_text_visibility',
         'posting_page_end_title',
         'posting_page_end_text',
+        'posting_page_font',
         'posting_page_buttons_color',
         'posting_page_buttons_font_color',
         'posting_page_logo',

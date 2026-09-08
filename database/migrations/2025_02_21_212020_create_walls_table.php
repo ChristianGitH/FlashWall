@@ -31,7 +31,7 @@ return new class extends Migration
             $table->integer('background_choice')->default(0); // 0=color, 1=image
             $table->string('background_color')->default('#f7a6d5');
             $table->string('background_image')->default('default_background.jpg');
-            $table->integer('caption_max_width')->default(50);
+            $table->integer('caption_max_width')->default(70);
             $table->integer('caption_position')->default(1); // 0=bellow image, 1=on image
             $table->string('caption_font')->nullable();
             $table->integer('caption_font_size')->default(16);
