@@ -1,4 +1,4 @@
-<x-layouts.app title="Événements">
+<x-layouts.app :title="$pageMetadata['title'] ?? 'Événements'">
     <x-seo-head-tags :locale="$locale" :pageKey="$pageKey" />
 
     <div class="mx-auto mt-2 max-w-6xl">

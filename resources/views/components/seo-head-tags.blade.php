@@ -3,6 +3,7 @@
 @php
     $locale = $locale ?? app()->getLocale();
     $pages = config('pages.pages', []);
+    $metadata = config("pages.metadata.{$locale}.{$pageKey}", []);
     
     // Get the current page translations
     $pageTranslations = $pages[$pageKey] ?? null;
@@ -23,6 +24,10 @@
 @endphp
 
 @push('head')
+    @if (!empty($metadata['description']))
+        <meta name="description" content="{{ $metadata['description'] }}" />
+    @endif
+
     @if ($pageTranslations)
         <!-- Canonical URL for SEO -->
         <link rel="canonical" href="{{ $canonicalUrl }}" />

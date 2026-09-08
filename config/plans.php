@@ -29,8 +29,8 @@ return [
             'name' => 'plans.plans.1.name',
             'stripe_price_id' => env('STRIPE_STANDARD_PRICE_ID', 'price_standard'), // Set in .env
             'features' => [
-                'walls' => 2,
-                'images_per_wall' => 1000,
+                'walls' => 1,
+                'images_per_wall' => 500,
                 'advanced_settings' => false,
                 'advanced_moderation' => true,
                 'live_usage_duration' => 48,
@@ -42,16 +42,30 @@ return [
         // Business Plan
         2 => [
             'name' => 'plans.plans.2.name',
-            'stripe_price_id' => env('STRIPE_BUSINESS_PRICE_ID', 'price_business'),
+            'stripe_price_id' => env('STRIPE_PREMIUM_PRICE_ID', 'price_premium'),
             'features' => [
-                'walls' => 5,
-                'images_per_wall' => 5000,
+                'walls' => 2,
+                'images_per_wall' => 1500,
                 'advanced_settings' => true,
                 'advanced_moderation' => true,
                 'live_usage_duration' => 96,
             ],
             'description' => 'plans.plans.2.description',
             'price' => 'plans.plans.2.price',
+        ],
+        // Pro Plan
+        3 => [
+            'name' => 'plans.plans.3.name',
+            'stripe_price_id' => env('STRIPE_PRO_PRICE_ID', 'price_pro'),
+            'features' => [
+                'walls' => '∞',
+                'images_per_wall' => '∞',
+                'advanced_settings' => true,
+                'advanced_moderation' => true,
+                'live_usage_duration' => '∞',
+            ],
+            'description' => 'plans.plans.3.description',
+            'price' => 'plans.plans.3.price',
         ],
     ],
 

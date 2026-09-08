@@ -1,4 +1,4 @@
-<x-layouts.app :title="'Legal Notice'">
+<x-layouts.app :title="$pageMetadata['title'] ?? 'Legal Notice'">
 <x-seo-head-tags :locale="$locale" :pageKey="$pageKey" />
 
 <div class="container mx-auto px-4 max-w-3xl">

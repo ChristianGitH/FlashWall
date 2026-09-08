@@ -90,6 +90,7 @@ class StaticPageController extends Controller
         return view("static.{$locale}.{$pageKey}", [
             'locale' => $locale,
             'pageKey' => $pageKey,
+            'pageMetadata' => config("pages.metadata.{$locale}.{$pageKey}", []),
         ]);
     }
 
