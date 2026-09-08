@@ -27,7 +27,7 @@ new class extends Component
 }
 
 ?>
-<x-layouts.app :title="'Home'">
+<x-layouts.app :title="$pageMetadata['title'] ?? 'Home'">
 <x-seo-head-tags :locale="$locale" :pageKey="$pageKey" />
 <div class="mx-auto mt-2 max-w-6xl">
     <section class="">
@@ -35,7 +35,7 @@ new class extends Component
             <span class="font-bold bg-linear-to-r from-purple-500 to-pink-300 bg-clip-text text-transparent">
                 Flashwall
             </span>
-            <span class="font-bold"> - Bring the energy of the audience to your screens!</span>
+            <span class="font-bold"> - Bring the energy of your audience to your screens!</span>
         </h1>
 
         <p class="mt-1 text-xl text-gray-700 dark:text-gray-300">

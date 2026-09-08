@@ -9,13 +9,18 @@ return [
         ],
         1 => [
             'name' => 'Standard',
-            'description' => 'For growing events and projects',
+            'description' => 'For small events and projects',
             'price' => '95 €',
         ],
         2 => [
+            'name' => 'Premium',
+            'description' => 'For a high-end fully personalized experience',
+            'price' => '149 €',
+        ],
+        3 => [
             'name' => 'Pro',
             'description' => 'For teams and companies',
-            'price' => '149 €',
+            'price' => 'Get your personalized quote',
         ],
     ],
 ];

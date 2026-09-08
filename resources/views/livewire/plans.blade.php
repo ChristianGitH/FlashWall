@@ -49,7 +49,7 @@ class extends Component
         </div>
     </div>
 
-    <div class="grid gap-6 pt-2 lg:grid-cols-3">
+    <div class="grid gap-6 pt-2 lg:grid-cols-4">
         @foreach(config('plans.plans') as $level => $plan)
             <x-card
                 shadow
@@ -70,7 +70,7 @@ class extends Component
                         {{ __($plan['price']) }}
                     </p>
 
-                    @if(($level ?? '') != 0)
+                    @if(($level ?? '') != 0 && ($level ?? '') != 3 )
                         <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">{{ __('per event - No time limit on dashboard access') }}</p>
                     @endif
 

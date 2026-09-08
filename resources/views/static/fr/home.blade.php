@@ -27,7 +27,7 @@ new class extends Component
 }
 
 ?>
-<x-layouts.app :title="'Accueil'">
+<x-layouts.app :title="$pageMetadata['title'] ?? 'Accueil'">
 <x-seo-head-tags :locale="$locale" :pageKey="$pageKey" />
 <div class="mx-auto mt-2 max-w-6xl">
     <section class="">

@@ -9,13 +9,18 @@ return [
         ],
         1 => [
             'name' => 'Standard',
-            'description' => 'Pour les événements et projets en pleine expansion',
+            'description' => 'Pour les événements et projets de petite envergure',
             'price' => '95 €',
         ],
         2 => [
+            'name' => 'Premium',
+            'description' => 'Pour une expérience haut de gamme entièrement personnalisée',
+            'price' => '149 €',
+        ],
+        3 => [
             'name' => 'Pro',
             'description' => 'Pour les équipes et les entreprises',
-            'price' => '149 €',
+            'price' => 'Obtenez votre devis personnalisé',
         ],
     ],
 ];

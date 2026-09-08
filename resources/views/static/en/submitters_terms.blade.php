@@ -1,4 +1,4 @@
-<x-layouts.app :title="'Terms of use'">
+<x-layouts.app :title="$pageMetadata['title'] ?? 'Terms of use'">
 <x-seo-head-tags :locale="$locale" :pageKey="$pageKey" />
 
 <div class="container mx-auto p-5 px-2 lg:px-10 max-w-3xl">
