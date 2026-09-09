@@ -29,6 +29,7 @@
     $isPublicPage = in_array($routeName, [
         'static.page',
         'plans',
+        'contact',
         'login',
         'password.forgot',
         'password.reset',

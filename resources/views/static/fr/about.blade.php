@@ -39,7 +39,7 @@ new class extends Component
             <div class="relative max-w-4xl">
 
                 <p class="text-sm font-semibold uppercase tracking-[0.3em] text-teal-600 dark:text-teal-300">
-                    À propos de Flashwall
+                A propos de Flashwall
                 </p>
 
                 <h1 class="mt-4 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl dark:text-white">

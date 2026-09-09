@@ -204,15 +204,21 @@ class extends Component {
     }
 }; ?>
 
-<div class="min-h-screen">
-    <div class="max-w-3xl mx-auto">
+<div class="min-h-screen px-2 sm:px-4">
+    <div class="w-full max-w-3xl mx-auto min-w-0">
 
-    <x-tabs wire:model="selectedTab" label-class="text-3xl font-bold font-[Figtree]">
+    <x-tabs
+        wire:model="selectedTab"
+        label-div-class="flex w-full max-w-full mx-auto flex-col divide-y divide-base-content/10 sm:flex-row sm:divide-y-0 sm:overflow-x-auto sm:whitespace-nowrap scrollbar-hide"
+        label-class="w-full px-3 py-3 text-left text-lg sm:w-auto sm:py-2 sm:text-2xl lg:text-3xl font-bold font-[Figtree] cursor-pointer"
+        class="min-w-0 mx-auto"
+    >
+
         <!-- PROFILE TAB -->
-        <x-tab name="profile-tab" label="{{ __('Your profile') }}">
+        <x-tab name="profile-tab" label="{{ __('Your profile') }}" class="flex min-w-0 flex-col">
             {{-- HEADER + PROGRESS --}}
-            <div class="mb-6">
-                <div class="mt-3">
+            <div class="mb-6 w-full max-w-full min-w-0 mx-auto">
+                <div>
                     <div class="flex justify-between text-sm mb-1">
                         <span>{{ __('Profile completion') }}</span>
                         <span>{{ round($this->completion) }}%</span>
@@ -224,7 +230,7 @@ class extends Component {
 
             {{-- INCENTIVE MESSAGE --}}
             @if ($this->completion < 100)
-                <div class="alert alert-info mb-6">
+                <div class="alert alert-info mb-6 max-w-full min-w-0 mx-auto items-start text-sm sm:text-base">
                     {{ __('Complete your profile to improve your experience!') }}
                 </div>
             @endif
@@ -232,7 +238,7 @@ class extends Component {
             <x-form wire:submit="updateProfile">
 
                 {{-- PERSONAL INFORMATION --}}
-                <x-card class="mb-6" shadow separator>
+                <x-card class="mb-6 max-w-full mx-auto" shadow separator>
                     <x-slot:title>
                         <div class="flex items-center gap-2">
                             <x-icon name="o-user" class="w-5 h-5" />
@@ -240,17 +246,17 @@ class extends Component {
                         </div>
                     </x-slot:title>
 
-                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <x-input label="{{__('First name')}}" wire:model="first_name" placeholder="{{ __('First name') }}" icon="o-user" inline/>
                         <x-input label="{{__('Name')}}" wire:model="name" placeholder="{{ __('Name') }}" icon="o-user" inline/>
                     </div>
 
                     <x-input label="{{__('E-mail')}}" wire:model="email" placeholder="{{ __('E-mail') }}" icon="o-envelope" inline/>
                     @if (! $emailVerified)
-                        <div class="alert alert-warning mt-4">
+                        <div class="alert alert-warning mt-4 items-start text-sm sm:text-base">
                             {{ __('Your email is not verified. Please check your email box or get a new verification link.') }}
                             
-                            <a href="{{ route('verification.notice') }}" class="btn btn-sm btn-link">
+                            <a href="{{ route('verification.notice') }}" class="btn btn-sm btn-link h-auto min-h-0 whitespace-normal text-left">
                                 {{ __('Resend verification email') }}
                             </a>
                         </div>
@@ -258,7 +264,7 @@ class extends Component {
                 </x-card>
 
                 {{-- SECURITY --}}
-                <x-card class="mb-6" shadow separator>
+                <x-card class="mb-6 max-w-full mx-auto" shadow separator>
                     <x-slot:title>
                         <div class="flex items-center gap-2">
                             <x-icon name="o-shield-check" class="w-5 h-5" />
@@ -286,31 +292,31 @@ class extends Component {
                                 icon="o-lock-closed" inline/>
                     </div>
 
-                    <div class="mt-2 text-right">
-                        <x-button label="{{__('Forgot your password?')}}" class="btn-ghost" link="/forgot-password" />
+                    <div class="mt-2 text-left sm:text-right">
+                        <x-button label="{{__('Forgot your password?')}}" class="btn-ghost max-w-full whitespace-normal" link="/forgot-password" />
                     </div>
 
                 </x-card>
 
                 {{-- ACTION --}}
-                <div class="flex justify-end">
+                <div class="flex justify-stretch sm:justify-center">
                     <x-button label="{{__('Save changes')}}" 
                             type="submit" 
                             icon="o-check" 
-                            class="btn-primary px-6" />
+                            class="btn-primary w-full px-6 sm:w-auto" />
                 </div>
 
             </x-form>
         </x-tab>
 
         <!-- PLAN TAB -->
-        <x-tab name="plan-tab" class="flex flex-col items-center gap-6">
-            <x-slot:label>  
-                <span>{{ __('Your current plan') }} : </span>
-                <span class="font-normal">{{ __($current_plan['name']) }}</span>
-            </x-slot:label>
+        <x-tab
+            name="plan-tab"
+            label="{{ __('Your current plan') }}: {{ __($current_plan['name']) }}"
+            class="flex min-w-0 flex-col items-center gap-6"
+        >
 
-            <x-card shadow separator class="w-fit mx-auto" title="{{ __('Usage and limits') }}">
+            <x-card shadow separator class="w-full max-w-full mx-auto" title="{{ __('Usage and limits') }}">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <x-stat
                         title="{{ __('Number of walls') }}"
@@ -335,12 +341,67 @@ class extends Component {
                 </div>
             </x-card>
 
-            <x-card shadow separator class="mx-auto max-w-full h-full" title="{{ __('Plans') }}">
+            <x-card shadow separator class="w-full mx-auto max-w-full h-full" title="{{ __('Plans') }}">
                     <x-slot:menu>
                         <x-button label="{{ __('View plans details') }}" class="btn-sm" link="{{ route('plans') }}"/>
                     </x-slot:menu>
 
-                <div class="overflow-x-auto">
+                <div class="md:hidden mt-4 w-full space-y-3">
+                    @foreach(config('plans.plans') as $level => $plan)
+                        <div class="rounded-lg border border-base-content/10 p-4 {{ $level === $currentPlanLevel ? 'bg-success/10 ring-1 ring-success/30' : 'bg-base-100' }}">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-lg break-words">{{ __($plan['name']) }}</h3>
+                                    @if($level === $currentPlanLevel)
+                                        <span class="badge badge-success badge-sm mt-1">{{ __('Current') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <dl class="mt-4 divide-y divide-base-content/10 text-sm">
+                                @foreach($plans_table as $row)
+                                    @php
+                                        $value = $row['plan_'.$level];
+                                    @endphp
+                                    <div class="flex items-start justify-between gap-4 py-2 first:pt-0 last:pb-0">
+                                        <dt class="text-base-content/70">{{ $row['feature'] }}</dt>
+                                        <dd class="shrink-0 text-right font-semibold">
+                                            @if($value === '✓')
+                                                <span class="text-success text-lg" aria-label="{{ __('Included') }}">✓</span>
+                                            @elseif($value === '—')
+                                                <span class="opacity-50" aria-label="{{ __('Not included') }}">—</span>
+                                            @else
+                                                {{ $value }}
+                                            @endif
+                                        </dd>
+                                    </div>
+                                @endforeach
+                            </dl>
+
+                            <div class="mt-4">
+                                @if($level === $currentPlanLevel)
+                                    <span class="badge badge-success">{{ __('Current') }}</span>
+                                @elseif($level == 3)
+                                    <x-button
+                                        label="{{ __('Get a quote') }}"
+                                        icon="o-pencil-square"
+                                        class="w-full bg-[#00bafe] btn-sm"
+                                        wire:click="selectPlan({{ $level }})"
+                                    />
+                                @elseif($level > $currentPlanLevel)
+                                    <x-button
+                                        label="{{ __('Upgrade') }}"
+                                        icon="o-chevron-double-up"
+                                        class="w-full bg-[#00bafe] btn-sm"
+                                        wire:click="selectPlan({{ $level }})"
+                                    />
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="hidden overflow-x-auto md:block">
                     <table class="mt-4 table table-zebra w-full">
                         <thead>
                             <tr>
@@ -358,7 +419,7 @@ class extends Component {
                                             @endif
 
                                             <span class="font-bold">
-                                                {{ $plan['name'] }}
+                                                {{ __($plan['name']) }}
                                             </span>
                                         </div>
                                     </th>
@@ -408,6 +469,13 @@ class extends Component {
                                         <span class="text-black badge badge-success">
                                             {{ __('Current') }}
                                         </span>
+                                    @elseif($level == 3 )
+                                        <x-button
+                                            label="{{ __('Get a quote') }}"
+                                            icon="o-pencil-square"
+                                            class="w-full min-w-[8rem] bg-[#00bafe] btn-sm h-auto min-h-10 whitespace-normal px-2 text-center leading-tight"
+                                            wire:click="selectPlan({{ $level }})"
+                                        />
                                     @elseif($level < $currentPlanLevel)
 
                                     @else
@@ -415,7 +483,7 @@ class extends Component {
                                         <x-button
                                             label="{{ __('Upgrade') }}"
                                             icon="o-chevron-double-up"
-                                            class="bg-[#00bafe] btn-sm"
+                                            class="w-full min-w-[8rem] bg-[#00bafe] btn-sm h-auto min-h-10 whitespace-normal px-2 text-center leading-tight"
                                             wire:click="selectPlan({{ $level }})"
                                         />
 
