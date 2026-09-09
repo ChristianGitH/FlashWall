@@ -59,7 +59,7 @@ new class extends Component
         {{-- Affichage des Walls de l'utilisateur --}}
         @if(count($walls) > 0)
                 @foreach($walls as $index => $wall)
-                    <x-menu-sub :title="$wall->name" icon="o-sparkles" :open="request()->is($wall->slug . '/*')">
+                    <x-menu-sub :title="$wall->name" icon="o-bolt" :open="request()->is($wall->slug . '/*')">
                         <x-menu-item title="{{__('Settings')}}" icon="o-cog-6-tooth" link="{{ route('setup-wall', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="{{__('Moderation')}}" icon="o-magnifying-glass-circle" link="{{ route('moderation', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="{{__('Post image')}}" icon="o-plus" link="{{ route('create-image', ['wall' => $wall->slug]) }}"  />

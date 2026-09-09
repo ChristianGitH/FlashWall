@@ -106,6 +106,13 @@ class extends Component
                             link="{{ route('login') }}"
                             class="btn-sm rounded-full border-none bg-gradient-to-r from-purple-500 to-pink-400 text-white hover:from-fuchsia-500 hover:to-pink-500"
                         />
+                    @elseif($level == 3)
+                        <x-button
+                            label="{{ __('Get a quote') }}"
+                            icon="o-pencil-square"
+                            class="btn-sm rounded-full border-none bg-gradient-to-r from-purple-500 to-pink-400 text-white hover:from-fuchsia-500 hover:to-pink-500"
+                            wire:click="selectPlan({{ $level }})"
+                        />
                     @else
                         <x-button
                             label="{{ __('Upgrade') }}"

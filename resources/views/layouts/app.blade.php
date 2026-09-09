@@ -33,7 +33,8 @@
         'password.forgot',
         'password.reset',
         'home',
-        'register'
+        'register',
+        'contact'
     ]);
 
         

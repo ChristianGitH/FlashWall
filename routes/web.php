@@ -64,6 +64,13 @@ Route::get('language/{locale}', [LanguageController::class, 'switch']);
 Route::livewire('/display/{wall}', 'displaywalls.slideshow-wrapper', ['mode' => 'prod'])->name('slideshow');
 Route::livewire('/display/{wall}/{mode}', 'displaywalls.slideshow-wrapper')->name('slideshow.mode');
 Route::livewire('/plans', 'plans')->name('plans');
+Route::livewire('/contact', 'contact')->name('contact');
+
+Route::get('/sitemap.xml', function () {
+    return response()->view('sitemap', [
+        'pages' => config('pages.pages', []),
+    ])->header('Content-Type', 'application/xml');
+})->name('sitemap');
 
 // Password reset routes, should be accissible for guests, and users
 Route::livewire('/forgot-password', 'auth.forgot-password')->name('password.forgot');
