@@ -772,7 +772,7 @@ class extends Component {
                 @if($new_posting_page_background_image)
                     <img src="{{ $new_posting_page_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
                 @elseif($posting_page_background_image)
-                    <img src="{{ asset('storage/posting_page_images/background_images/' . $wall->posting_page_background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                    <img src="{{ asset('storage/' . (str_contains($wall->posting_page_background_image, '/') ? $wall->posting_page_background_image : 'posting_page_images/background_images/' . $wall->posting_page_background_image)) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
                 @endif
             </div>
             

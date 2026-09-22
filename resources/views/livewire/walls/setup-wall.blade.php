@@ -279,12 +279,13 @@ class extends Component {
 
             // Refresh navigation when a wall name is updated.
             $this->dispatch('refreshNavigation');
+                
+            // We go to next step
+            $this->step++;  
         } else {
             $this->warning(__('No change detected!'));
         }
-        
-        // We go to next step
-        $this->step++;
+
     }
 
     /*
@@ -330,6 +331,8 @@ class extends Component {
             $logo_path = $this->new_posting_page_logo->store('posting_page_images/logos', 'public');
             $logo_filename = basename($logo_path);
             $this->wall->posting_page_logo = $logo_filename;
+            $this->posting_page_logo = $logo_filename;
+            $this->new_posting_page_logo = null;
         }
 
         if ($this->new_posting_page_background_image && $this->hasAdvancedSettings) {
@@ -340,6 +343,8 @@ class extends Component {
             $background_path = $this->new_posting_page_background_image->store('posting_page_images/background_images', 'public');
             $background_filename = basename($background_path);
             $this->wall->posting_page_background_image = $background_filename;
+            $this->posting_page_background_image = $background_filename;
+            $this->new_posting_page_background_image = null;
         }
         
         // On prépare les changements sur le modèle (sauf l'image)
@@ -352,6 +357,9 @@ class extends Component {
         if ($this->wall->isDirty()) {
             $this->wall->save();
             $this->success(__('Changes saved!'));
+                            
+            // We go to next step
+            $this->step++;  
         } else {
             $this->warning(__('No change detected!'));
         }
@@ -417,20 +425,22 @@ class extends Component {
  
         if ($this->new_background_image) {
             // Suppression de l'ancienne image puis sauvegarde de la nouvelle image
-            if ($this->wall->background_image !== 'walls_images/background_images/default_background.jpg' && $this->wall->background_image !== 'walls_images/background_images/grid_background.jpg') {
+            if ($this->wall->background_image !== 'default_background.jpg' && $this->wall->background_image !== 'grid_background.jpg') {
                 $currentBackgroundPath = str_contains($this->wall->background_image, '/')
                     ? $this->wall->background_image
                     : 'walls_images/background_images/' . $this->wall->background_image;
                 Storage::disk('public')->delete($currentBackgroundPath);
             }
             $background_image_path = $this->new_background_image->store('walls_images/background_images', 'public');
-            $this->background_image = $background_image_path;
-            $this->wall->background_image = $background_image_path;
+            $background_filename = basename($background_image_path);
+
+            $this->background_image = $background_filename;
+            $this->wall->background_image = $background_filename;
 
             // If user doesn't have advanced settings, we want to mirror the posting page background with the slideshow background.
             if (! $this->hasAdvancedSettings) {
-                $this->posting_page_background_image = $background_image_path; // Mirrors slideshow style
-                $this->wall->posting_page_background_image = $background_image_path;
+                $this->posting_page_background_image = $background_filename; // Mirrors slideshow style
+                $this->wall->posting_page_background_image = $background_filename;
             }
         }
 
@@ -444,12 +454,13 @@ class extends Component {
         if ($this->wall->isDirty()) {
             $this->wall->save();
             $this->success(__('Changes saved!'));
+                    
+            // We go to next step
+            $this->step++;
         } else {
             $this->warning(__('No change detected!'));
         }
-        
-        // We go to next step
-        $this->step++;
+
     }
 
 
@@ -493,6 +504,9 @@ class extends Component {
         if ($this->wall->isDirty()) {
             $this->wall->save();
             $this->success(__('Changes saved!'));
+                            
+            // We go to next step
+            $this->step++;  
         } else {
             $this->warning(__('No change detected!'));
         }
@@ -651,19 +665,18 @@ class extends Component {
 
                 <x-toggle label="{{__('Display welcome text?')}}" wire:model="posting_page_text_visibility" right inline/>
                 
-                <div class="max-w-full overflow-hidden" x-data="{ posting_page_logo_visibility: @entangle('posting_page_logo_visibility') }">
+                <div class="max-w-full overflow-hidden" x-data="{ posting_page_logo_visibility: @entangle('posting_page_logo_visibility'), logoPreview: null, hasNewSelection: false, previewReady: false }" x-on:change="if ($event.target.files?.[0]) { hasNewSelection = true; previewReady = false; const reader = new FileReader(); reader.onload = event => logoPreview = event.target.result; reader.readAsDataURL($event.target.files[0]); }" x-on:livewire-upload-finish="previewReady = true" x-on:livewire-upload-error="hasNewSelection = false; previewReady = false" x-on:livewire-upload-cancel="hasNewSelection = false; previewReady = false">
                     <x-toggle label="{{__('Display logo?')}}" x-model="posting_page_logo_visibility" wire:model="posting_page_logo_visibility" right inline/>
 
-                    <div x-show="posting_page_logo_visibility == true">
+                    <div x-show="posting_page_logo_visibility == true" class="text-center">
                         <x-file style="max-width: 100% !important" wire:model="new_posting_page_logo" 
                             hint="{{ __('Only image formats allowed') }}"
                             accept="image/png, image/jpeg"
                         />
-                        <x-progress wire:loading wire:target="new_posting_page_logo" class="progress-primary h-0.5" indeterminate />
-                        @if($new_posting_page_logo)
-                            <img src="{{ $new_posting_page_logo->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
-                        @elseif($posting_page_logo)
-                            <img src="{{ asset('storage/' . $wall->posting_page_logo) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                        <x-loading wire:loading wire:target="new_posting_page_logo" class="progress-primary"/>
+                        <img x-show="logoPreview && previewReady" x-bind:src="logoPreview" class="max-w-xs mx-auto shadow-md object-cover" alt="{{ __('Logo preview') }}" />
+                        @if(!$new_posting_page_logo && $posting_page_logo)
+                            <img wire:key="posting-page-logo" x-show="!hasNewSelection" x-bind:src="'{{ asset('storage/posting_page_images/logos') }}/' + $wire.posting_page_logo" class="max-w-xs mx-auto shadow-md object-cover" alt="{{ __('Current logo') }}" />
                         @endif
                     </div>
                 </div>
@@ -854,16 +867,19 @@ class extends Component {
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
                     
-                        <div x-show="posting_page_choice == 1"  class="max-w-full text-center overflow-hidden">
+                        <div x-show="posting_page_choice == 1" x-data="{ backgroundPreview: null, hasNewSelection: false, previewReady: false }" x-on:change="if ($event.target.files?.[0]) { hasNewSelection = true; previewReady = false; const reader = new FileReader(); reader.onload = event => backgroundPreview = event.target.result; reader.readAsDataURL($event.target.files[0]); }" x-on:livewire-upload-finish="previewReady = true" x-on:livewire-upload-error="hasNewSelection = false; previewReady = false" x-on:livewire-upload-cancel="hasNewSelection = false; previewReady = false" class="max-w-full text-center overflow-hidden">
                             <x-file :disabled="!$hasAdvancedSettings" wire:model="new_posting_page_background_image" style="max-width: 100% !important" label="{!! __('Page background image') !!}" 
                                 hint="{{ __('Only image formats allowed') }}"
                                 accept="image/png, image/jpeg"
                             />
-                            <x-loading wire:loading wire:target="new_posting_page_background_image" class="loading-ring" indeterminate />
-                            @if($new_posting_page_background_image)
-                                <img src="{{ $new_posting_page_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
-                            @elseif($posting_page_background_image)
-                                <img src="{{ asset('storage/' . $wall->posting_page_background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                            <x-loading wire:loading wire:target="new_posting_page_background_image" class="progress-primary" />
+                            <img x-show="backgroundPreview && previewReady" x-bind:src="backgroundPreview" class="max-w-xs mx-auto shadow-md object-cover" alt="{{ __('Background preview') }}" />
+                            @if(!$new_posting_page_background_image && $posting_page_background_image)
+                                <img wire:key="posting-page-background-{{ $posting_page_background_image }}" 
+                                    x-show="!hasNewSelection" 
+                                    x-bind:src="'{{ asset('storage/posting_page_images/background_images') }}/' + $wire.posting_page_background_image"                                class="max-w-xs mx-auto shadow-md object-cover" 
+                                    alt="{{ __('Current background') }}"
+                                />
                             @endif
                         </div>
                     </div>
@@ -1051,17 +1067,20 @@ class extends Component {
                         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                     @enderror
 
-                    <div x-show="wall_background_choice == 1" class="max-w-full text-center overflow-hidden">
+                    <div x-show="wall_background_choice == 1" x-data="{ backgroundPreview: null, hasNewSelection: false, previewReady: false }" x-on:change="if ($event.target.files?.[0]) { hasNewSelection = true; previewReady = false; const reader = new FileReader(); reader.onload = event => backgroundPreview = event.target.result; reader.readAsDataURL($event.target.files[0]); }" x-on:livewire-upload-finish="previewReady = true" x-on:livewire-upload-error="hasNewSelection = false; previewReady = false" x-on:livewire-upload-cancel="hasNewSelection = false; previewReady = false" class="max-w-full text-center overflow-hidden">
                         <x-file style="max-width: 100% !important" wire:model="new_background_image" label="{!! __('Background image') !!}" 
                             hint="{{ __('Only image formats allowed') }}"
                             accept="image/png, image/jpeg"
                         />
 
-                        <x-loading wire:loading wire:target="new_background_image" class="loading-ring" indeterminate />
-                        @if($new_background_image)
-                            <img src="{{ $new_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
-                        @elseif($background_image)
-                            <img src="{{ asset('storage/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+                        <x-loading wire:loading wire:target="new_background_image" class="progress-primary" />
+                        <img x-show="backgroundPreview && previewReady" x-bind:src="backgroundPreview" class="max-w-xs mx-auto shadow-md object-cover" alt="{{ __('Background preview') }}" />
+                        @if(!$new_background_image && $background_image)
+                            <img wire:key="wall-background-{{ $background_image }}" 
+                            x-show="!hasNewSelection" 
+                            x-bind:src="'{{ asset('storage/walls_images/background_images') }}/' + $wire.background_image"
+                            class="max-w-xs mx-auto shadow-md object-cover" 
+                            alt="{{ __('Current background') }}" />
                         @endif
                     </div>
                 </div>

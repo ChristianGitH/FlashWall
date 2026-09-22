@@ -61,7 +61,10 @@ new class extends Component {
         if ($this->wall->posting_page_background_choice == 0) {    
             $this->background = 'background: ' . $this->wall->posting_page_background_color . ';';
         } else {
-            $url = asset("storage/{$this->wall->posting_page_background_image}");
+            $backgroundPath = str_contains($this->wall->posting_page_background_image, '/')
+                ? $this->wall->posting_page_background_image
+                : 'posting_page_images/background_images/' . $this->wall->posting_page_background_image;
+            $url = asset("storage/{$backgroundPath}");
             $this->background = "background:  no-repeat center url('{$url}'); background-size: cover;";
         }
     }
@@ -450,7 +453,7 @@ new class extends Component {
 
         <x-card x-show="currentCard === 'submitter'" x-cloak class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
             @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mb-2 mx-auto object-cover " />
+                <img src="{{ asset('storage/posting_page_images/logos/' . $this->wall->posting_page_logo) }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mb-2 mx-auto object-cover " />
             @endif
             @if($this->wall->posting_page_text_visibility)
                 <h1 class="mb-4 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
@@ -637,7 +640,7 @@ new class extends Component {
 
         <x-card x-show="currentCard === 'upload'" x-cloak  class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
             @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mt-1 mb-2 mx-auto object-cover " />
+                <img src="{{ asset('storage/posting_page_images/logos/' . $this->wall->posting_page_logo) }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mt-1 mb-2 mx-auto object-cover " />
             @endif
             @if($this->wall->posting_page_text_visibility)
                 <h1 class="mb-3 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
