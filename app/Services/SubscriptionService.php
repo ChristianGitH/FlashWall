@@ -15,10 +15,6 @@ class SubscriptionService
      */
     public static function canCreateWall(User $user): bool
     {
-        if (!$user->hasActiveSubscription()) {
-            return false;
-        }
-
         return !$user->hasReachedWallLimit();
     }
 
@@ -35,18 +31,18 @@ class SubscriptionService
      */
     public static function getSubscriptionErrorMessage(User $user): string
     {
-        if (!$user->hasActiveSubscription()) {
-            if ($user->subscription_ends_at && $user->subscription_ends_at->isPast()) {
-                return 'Your subscription has expired. Please renew to continue.';
-            }
-            return 'You need an active subscription to access this feature.';
-        }
-
         if ($user->hasReachedWallLimit()) {
             $limit = $user->getFeature('walls');
             return __("You've reached your wall limit of :limit. Please upgrade your plan.", [
                 'limit' => $limit,
             ]);
+        }
+
+        if (!$user->hasActiveSubscription()) {
+            if ($user->subscription_ends_at && $user->subscription_ends_at->isPast()) {
+                return 'Your subscription has expired. Please renew to continue.';
+            }
+            return 'You need an active subscription to access this feature.';
         }
 
         return __('You do not have permission to access this feature.');

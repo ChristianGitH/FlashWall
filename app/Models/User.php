@@ -48,8 +48,10 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'plan_level' => 'integer',
         'trial_ends_at' => 'datetime',
         'subscription_ends_at' => 'datetime',
+        'is_subscription_active' => 'boolean',
         'password' => 'hashed',
     ];
 
@@ -117,10 +119,6 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasFeature(string $feature): bool
     {
-        if (!$this->hasActiveSubscription()) {
-            return false; // Expired subscription loses access
-        }
-
         $plan = $this->currentPlan();
         return $plan['features'][$feature] ?? false;
     }
@@ -129,12 +127,8 @@ class User extends Authenticatable implements MustVerifyEmail
      * Get a feature value (useful for numeric limits)
      * Returns the feature value or 0 if not available
      */
-    public function getFeature(string $feature): int|float|bool
+    public function getFeature(string $feature): int|float|string|bool
     {
-        if (!$this->hasActiveSubscription()) {
-            return 0; // Expired subscription has no features
-        }
-
         $plan = $this->currentPlan();
         return $plan['features'][$feature] ?? 0;
     }
@@ -145,7 +139,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasReachedWallLimit(): bool
     {
         $limit = $this->getFeature('walls');
-        if ($limit === PHP_INT_MAX) {
+        if ($limit === PHP_INT_MAX || $limit === '∞') {
             return false; // Unlimited
         }
         return $this->walls()->count() >= $limit;
@@ -157,7 +151,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function remainingWalls(): int
     {
         $limit = $this->getFeature('walls');
-        if ($limit === PHP_INT_MAX) {
+        if ($limit === PHP_INT_MAX || $limit === '∞') {
             return PHP_INT_MAX;
         }
         return max(0, $limit - $this->walls()->count());
