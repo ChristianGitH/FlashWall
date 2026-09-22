@@ -75,7 +75,11 @@ class extends Component {
                 ) }}" 
                 icon="o-lock-closed" class="alert-info flex flex-wrap">
                     <x-slot:actions>
-                        <x-button label="{{ __('Upgrade your plan !') }}" />
+                        <x-button
+                            label="{{ __('Upgrade your plan !') }}"
+                            icon="o-chevron-double-up"
+                            link="{{ route('plans') }}"
+                        />
                     </x-slot:actions>
                 </x-alert>
             @else
