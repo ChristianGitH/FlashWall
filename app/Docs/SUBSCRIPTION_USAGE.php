@@ -15,7 +15,7 @@ $user = auth()->user();
 // Get user's current plan
 $plan = $user->currentPlan();
 echo $plan['name']; // "Pro"
-echo $plan['features']['walls']; // 5
+echo $plan['features']['walls']; // 1, 2, or "∞"
 
 // Check subscription status
 $user->hasActiveSubscription(); // true/false
@@ -23,11 +23,11 @@ $user->isOnTrial(); // true/false
 
 // Check specific features
 $user->hasFeature('custom_branding'); // true/false
-$user->getFeature('walls'); // 5 (or PHP_INT_MAX for unlimited)
+$user->getFeature('walls'); // 1, 2, or "∞"
 
 // Wall-specific checks
 $user->hasReachedWallLimit(); // true/false
-$user->remainingWalls(); // 3 remaining
+$user->remainingWalls(); // Number of walls still available
 
 // ============================================================================
 // 2. SUBSCRIPTION SERVICE - Static utility methods
@@ -95,8 +95,9 @@ class CreateWall extends Component
     <button>Create new wall</button>
 @endif
 
-<!-- Show current plan info -->
+<!-- Show current plan info and usage -->
 <p>You're on the {{ auth()->user()->currentPlan()['name'] }} plan</p>
+<p>Wall capacity: {{ auth()->user()->getFeature('walls') }}</p>
 <p>Remaining walls: {{ auth()->user()->remainingWalls() }}</p>
 
 // ============================================================================
