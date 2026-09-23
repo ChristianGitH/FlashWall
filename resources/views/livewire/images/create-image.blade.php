@@ -4,8 +4,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Rule;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image as InterventionImage;
-use Intervention\Image\Drivers\GD\Driver;
+use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
@@ -274,7 +273,9 @@ new class extends Component {
         // File is already optimized on client side (converted to WebP, resized to 2048px)
         // But we add fallback processing in case client-side conversion failed
         // Convert to intervention image element
-        $img = InterventionImage::read($this->image->getRealPath());
+        $manager = new ImageManager(new Driver());
+
+        $img = $manager->read($this->image->getRealPath());
         
         // Safety check: Ensure image isn't larger than expected (fallback if JS didn't resize)
         $max = 2100;
@@ -350,29 +351,41 @@ new class extends Component {
                 // Hide preview immediately while processing new file
                 this.showPreview = false;
 
-                // Convert file to WEBP and resize
-                const webpFile = await this.convertToWebp(file);
+                try {
+                    // Convert file to WEBP and resize
+                    const webpFile = await this.convertToWebp(file);
 
-                // Send to Livewire
-                this.$wire.upload('image', webpFile, 
-                    () => {
-                        // Success callback
-                        this.processing = false;
-                        this.showPreview = true;
-                    }, 
-                    () => {
-                        // Error callback
-                        this.processing = false;
-                        this.showPreview = true;
-                    }
-                );
+                    // Send to Livewire
+                    this.$wire.upload('image', webpFile,
+                        () => {
+                            this.processing = false;
+                            this.showPreview = true;
+                        },
+                        (error) => {
+                            console.error('Image upload failed', error);
+                            this.processing = false;
+                            this.showPreview = true;
+                            event.target.value = '';
+                            alert('The image could not be uploaded. Please try again.');
+                        }
+                    );
+                } catch (error) {
+                    console.error('Image processing failed', error);
+                    this.processing = false;
+                    this.showPreview = true;
+                    event.target.value = '';
+                    alert('The image could not be processed. Please try again.');
+                }
             },
 
             convertToWebp(file) {
                 return new Promise(resolve => {
                     const img = new Image();
                     
+                    const objectUrl = URL.createObjectURL(file);
+
                     img.onload = () => {
+                        URL.revokeObjectURL(objectUrl);
                         const maxSize = 2048;
                         const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1); // Max 1 so we don't upscale smaller images
                         const newWidth = img.width * ratio;
@@ -405,12 +418,13 @@ new class extends Component {
                     };
 
                     img.onerror = () => {
+                        URL.revokeObjectURL(objectUrl);
                         // Fallback to original file if image fails to load
                         console.error("Failed to load image, using original file");
                         resolve(file);
                     };
 
-                    img.src = URL.createObjectURL(file);
+                    img.src = objectUrl;
                 });
             }
         }));
@@ -673,10 +687,13 @@ new class extends Component {
 
             <x-form x-data="uploadImage" wire:submit="uploadImage" class="max-w-full w-full"> 
 
-                <input class="file-input w-full" type="file" @change="selectFile" x-ref="fileInput" accept="image/*">
+                <input class="file-input w-full" type="file" @change="selectFile($event)" x-ref="fileInput" accept="image/*">
 
-                <!-- Barre de progression -->
-                <x-loading x-show="processing" class="justify-self-center loading-ring" />
+                <x-loading x-show="processing"
+                    class="justify-self-center {{ $this->wall->posting_page_buttons_color ? '' : 'progress-primary' }}"
+                    style="{{ $this->wall->posting_page_buttons_color ? '
+                    background-color:'.$this->wall->posting_page_buttons_color : '' }}"
+                />
 
                 @if($image)
                     <div x-show="showPreview">
