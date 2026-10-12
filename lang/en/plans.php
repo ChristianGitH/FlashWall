@@ -21,6 +21,9 @@ return [
             'name' => 'Pro',
             'description' => 'For teams and companies',
             'price' => 'Get your personalized quote',
+            'live_usage_duration' => 'Customized',
+            'images_per_wall' => 'Customized',
+            'walls' => 'Customized',
         ],
     ],
 ];

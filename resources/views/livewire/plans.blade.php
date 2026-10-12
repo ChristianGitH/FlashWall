@@ -75,8 +75,18 @@ class extends Component
                     @endif
 
                 <ul class="mt-6 space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
-                    <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>{{ $plan['features']['walls'] }} {{ __('wall') }}{{ $plan['features']['walls'] > 1 ? 's' : '' }}</li>
-                    <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>{{ $plan['features']['images_per_wall'] }} {{ __('images') }}</li>
+                    <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>
+                        {{ __($plan['features']['walls']) }}
+                        @if(is_numeric($plan['features']['walls'])) 
+                            {{ 'wall' }}{{ $plan['features']['walls'] > 1 ? 's' : '' }}
+                        @endif
+                    </li>
+                    <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>
+                        {{ __($plan['features']['images_per_wall']) }}
+                        @if(is_numeric($plan['features']['images_per_wall'])) 
+                            {{ __('images') }}
+                        @endif
+                    </li>
 
                     @if($plan['features']['advanced_settings'])
                         <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>{{ __('Advanced settings included') }}</li>
@@ -87,7 +97,12 @@ class extends Component
                     @endif
 
                     @if($plan['features']['live_usage_duration'] > 0)
-                        <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>{{ $plan['features']['live_usage_duration'] }} {{ __('hours live usage') }}</li>
+                        <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>
+                        {{ __($plan['features']['live_usage_duration']) }}
+                        @if(is_numeric($plan['features']['live_usage_duration'])) 
+                            {{ __('hours live usage') }}
+                        @endif
+                        </li>
                         <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>{{ __('No time limit on dashboard access') }}</li>
                     @endif
 

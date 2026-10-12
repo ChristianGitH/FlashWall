@@ -44,6 +44,8 @@ class extends Component {
     public string $current_plan_settings_level = "Basic";
     public ?string $liveUsageStartsAt = null;
     public string $userTimezone = 'UTC';
+    public $wallsStat = null;
+    public $imagesStat = null;
 
     public function mount()
     {
@@ -60,6 +62,18 @@ class extends Component {
         // Get user's current plan
         $this->currentPlanLevel = (int) $user->plan_level;
         $this->current_plan = $user->currentPlan();
+
+        // Get Stats Int or Text
+        if(is_numeric($this->current_plan['features']['walls'])) {
+            $this->wallsStat = (int) $this->current_plan['features']['walls'];
+        } else {
+            $this->wallsStat = 'Custom';
+        }
+        if(is_numeric($this->current_plan['features']['images_per_wall'])) {
+            $this->imagesStat = (int) $this->current_plan['features']['images_per_wall'];
+        } else {
+            $this->imagesStat = 'Custom';
+        }
 
         // Get the setting level
         if ($this->current_plan['features']['advanced_settings']) {
@@ -328,14 +342,14 @@ class extends Component {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <x-stat
                         title="{{ __('Number of walls') }}"
-                        value="{{ $this->wallsCount }} / {{ $current_plan['features']['walls'] }}"
+                        value="{{ $this->wallsCount }} / {{ __($wallsStat) }}"
                         icon="o-sparkles"
                         color="text-primary"
                         class="font-bold text-xl"/>
 
                     <x-stat
                         title="{{ __('Images per wall') }}"
-                        value="{{ $current_plan['features']['images_per_wall'] }}"
+                        value="{{ __($imagesStat) }}"
                         icon="o-photo"
                         color="text-primary"
                         class="font-bold text-xl"/>
@@ -470,14 +484,14 @@ class extends Component {
                                         $value = $row['plan_'.$level];
                                     @endphp
                                     <div class="flex items-start justify-between gap-4 py-2 first:pt-0 last:pb-0">
-                                        <dt class="text-base-content/70">{{ $row['feature'] }}</dt>
+                                        <dt class="text-base-content/70">{{ __($row['feature']) }}</dt>
                                         <dd class="shrink-0 text-right font-semibold">
                                             @if($value === '✓')
                                                 <span class="text-success text-lg" aria-label="{{ __('Included') }}">✓</span>
                                             @elseif($value === '—')
                                                 <span class="opacity-50" aria-label="{{ __('Not included') }}">—</span>
                                             @else
-                                                {{ $value }}
+                                                {{ __($value) }}
                                             @endif
                                         </dd>
                                     </div>
@@ -558,7 +572,11 @@ class extends Component {
                                             @elseif($value === '—')
                                                 <span class="opacity-50">—</span>
                                             @else
-                                                {{ $value }}
+                                                @if(is_numeric($value))
+                                                    {{ $value }}
+                                                @else
+                                                    {{ __('Custom') }}
+                                                @endif
                                             @endif
                                         </td>
                                     @endforeach

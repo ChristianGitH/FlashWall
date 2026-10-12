@@ -24,6 +24,9 @@ return [
             'description' => 'Pour les équipes et les entreprises',
             'price' => 'Obtenez votre devis personnalisé',
             'support' => 'e-mail et WhatsApp',
+            'live_usage_duration' => 'Durée d\'utilisation live personnalisée',
+            'images_per_wall' => 'Nombre d\'images personnalisé',
+            'walls' => 'Nombre de walls personnalisé',
         ],
     ],
 ];
