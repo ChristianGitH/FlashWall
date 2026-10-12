@@ -328,7 +328,7 @@ public function markImageAsDisplayed($imageId, $nextImageId)
 
 
     <!-- FULLSCREEN BUTTON -->
-    <div class="fixed top-2 right-2" x-show="!isFullscreen">
+    <div class="fixed top-2 right-2 z-50" x-show="!isFullscreen">
         <x-button 
             @click="toggleFullscreen"
             icon="o-arrows-pointing-out"
@@ -391,12 +391,16 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                     class="object-contain"
                     style="max-height: 100%; max-width: 100%;"
                 />
-            </div>
-
+            
                 <!-- CAPTION WRAPPER - and avatar and name -->
                 <!-- We check for name, email and avatar if they're enabled and not empty.  -->
                 @if(($image->caption && $wall->caption_on_wall) || ($image->submitter_name && $wall->submitter_name_on_wall) || ($image->submitter_avatar && $wall->require_avatar_submitter))
 
+                    @if($displaySettings['layout'] === 0)
+                    
+                        <!-- Closes the image wrapper div for caption position bellow -->
+                        <!-- or on the side of image. -->
+                        </div>
 
                         <div x-data="{ showCaption: false, showCaptionContent: false }"
                             x-init="
@@ -454,6 +458,90 @@ public function markImageAsDisplayed($imageId, $nextImageId)
                                 @endif
                             
                         </div>
+                    @elseif($displaySettings['layout'] === 1)
+                        <!-- Caption below image -->
+                        </div>
+
+                        <div class="absolute text-center w-full"
+                        style="bottom : {{ $displaySettings['caption_bellow_image_bottom_margin'] }};">
+                            <span class="leading-none p-[0.5em] font-semibold rounded-md "
+                            style="font-size: {{ $displaySettings['caption_font_size'] }}px;
+                            color: {{ $displaySettings['caption_font_color'] }};
+                            background-color: {{ $displaySettings['caption_background'] }};
+                            max-width: {{ $displaySettings['caption_max_width'] }}%;
+                            display: inline-block;">
+
+                                <div class="flex justify-center items-center gap-2">
+                                    @if($wall->require_avatar_submitter && $image->submitter_avatar)
+                                    <span
+                                        class="emoji_font bg-base-300 rounded-full inline-flex items-center justify-center"
+                                        style="
+                                            font-size: {{ $displaySettings['caption_font_size'] }}px;
+                                            width: {{ $displaySettings['caption_font_size'] * 2 }}px;
+                                            height: {{ $displaySettings['caption_font_size'] * 2 }}px;
+                                        "
+                                    >
+                                        {{ $image->submitter_avatar }}
+                                    </span>
+                                    @endif
+
+                                    @if($wall->submitter_name_on_wall && $image->submitter_name)
+                                        <span>{{ $image->submitter_name }}</span>
+                                    @endif
+
+                                    @if($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name)
+                                        :
+                                    @endif
+                                </div>
+
+                                @if($wall->caption_on_wall && $image->caption)
+                                    <div class="p-[0.5em]">{{ $image->caption }}</div>
+                                @endif
+                            </span>
+                        </div>
+                    @elseif($displaySettings['layout'] === 2)
+                        <!-- Caption on image -->
+                        <div class="absolute bottom-[20px] text-center w-full">
+                            <span class="leading-none p-[0.5em] font-semibold rounded-md"
+                            style="font-size: {{ $displaySettings['caption_font_size'] }}px;
+                            color: {{ $displaySettings['caption_font_color'] }};
+                            background-color: {{ $displaySettings['caption_background'] }};
+                            max-width: {{ $displaySettings['caption_max_width'] }}%;
+                            display: inline-block;">
+
+                                <div class="flex justify-center items-center gap-2">
+                                    @if($wall->require_avatar_submitter && $image->submitter_avatar)
+                                    <span
+                                        class="emoji_font bg-base-300 rounded-full inline-flex items-center justify-center"
+                                        style="
+                                            font-size: {{ $displaySettings['caption_font_size'] }}px;
+                                            width: {{ $displaySettings['caption_font_size'] * 2 }}px;
+                                            height: {{ $displaySettings['caption_font_size'] * 2 }}px;
+                                        "
+                                    >
+                                        {{ $image->submitter_avatar }}
+                                    </span>
+                                    @endif
+
+                                    @if($wall->submitter_name_on_wall && $image->submitter_name)
+                                        <span>{{ $image->submitter_name }}</span>
+                                    @endif
+
+                                    @if($wall->caption_on_wall && $image->caption && $wall->submitter_name_on_wall && $image->submitter_name)
+                                        :
+                                    @endif
+                                </div>
+
+                                @if($wall->caption_on_wall && $image->caption)
+                                    <div class="p-[0.5em]">{{ $image->caption }}</div>
+                                @endif
+                            </span>
+                        </div>
+                        </div>
+                    @endif
+                @else
+                    <!-- If no caption, name or avatar, we just close the image wrapper div -->
+                    </div>
                 @endif
         </div>
     @endforeach

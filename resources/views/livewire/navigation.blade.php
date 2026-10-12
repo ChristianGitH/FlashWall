@@ -36,8 +36,11 @@ new class extends Component
 
 
 <div class="flex flex-col h-[90%]">
-    <x-menu activate-by-route>
-        <x-menu-item title="{{__('Wedding')}}" icon="o-heart" link="{{ localized_page('wedding') }}" />
+    @php
+        $showDevLinks = app()->environment(['local', 'testing']) || app()->isLocal() || config('app.debug');
+    @endphp
+
+    <x-menu>
 
         {{-- Vérifie si l'utilisateur est connecté --}}
         @if($user = auth()->user())
@@ -48,21 +51,25 @@ new class extends Component
                 </x-list-item>
             <x-menu-separator />
 
-        <x-menu-item title="{{__('Home')}}" icon="o-home" link="{{ localized_page('home') }}" />
+        
+        <livewire:static-page-navigation :as_sub_menu="true" />
 
         <x-menu-item title="{{__('Create Wall')}}" icon="o-plus" link="{{ route('create-wall') }}" />
 
         {{-- Affichage des Walls de l'utilisateur --}}
         @if(count($walls) > 0)
                 @foreach($walls as $index => $wall)
-                    <x-menu-sub :title="$wall->name" icon="o-sparkles" :open="request()->is($wall->slug . '/*')">
+                    <x-menu-sub :title="$wall->name" icon="o-bolt" :open="request()->is($wall->slug . '/*')">
                         <x-menu-item title="{{__('Settings')}}" icon="o-cog-6-tooth" link="{{ route('setup-wall', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="{{__('Moderation')}}" icon="o-magnifying-glass-circle" link="{{ route('moderation', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="{{__('Post image')}}" icon="o-plus" link="{{ route('create-image', ['wall' => $wall->slug]) }}"  />
                         <x-menu-item title="Display" icon="o-tv" link="{{ route('slideshow', ['wall' => $wall->slug]) }}" external />
-                        <x-menu-item title="Display Dev" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'dev']) }}" external />
-                        <x-menu-item title="Display Slow" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'slow']) }}" external />
-                        <x-menu-item title="Display Old Caption" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'oldcaption']) }}" external />
+                        @if($showDevLinks)
+                            <x-menu-item title="Display Dev" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'dev']) }}" external />
+                            <x-menu-item title="Display Slow" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'slow']) }}" external />
+                            <x-menu-item title="Display Old Caption" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'oldcaption']) }}" external />
+                            <x-menu-item title="Display Preview" icon="o-tv" link="{{ route('slideshow.mode', ['wall' => $wall->slug, 'mode' => 'preview']) }}" external />
+                        @endif
                     </x-menu-sub>
                 @endforeach
 
@@ -75,10 +82,9 @@ new class extends Component
 
         <x-menu-separator />
 
-        <x-menu class="flex flex-row my-0.5 mt-3 py-1.5 px-4 whitespace-nowrap flex flex-row items-center">
-            <x-theme-toggle />
             @include('partials/language-switcher')
-        </x-menu>
+            <x-theme-toggle class="btn btn-circle btn-ghost btn-sm mx-3" />
+            
     </x-menu>
 
 

@@ -4,8 +4,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Rule;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image as InterventionImage;
-use Intervention\Image\Drivers\GD\Driver;
+use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
@@ -61,7 +60,10 @@ new class extends Component {
         if ($this->wall->posting_page_background_choice == 0) {    
             $this->background = 'background: ' . $this->wall->posting_page_background_color . ';';
         } else {
-            $url = asset("storage/posting_page_images/background_images/{$this->wall->posting_page_background_image}");
+            $backgroundPath = str_contains($this->wall->posting_page_background_image, '/')
+                ? $this->wall->posting_page_background_image
+                : 'posting_page_images/background_images/' . $this->wall->posting_page_background_image;
+            $url = asset("storage/{$backgroundPath}");
             $this->background = "background:  no-repeat center url('{$url}'); background-size: cover;";
         }
     }
@@ -279,7 +281,9 @@ new class extends Component {
         // File is already optimized on client side (converted to WebP, resized to 2048px)
         // But we add fallback processing in case client-side conversion failed
         // Convert to intervention image element
-        $img = InterventionImage::read($this->image->getRealPath());
+        $manager = new ImageManager(new Driver());
+
+        $img = $manager->read($this->image->getRealPath());
         
         // Safety check: Ensure image isn't larger than expected (fallback if JS didn't resize)
         $max = 2100;
@@ -324,7 +328,7 @@ new class extends Component {
         Storage::disk('public')->put($parent->thumb_full_path, $img->scale(width: 500)->encodeByExtension('webp', 80));
 
         $this->success(__('Image added successfully!'));
-        $this->showMessage($this->posting_page_end_text, $this->posting_page_end_title);
+        $this->showMessage(__($this->posting_page_end_text), __($this->posting_page_end_title));
         $this->reset('image', 'caption');
     }
     
@@ -333,12 +337,7 @@ new class extends Component {
 ?>
 
 @push('head')
-    <link rel="icon" type="image/png" href="{{ asset('/storage/favicon_ubi/ubi-favicon-96x96.png') }}" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="{{ asset('/storage/favicon_ubi/ubi-favicon.svg') }}" />
-    <link rel="shortcut icon" href="{{ asset('/storage/favicon-ubi/ubi_favicon.ico') }}" />
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('/storage/favicon_ubi/ubi-apple-touch-icon.png') }}" />
-    <link rel="manifest" href="{{ asset('/storage/favicon_ubi/ubi-site.webmanifest') }}" />
-    
+
     <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('uploadImage', () => ({
@@ -360,29 +359,41 @@ new class extends Component {
                 // Hide preview immediately while processing new file
                 this.showPreview = false;
 
-                // Convert file to WEBP and resize
-                const webpFile = await this.convertToWebp(file);
+                try {
+                    // Convert file to WEBP and resize
+                    const webpFile = await this.convertToWebp(file);
 
-                // Send to Livewire
-                this.$wire.upload('image', webpFile, 
-                    () => {
-                        // Success callback
-                        this.processing = false;
-                        this.showPreview = true;
-                    }, 
-                    () => {
-                        // Error callback
-                        this.processing = false;
-                        this.showPreview = true;
-                    }
-                );
+                    // Send to Livewire
+                    this.$wire.upload('image', webpFile,
+                        () => {
+                            this.processing = false;
+                            this.showPreview = true;
+                        },
+                        (error) => {
+                            console.error('Image upload failed', error);
+                            this.processing = false;
+                            this.showPreview = true;
+                            event.target.value = '';
+                            alert('The image could not be uploaded. Please try again.');
+                        }
+                    );
+                } catch (error) {
+                    console.error('Image processing failed', error);
+                    this.processing = false;
+                    this.showPreview = true;
+                    event.target.value = '';
+                    alert('The image could not be processed. Please try again.');
+                }
             },
 
             convertToWebp(file) {
                 return new Promise(resolve => {
                     const img = new Image();
                     
+                    const objectUrl = URL.createObjectURL(file);
+
                     img.onload = () => {
+                        URL.revokeObjectURL(objectUrl);
                         const maxSize = 2048;
                         const ratio = Math.min(maxSize / img.width, maxSize / img.height, 1); // Max 1 so we don't upscale smaller images
                         const newWidth = img.width * ratio;
@@ -415,12 +426,13 @@ new class extends Component {
                     };
 
                     img.onerror = () => {
+                        URL.revokeObjectURL(objectUrl);
                         // Fallback to original file if image fails to load
                         console.error("Failed to load image, using original file");
                         resolve(file);
                     };
 
-                    img.src = URL.createObjectURL(file);
+                    img.src = objectUrl;
                 });
             }
         }));
@@ -463,7 +475,7 @@ new class extends Component {
 
         <x-card x-show="currentCard === 'submitter'" x-cloak class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
             @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mb-2 mx-auto object-cover " />
+                <img src="{{ asset('storage/posting_page_images/logos/' . $this->wall->posting_page_logo) }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mb-2 mx-auto object-cover " />
             @endif
             @if($this->wall->posting_page_text_visibility)
                 <h1 class="mb-4 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
@@ -621,7 +633,7 @@ new class extends Component {
                 @if($this->terms_checkbox_display_card === 'submitter') 
                     <x-checkbox wire:model="terms" required>
                         <x-slot:label>
-                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline">{{ __('terms.title') }}</a>
+                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline">{{ __('Terms') }}</a>
                         </x-slot:label>
                     </x-checkbox>
                 @endif
@@ -650,7 +662,7 @@ new class extends Component {
 
         <x-card x-show="currentCard === 'upload'" x-cloak  class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
             @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
-                <img src="storage/posting_page_images/logos/{{ $this->wall->posting_page_logo }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mt-1 mb-2 mx-auto object-cover " />
+                <img src="{{ asset('storage/posting_page_images/logos/' . $this->wall->posting_page_logo) }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mt-1 mb-2 mx-auto object-cover " />
             @endif
             @if($this->wall->posting_page_text_visibility)
                 <h1 class="mb-3 text-2xl font-bold text-center" style="{{ $this->posting_page_font_style }}">{{ $this->wall->posting_page_text ?: __('Post an image') }}</h1>
@@ -683,10 +695,13 @@ new class extends Component {
 
             <x-form x-data="uploadImage" wire:submit="uploadImage" class="max-w-full w-full"> 
 
-                <input class="file-input w-full" type="file" @change="selectFile" x-ref="fileInput" accept="image/*">
+                <input class="file-input w-full" type="file" @change="selectFile($event)" x-ref="fileInput" accept="image/*">
 
-                <!-- Barre de progression -->
-                <x-loading x-show="processing" class="justify-self-center loading-ring" />
+                <x-loading x-show="processing"
+                    class="justify-self-center {{ $this->wall->posting_page_buttons_color ? '' : 'progress-primary' }}"
+                    style="{{ $this->wall->posting_page_buttons_color ? '
+                    background-color:'.$this->wall->posting_page_buttons_color : '' }}"
+                />
 
                 @if($image)
                     <div x-show="showPreview">
@@ -702,7 +717,7 @@ new class extends Component {
                 @if($this->terms_checkbox_display_card === 'upload')
                     <x-checkbox wire:model="terms" required>
                         <x-slot:label>
-                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline">{{ __('terms') }}</a>
+                            {{__('I agree with the')}} <a href="{{ localized_page('submitters_terms') }}" class="underline" target="_blank">{{ __('Terms') }}</a>
                         </x-slot:label>
                     </x-checkbox>
                 @endif

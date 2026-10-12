@@ -59,7 +59,7 @@ class extends Component {
     }
 }; ?>
 
-<div class="lg:min-h-screen flex items-center justify-center">
+<div class="lg:min-h-[80vh] flex items-center justify-center">
     <x-card class="flex items-center justify-center p-5 lg:px-10 lg:py-5" title="{{__('Reset Password')}}" shadow separator>
         <x-session-status class="mb-4" :status="session('status')" />
         <x-form wire:submit="resetPassword">

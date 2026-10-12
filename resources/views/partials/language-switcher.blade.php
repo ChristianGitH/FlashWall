@@ -1,11 +1,11 @@
-<div class="flex justify-center text-center sm:justify-start">
-    @foreach($available_locales as $locale_name => $available_locale)
-        @if($available_locale === $current_locale)
-            <span class="ml-2 mr-2 text-gray-500 dark:text-gray-400">{{ $locale_name }}</span>
-        @else
-            <a class="ml-1 underline ml-2 mr-2 text-gray-700 dark:text-gray-300" href="../language/{{ $available_locale }}">
-                <span>{{ $locale_name }}</span>
-            </a>
-        @endif
-    @endforeach
-</div>
+    @php($current_locale_code = strtoupper($current_locale))
+    <x-dropdown label="{{ $current_locale_code }}" class="btn-ghost" right>
+            @foreach($available_locales as $locale_name => $available_locale)
+            <a
+                    href="{{ url('language/' . $available_locale) }}"
+                    class="block px-3 py-2 text-sm {{ $available_locale === $current_locale ? 'bg-slate-100 font-semibold text-slate-900 dark:bg-slate-800 dark:text-white' : 'font-normal text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white' }}"
+                >
+                    {{ $locale_name }}
+                </a>
+            @endforeach
+    </x-dropdown>

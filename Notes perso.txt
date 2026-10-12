@@ -1,14 +1,5 @@
 TO DEPLOY :
-web.php : moved language switcher to its own component, added static pages management.
-LanguageController : new - switches the current app locale, translate the current static page URL.
-StaticController : new - render translated static pages, redirect plain slug requests to the current locale version.
-config/pages : list of static pages, and available traduction slugs.
-seo-head-tags : help adding canonical url and hreflang to satic pages for SEO.
-static/en or /fr : folders to drop the static pages.
-helper/LocalizedHelper : Generates a localized URL for static pages based on a page key.
-composer.json : added helper autoload
-index.blade : Moved and changed to static page.
-
+Updated language switcher (z-index and overlay bug). Now use normal dropdown menu.
 
 NEXT TO DO :
 CSRF on slideshow

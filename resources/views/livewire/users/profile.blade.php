@@ -698,6 +698,7 @@ class extends Component {
                             icon="o-check" 
                             class="btn-primary w-full px-6 sm:w-auto" />
                 </div>
+            </x-card>
 
             </x-form>
         </x-tab>
