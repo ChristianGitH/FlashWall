@@ -565,38 +565,40 @@ class extends Component {
                                 </tr>
                             @endforeach
                         </tbody>
-                        <tr>
-                            <td></td>
+                        <tfoot>
+                            <tr>
+                                <td></td>
 
-                            @foreach(config('plans.plans') as $level => $plan)
-                                <td class="text-center {{ $level === $currentPlanLevel ? 'bg-success/10' : '' }}">
-                                    @if($level === $currentPlanLevel)
+                                @foreach(config('plans.plans') as $level => $plan)
+                                    <td class="text-center {{ $level === $currentPlanLevel ? 'bg-success/10' : '' }}">
+                                        @if($level === $currentPlanLevel)
 
-                                        <span class="text-black badge badge-success">
-                                            {{ __('Current') }}
-                                        </span>
-                                    @elseif($level == 3 )
-                                        <x-button
-                                            label="{{ __('Get a quote') }}"
-                                            icon="o-pencil-square"
-                                            class="w-full min-w-[8rem] bg-[#00bafe] btn-sm h-auto min-h-10 whitespace-normal px-2 text-center leading-tight"
-                                            link="{{ route('contact') }}"
-                                        />
-                                    @elseif($level < $currentPlanLevel)
+                                            <span class="text-black badge badge-success">
+                                                {{ __('Current') }}
+                                            </span>
+                                        @elseif($level == 3 )
+                                            <x-button
+                                                label="{{ __('Get a quote') }}"
+                                                icon="o-pencil-square"
+                                                class="w-full min-w-[8rem] bg-[#00bafe] btn-sm h-auto min-h-10 whitespace-normal px-2 text-center leading-tight"
+                                                link="{{ route('contact') }}"
+                                            />
+                                        @elseif($level < $currentPlanLevel)
 
-                                    @else
+                                        @else
 
-                                        <x-button
-                                            label="{{ __('Upgrade') }}"
-                                            icon="o-chevron-double-up"
-                                            class="w-full min-w-[8rem] bg-[#00bafe] btn-sm h-auto min-h-10 whitespace-normal px-2 text-center leading-tight"
-                                            wire:click="selectPlan({{ $level }})"
-                                        />
+                                            <x-button
+                                                label="{{ __('Upgrade') }}"
+                                                icon="o-chevron-double-up"
+                                                class="w-full min-w-[8rem] bg-[#00bafe] btn-sm h-auto min-h-10 whitespace-normal px-2 text-center leading-tight"
+                                                wire:click="selectPlan({{ $level }})"
+                                            />
 
-                                    @endif
-                                </td>
-                            @endforeach
-                        </tr>
+                                        @endif
+                                    </td>
+                                @endforeach
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
 
@@ -698,7 +700,6 @@ class extends Component {
                             icon="o-check" 
                             class="btn-primary w-full px-6 sm:w-auto" />
                 </div>
-            </x-card>
 
             </x-form>
         </x-tab>

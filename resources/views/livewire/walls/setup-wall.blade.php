@@ -1014,29 +1014,6 @@ class extends Component {
                     </label>
                 </div>
 
-
-                    <x-menu-separator />
-                
-                <!-- ADVANCED LAYOUT SETTINGS -->
-                <x-advanced-settings>
-
-                    <div class="flex items-center justify-center gap-4 sm:flex-row flex-col">
-                        <x-input :disabled="!$hasAdvancedSettings" class="w-20" type="number" label="{{ __('Top margin') }}" placeholder="{{ __('Top margin') }}" wire:model="margin_top" inline >
-                            <x-slot:prefix>%</x-slot:prefix>
-                        </x-input>
-                        <x-input :disabled="!$hasAdvancedSettings" class="w-20" type="number" label="{{__('Bottom margin') }}" placeholder="{{__('Bottom margin') }}" wire:model="margin_bottom" inline >
-                            <x-slot:prefix>%</x-slot:prefix>
-                        </x-input>
-                    </div>
-                    <div class="flex items-center justify-center gap-4 sm:flex-row flex-col">
-                        <x-input :disabled="!$hasAdvancedSettings" class="w-20" type="number" label="{{ __('Left margin') }}" placeholder="{{ __('Left margin') }}" wire:model="margin_left" inline >
-                            <x-slot:prefix>%</x-slot:prefix>
-                        </x-input>
-                        <x-input :disabled="!$hasAdvancedSettings" class="w-20" type="number" label="{{__('Right margin') }}" placeholder="{{__('Right margin') }}" wire:model="margin_right" inline >
-                            <x-slot:prefix>%</x-slot:prefix>
-                        </x-input>
-                    </div>
-                </x-advanced-settings>
             </x-card>
 
             <x-card title="{{ __('Slideshow page style') }}" shadow separator>
@@ -1084,6 +1061,30 @@ class extends Component {
                         @endif
                     </div>
                 </div>
+
+                
+                <x-menu-separator />
+                
+                <!-- ADVANCED LAYOUT SETTINGS -->
+                <x-advanced-settings>
+
+                    <div class="flex items-center justify-center gap-4 sm:flex-row flex-col">
+                        <x-input :disabled="!$hasAdvancedSettings" class="w-20" type="number" label="{{ __('Top margin') }}" placeholder="{{ __('Top margin') }}" wire:model="margin_top" inline >
+                            <x-slot:prefix>%</x-slot:prefix>
+                        </x-input>
+                        <x-input :disabled="!$hasAdvancedSettings" class="w-20" type="number" label="{{__('Bottom margin') }}" placeholder="{{__('Bottom margin') }}" wire:model="margin_bottom" inline >
+                            <x-slot:prefix>%</x-slot:prefix>
+                        </x-input>
+                    </div>
+                    <div class="flex items-center justify-center gap-4 sm:flex-row flex-col">
+                        <x-input :disabled="!$hasAdvancedSettings" class="w-20" type="number" label="{{ __('Left margin') }}" placeholder="{{ __('Left margin') }}" wire:model="margin_left" inline >
+                            <x-slot:prefix>%</x-slot:prefix>
+                        </x-input>
+                        <x-input :disabled="!$hasAdvancedSettings" class="w-20" type="number" label="{{__('Right margin') }}" placeholder="{{__('Right margin') }}" wire:model="margin_right" inline >
+                            <x-slot:prefix>%</x-slot:prefix>
+                        </x-input>
+                    </div>
+                </x-advanced-settings>
             </x-card>
 
 
