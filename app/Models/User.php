@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
  
 
@@ -27,6 +28,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'plan_level',
         'trial_ends_at',
         'subscription_ends_at',
+        'live_usage_hours_granted',
+        'live_usage_starts_at',
+        'live_usage_ends_at',
         'stripe_id',
         'is_subscription_active',
     ];
@@ -51,6 +55,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'plan_level' => 'integer',
         'trial_ends_at' => 'datetime',
         'subscription_ends_at' => 'datetime',
+        'live_usage_hours_granted' => 'integer',
+        'live_usage_starts_at' => 'datetime',
+        'live_usage_ends_at' => 'datetime',
         'is_subscription_active' => 'boolean',
         'password' => 'hashed',
     ];
@@ -157,16 +164,88 @@ class User extends Authenticatable implements MustVerifyEmail
         return max(0, $limit - $this->walls()->count());
     }
 
+    public function hasActiveLiveUsageSession(): bool
+    {
+        return $this->live_usage_starts_at !== null
+            && $this->live_usage_starts_at->lte(now())
+            && ($this->live_usage_ends_at === null || $this->live_usage_ends_at->gt(now()));
+    }
+
+    public function getLiveUsageHoursGranted(): int|string
+    {
+        return $this->live_usage_hours_granted ?? $this->getFeature('live_usage_duration');
+    }
+
+    public function scheduleLiveUsageSession(Carbon $startsAt): void
+    {
+        if ($this->live_usage_ends_at && $this->live_usage_ends_at->isFuture()) {
+            throw new \LogicException('Live usage has already been scheduled.');
+        }
+
+        if (!$this->hasActiveSubscription()) {
+            throw new \LogicException('An active plan is required to schedule live usage.');
+        }
+
+        $duration = $this->getLiveUsageHoursGranted();
+        if ($duration !== '∞' && (!is_numeric($duration) || (int) $duration <= 0)) {
+            throw new \LogicException('The current plan does not include live usage.');
+        }
+
+        $startsAt = $startsAt->copy()->utc();
+        $this->live_usage_starts_at = $startsAt;
+        $this->live_usage_ends_at = $duration === '∞'
+            ? null
+            : $startsAt->copy()->addHours((int) $duration);
+        $this->live_usage_hours_granted = 0;
+        $this->save();
+    }
+
+    public function addPurchasedLiveUsageHours(int $hours): void
+    {
+        if ($hours <= 0) {
+            throw new \InvalidArgumentException('Additional live usage hours must be greater than zero.');
+        }
+
+        $grantedHours = $this->getLiveUsageHoursGranted();
+        if ($grantedHours === '∞') {
+            throw new \LogicException('Unlimited live usage does not need additional hours.');
+        }
+
+        if ($this->live_usage_starts_at?->isPast() && $this->live_usage_ends_at?->isPast()) {
+            $this->live_usage_starts_at = null;
+            $this->live_usage_ends_at = null;
+            $this->live_usage_hours_granted = $hours;
+        } elseif ($this->live_usage_starts_at !== null) {
+            if ($this->live_usage_ends_at === null) {
+                throw new \LogicException('Unlimited live usage does not need additional hours.');
+            }
+
+            $this->live_usage_ends_at = $this->live_usage_ends_at->copy()->addHours($hours);
+            $this->live_usage_hours_granted = 0;
+        } else {
+            $this->live_usage_hours_granted = (int) $grantedHours + $hours;
+        }
+
+        $this->save();
+    }
+
     /**
      * Upgrade user to a new plan level
      */
-    public function upgradePlan(int $planLevel): void
+    public function upgradePlan(int $planLevel, ?int $liveUsageHours = null): void
     {
         if (!isset(config('plans.plans')[$planLevel])) {
             throw new \InvalidArgumentException("Plan level {$planLevel} does not exist");
         }
 
+        if ($liveUsageHours !== null && $liveUsageHours < 0) {
+            throw new \InvalidArgumentException('Live usage hours cannot be negative.');
+        }
+
         $this->plan_level = $planLevel;
+        $planDuration = config('plans.plans')[$planLevel]['features']['live_usage_duration'];
+        $this->live_usage_hours_granted = $liveUsageHours
+            ?? (is_numeric($planDuration) ? (int) $planDuration : null);
         $this->trial_ends_at = null; // Clear trial when upgrading
         $this->is_subscription_active = true;
         $this->save();

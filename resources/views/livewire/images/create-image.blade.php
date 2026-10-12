@@ -152,6 +152,12 @@ new class extends Component {
 
     private function canPostImage(): bool
     {
+        $isWallOwner = Auth::check() && (int) Auth::id() === (int) $this->wall->user_id;
+        if (!$isWallOwner && !$this->wall->user->hasActiveLiveUsageSession()) {
+            $this->showMessage('This wall is not accepting submissions right now.', 'Hello!');
+            return false;
+        }
+
         $max = $this->wall->max_images_submitter;
 
         if (is_numeric($max)) {
@@ -204,6 +210,8 @@ new class extends Component {
 
     public function saveSubmitterData()
     {
+        if (!$this->canPostImage()) return;
+
         // Build validation rules dynamically
         $rules = [
             'name' => ($this->wall->require_name_submitter ? 'required|' : 'nullable|') . 'string|max:15',
@@ -722,11 +730,14 @@ new class extends Component {
         </x-card>
 
 
-        <x-card x-show="currentCard === 'message'" x-cloak class="flex flex-col max-w-full md:max-w-none px-2 md:px-5 items-center justify-center">
-            <h1 class="text-2xl font-bold mb-4" style="{{ $this->posting_page_font_style }}">
+        <x-card x-show="currentCard === 'message'" x-cloak class="max-w-full md:max-w-none px-2 md:px-5 flex items-center justify-center">
+            @if($this->wall->posting_page_logo && $this->wall->posting_page_logo_visibility == 1)
+                <img src="{{ asset('storage/posting_page_images/logos/' . $this->wall->posting_page_logo) }}" class="max-w-[70vw] sm:max-w-[40vw] md:max-w-[30vw] lg:max-w-[20vw] mb-2 mx-auto object-cover " />
+            @endif
+            <h1 class="text-2xl font-bold mb-4 text-center" style="{{ $this->posting_page_font_style }}">
                 {{ $messageHeader }}
             </h1>
-            <p class="text-lg mb-6">{{ $messageText }}</p>
+            <p class="text-lg mb-6 text-center">{{ $messageText }}</p>
         </x-card>
 
 

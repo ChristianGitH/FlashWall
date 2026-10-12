@@ -885,143 +885,103 @@ class extends Component {
     </x-card>
 
 
-
-    <x-card title="{{ __('Wall background') }}" class="w-96" shadow separator>
-
-        <x-form wire:submit="updateWallBackground">
-
-        <div class="max-w-full overflow-hidden pb-1" x-data="{ wall_background_choice: @entangle('background_choice') }">
-            <div class="flex justify-center text-center mb-1">
-                <x-group
-                    label="{{ __('Use as background') }} :"
-                    :options="$background_choice_options"
-                    wire:model="background_choice"
-                    option-value="custom_key"
-                    class="[&:checked]:!btn-primary btn-sm" />
-            </div>
-
-            <div x-show="wall_background_choice == 0" x-data="{ background_color: @entangle('background_color') }"class="flex flex-row items-end justify-evenly">
-                <x-input class="w-full" label="{!! __('Background color')!!}" placeholder="{!! __('Background color')!!}" x-model="background_color">
-                    <x-slot:prefix>Hex</x-slot:prefix>
-                </x-input>
-
-                <input
-                    type="color"
-                    x-model="background_color"
-                    wire:model="background_color"
-                    class="h-8 w-12 mb-[0.46rem] cursor-pointer"
-                    title="{{ __('Choose a color') }}"
-                >
-            </div>
-            @error('background_color')
-                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-            @enderror
-
-            <div x-show="wall_background_choice == 1" class="max-w-full overflow-hidden">
-                <x-file style="max-width: 100% !important" wire:model="new_background_image" label="{!! __('Background image') !!}" 
-                    hint="{{ __('Only image formats allowed') }}"
-                    accept="image/png, image/jpeg"
-                />
-
-                <x-progress wire:loading wire:target="new_background_image" class="progress-primary h-0.5" indeterminate />
-                @if($new_background_image)
-                    <img src="{{ $new_background_image->temporaryUrl() }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
-                @elseif($background_image)
-                    <img src="{{ asset('storage/walls_images/background_images/' . $wall->background_image) }}" class="max-w-xs mx-auto shadow-md object-cover" inline />
+            <x-card title="{{ __('Sharing settings') }}" shadow separator>
+            <x-form wire:submit="updateShareOptions">   
+                @if(!$hasAdvancedSettings)
+                    <x-input label="{{ __('Slug') }}" placeholder="{{ __('Slug') }}" :disabled="!$hasAdvancedSettings" 
+                        wire:model="slug" icon="o-lock-closed"
+                        hint="{!! __('This setting is not available with your current subscription') !!}" inline/>
+                @else
+                <x-input label="{{ __('Slug') }}" placeholder="{{ __('Slug') }}" :disabled="!$hasAdvancedSettings" 
+                    wire:model="slug" icon="o-link"
+                    hint="{!! __('Numbers and lower case letters only, no spaces') !!}" inline/>
                 @endif
-            </div>
-        </div>
-            
-            <!-- For dev and testing ! -->
-            </br>
-            <p style="width: 100%;">Background exemples for testing. Right click to download.</p>
-            <div style="width: 100%; display: flex; justify-content: space-around;">
-                <img src="{{ asset('storage/walls_images/background_images/default_background.jpg') }}" style="width: 45%; height: auto; border: 2px solid #4a00ff;" inline />
-            </div>
-            
-            <x-slot:actions>
-                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallBackground" />
-            </x-slot:actions>
-        </x-form>
-    </x-card>
+                
+                <div x-data="{ position: @entangle('qr_code_position'),
+                    get enabled() {
+                        return this.position !== 'none'
+                    },
 
+                    toggle() {
+                        if (this.enabled) {
+                            this.position = 'none'
+                        } else {
+                            this.position = 'bottom-right'
+                        }
+                    }
+                }" 
+                class="mt-6">
+                
+                    <x-toggle label="{{__('Display QR Code on slideshow?')}}" 
+                    @click="toggle()" right inline
+                    ::checked="enabled"
+                    />
 
+                    <div x-show="enabled" class="flex justify-center">
+                        <div class="relative w-80 mt-4 bg-white aspect-video rounded-2xl overflow-hidden border shadow-lg">
 
+                            {{-- Center content preview --}}
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="bg-white px-4 py-2 rounded-xl text-sm font-medium">
+                                    <img class="w-60 h-full" src="{{ asset('storage/slideshow-layout-preview/layout_caption_on_image.png') }}"/> 
+                                </div>
+                            </div>
 
-    <x-card title="{{ __('Wall layout') }}" class="w-96" shadow separator>
+                            {{-- Top Left --}}
+                            <button
+                                type="button"
+                                @click="position = 'top-left'"
+                                class="absolute top-3 left-3 w-10 h-10 rounded-lg border-2 transition-all duration-200 flex items-center justify-center"
+                                :class="position === 'top-left'
+                                    ? 'bg-primary border-primary scale-110 shadow-lg'
+                                    : 'bg-gray-200 border-gray-200 hover:scale-105'"
+                            >
+                                <x-icon name="o-qr-code" class="w-8 h-8 text-black" />
+                            </button>
 
-        <x-form wire:submit="updateWallLayout">
-            <x-input type="number" label="{{ __('Top margin') }}" placeholder="{{ __('Top margin') }}" wire:model="margin_top" inline >
-                <x-slot:prefix>%</x-slot:prefix>
-            </x-input>
-            <x-input type="number" label="{{__('Bottom margin') }}" placeholder="{{__('Bottom margin') }}" wire:model="margin_bottom" inline >
-                <x-slot:prefix>%</x-slot:prefix>
-            </x-input>
-            <x-input type="number" label="{{ __('Left margin') }}" placeholder="{{ __('Left margin') }}" wire:model="margin_left" inline >
-                <x-slot:prefix>%</x-slot:prefix>
-            </x-input>
-            <x-input type="number" label="{{__('Right margin') }}" placeholder="{{__('Right margin') }}" wire:model="margin_right" inline >
-                <x-slot:prefix>%</x-slot:prefix>
-            </x-input>
+                            {{-- Top Right --}}
+                            <button
+                                type="button"
+                                @click="position = 'top-right'"
+                                class="absolute top-3 right-3 w-10 h-10 rounded-lg border-2 transition-all duration-200 flex items-center justify-center"
+                                :class="position === 'top-right'
+                                    ? 'bg-primary border-primary scale-110 shadow-lg'
+                                    : 'bg-gray-200 border-gray-200 hover:scale-105'"
+                            >
+                                <x-icon name="o-qr-code" class="w-8 h-8 text-black" />
+                            </button>
 
-            <x-slot:actions>
-                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateWallLayout" />
-            </x-slot:actions>
-            
-        </x-form>
-    </x-card>
+                            {{-- Bottom Left --}}
+                            <button
+                                type="button"
+                                @click="position = 'bottom-left'"
+                                class="absolute bottom-3 left-3 w-10 h-10 rounded-lg border-2 transition-all duration-200 flex items-center justify-center"
+                                :class="position === 'bottom-left'
+                                    ? 'bg-primary border-primary scale-110 shadow-lg'
+                                    : 'bg-gray-200 border-gray-200 hover:scale-105'"
+                            >
+                                <x-icon name="o-qr-code" class="w-8 h-8 text-black" />
+                            </button>
 
+                            {{-- Bottom Right --}}
+                            <button
+                                type="button"
+                                @click="position = 'bottom-right'"
+                                class="absolute bottom-3 right-3 w-10 h-10 rounded-lg border-2 transition-all duration-200 flex items-center justify-center"
+                                :class="position === 'bottom-right'
+                                    ? 'bg-primary border-primary scale-110 shadow-lg'
+                                    : 'bg-gray-200 border-gray-200 hover:scale-105'"
+                            >
+                                <x-icon name="o-qr-code" class="w-8 h-8 text-black" />
+                            </button>
 
-
-    <x-card title="{{ __('Images display') }}" class="w-96" shadow separator>
-
-        <x-form wire:submit="updateImagesDisplay">
-            <x-input type="number" label="{{ __('Time per image') }}" placeholder="{{ __('Time per image') }}" wire:model="duration" inline >
-                <x-slot:prefix>{{ __('Seconds')}}</x-slot:prefix>
-            </x-input>
-
-            @php
-                $transition_names = [
-                    ['custom_key' => 'none' , 'name' => __('None')],
-                    ['custom_key' => 'fade' , 'name' => 'Fade'],
-                    ['custom_key' => 'zoom' , 'name' => 'Zoom'],
-                ];
-            @endphp
-
-            <x-select label="Transition" wire:model="transition" :options="$transition_names" option-label="name" option-value="custom_key" />
-
-            <x-slot:actions>
-                <x-button label="{{ __('Update') }}" type="submit" icon="o-paper-airplane" class="btn-primary" spinner="updateImagesDisplay" />
-            </x-slot:actions>
-            
-        </x-form>
-    </x-card>
-
-
-
-
-    <x-card title="{{ __('Captions') }}" class="w-96" shadow separator>
-
-        <x-form wire:submit="updateCaptionsSettings">
-
-            <div x-data="{ allow_captions: @entangle('allow_captions') }">
-                <x-toggle label="{{__('Allow captions?')}}" x-model="allow_captions" wire:model="allow_captions" class="mb-[10px]" right inline/>
-                <template x-if="allow_captions">
-                    <div>
-                        <x-input 
-                            label="{{ __('Max captions characters') }}" 
-                            placeholder="{{ __('Max captions characters') }}" 
-                            wire:model="caption_max_characters" 
-                            type="number" 
-                            min="10" 
-                            max="255"
-                            hint="Min: 10, max: 255"
-                            inline
-                        />
-                        <x-toggle label="{{__('Display caption?')}}" wire:model="caption_on_wall" right inline/>
+                        </div>
+                        
                     </div>
-                </template>
-            </div>
+
+                    {{-- Hidden input for Livewire --}}
+                    <input type="hidden" wire:model="qr_code_position">
+                </div>
 
 
             <x-menu-separator />
