@@ -12,8 +12,7 @@ use Illuminate\Support\Facades\Storage;
 
 /* For fillForDev functionality */
 use Illuminate\Support\Str;
-use Intervention\Image\Laravel\Facades\Image as InterventionImage;
-use Intervention\Image\Drivers\GD\Driver;
+use Intervention\Image\ImageManager;
 
 new class extends Component {
     use Toast, WithPagination, WithoutUrlPagination;
@@ -323,6 +322,7 @@ new class extends Component {
     public function fillForDev(): void
     {
         $sourceImage = base_path('public/storage/N3uG8CaldrDo2jTEv1Foe9GZsPOb9WwglQ3dDR9M.jpg'); // ton image source
+        $imageManager = ImageManager::withDriver(config('image.driver'), ...config('image.options', []));
 
         for ($i = 0; $i < 30; $i++) {
             // Générer un nom unique pour l'image originale
@@ -337,11 +337,11 @@ new class extends Component {
             $webpFilename = 'webp_' . $i . '_' . Str::random(8) . '.webp';
 
             // Generate and save WebP version
-            $webpImage = InterventionImage::read($sourceImage)->encodeByExtension('webp', 80); // 80 : quality (0 to 100)
+            $webpImage = $imageManager->read($sourceImage)->encodeByExtension('webp', 80); // 80 : quality (0 to 100)
             Storage::disk('public')->put('walls_images/webp_images_submitters/' . $webpFilename, $webpImage);
 
             // Generate and save thumbnail
-            $thumb = InterventionImage::read($sourceImage)
+            $thumb = $imageManager->read($sourceImage)
                 ->scale(width: 500)
                 ->encodeByExtension('webp', 80);
 
@@ -446,7 +446,7 @@ new class extends Component {
 
             <button class="btn btn-sm"
                 @click="allSelected['{{ $context }}'] = !allSelected['{{ $context }}']; selected['{{ $context }}'] = allSelected['{{ $context }}'] ? [...document.querySelectorAll('.{{ $context }}-checkbox')].filter(cb => !cb.disabled).map(cb => cb.value) : []">
-                Select all
+                {{ __('Select all') }}
                 <input type="checkbox" class="checkbox" x-model="allSelected['{{ $context }}']" wire:loading.attr="disabled"/>
             </button>
 

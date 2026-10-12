@@ -7,11 +7,15 @@ Allow possibility to add a frame around submitter image, and then download
 Save submitter image at original format for user/sumbitter download
 Add fields to user model so user profiles could have more details, sociétés ?
 setup-wall + display-wall : Video as background on wall display
+Logo dans mail confirm mail.
+Mail confirm adress mail is not sent from register form ?
+setup-wall : Change slideshow margin, put in slideshow style
+
 
 
 /*\ COMMAND LINES /*\
 Reset BDD : 
-php artisan migrate:fresh --seed
+php artisan migrate
 
 Start Vite server : npm run dev (or build)
 

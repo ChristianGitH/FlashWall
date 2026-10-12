@@ -11,16 +11,19 @@ return [
             'name' => 'Standard',
             'description' => 'Pour les événements et projets de petite envergure',
             'price' => '95 €',
+            'support' => 'e-mail',
         ],
         2 => [
             'name' => 'Premium',
             'description' => 'Pour une expérience haut de gamme entièrement personnalisée',
             'price' => '149 €',
+            'support' => 'e-mail et WhatsApp',
         ],
         3 => [
             'name' => 'Pro',
             'description' => 'Pour les équipes et les entreprises',
             'price' => 'Obtenez votre devis personnalisé',
+            'support' => 'e-mail et WhatsApp',
         ],
     ],
 ];

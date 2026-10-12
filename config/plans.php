@@ -19,6 +19,7 @@ return [
                 'advanced_settings' => false,
                 'advanced_moderation' => false,
                 'live_usage_duration' => 0,
+                'support' => null,
             ],
             'description' => 'plans.plans.0.description',
             'price' => 'plans.plans.0.price',
@@ -30,25 +31,27 @@ return [
             'stripe_price_id' => env('STRIPE_STANDARD_PRICE_ID', 'price_standard'), // Set in .env
             'features' => [
                 'walls' => 1,
-                'images_per_wall' => 500,
+                'images_per_wall' => 250,
                 'advanced_settings' => false,
                 'advanced_moderation' => true,
-                'live_usage_duration' => 48,
+                'live_usage_duration' => 24,
+                'support' => 'plans.plans.1.support',
             ],
             'description' => 'plans.plans.1.description',
             'price' => 'plans.plans.1.price',
         ],
 
-        // Business Plan
+        // Premium Plan
         2 => [
             'name' => 'plans.plans.2.name',
             'stripe_price_id' => env('STRIPE_PREMIUM_PRICE_ID', 'price_premium'),
             'features' => [
                 'walls' => 2,
-                'images_per_wall' => 1500,
+                'images_per_wall' => 500,
                 'advanced_settings' => true,
                 'advanced_moderation' => true,
-                'live_usage_duration' => 96,
+                'live_usage_duration' => 48,
+                'support' => 'plans.plans.2.support',
             ],
             'description' => 'plans.plans.2.description',
             'price' => 'plans.plans.2.price',
@@ -63,6 +66,7 @@ return [
                 'advanced_settings' => true,
                 'advanced_moderation' => true,
                 'live_usage_duration' => '∞',
+                'support' => 'plans.plans.3.support',
             ],
             'description' => 'plans.plans.3.description',
             'price' => 'plans.plans.3.price',

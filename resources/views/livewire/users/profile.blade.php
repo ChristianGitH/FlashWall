@@ -5,6 +5,7 @@ use Livewire\Attributes\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule as ValidationRule;
 use Mary\Traits\Toast;
 
@@ -35,12 +36,14 @@ class extends Component {
 
     public int $wallsCount = 0;
 
-    public $selectedTab = 'profile-tab';
+    public $selectedTab = 'plan-tab';
     public $current_plan;
     public $headers = [];
     public $plans_table = [];
     public int $currentPlanLevel = 0;
     public string $current_plan_settings_level = "Basic";
+    public ?string $liveUsageStartsAt = null;
+    public string $userTimezone = 'UTC';
 
     public function mount()
     {
@@ -61,14 +64,6 @@ class extends Component {
         // Get the setting level
         if ($this->current_plan['features']['advanced_settings']) {
             $this->current_plan_settings_level = 'Advanced';
-        }
-
-        // Format live usage duration
-        if ($this->current_plan['features']['live_usage_duration'] == 0 ){
-            $this->current_plan['features']['live_usage_duration'].= ' ' . __('hour');
-        }
-        else{
-            $this->current_plan['features']['live_usage_duration'].= ' ' . __('hours');
         }
 
         $plans = config('plans.plans');
@@ -198,6 +193,114 @@ class extends Component {
         $this->reset(['password', 'password_confirmation', 'current_password']);
     }
 
+    public function scheduleLiveUsage(bool $startNow = false): void
+    {
+        $user = auth()->user();
+
+        if ($user->live_usage_ends_at && $user->live_usage_ends_at->isFuture()) {
+            $this->addError('liveUsageStartsAt', __('Live usage has already been scheduled and cannot be restarted.'));
+            return;
+        }
+
+        if ($startNow) {
+            $startsAt = now()->utc();
+        } else {
+            $this->validate([
+                'liveUsageStartsAt' => ['required', 'date_format:Y-m-d\\TH:i'],
+            ]);
+            $startsAt = Carbon::parse($this->liveUsageStartsAt, $this->displayTimezone)->utc();
+
+            if ($startsAt->isBefore(now()->utc())) {
+                $this->addError('liveUsageStartsAt', __('The start date and time must be now or in the future.'));
+                return;
+            }
+        }
+
+        try {
+            $user->scheduleLiveUsageSession($startsAt);
+        } catch (\LogicException $exception) {
+            $this->addError('liveUsageStartsAt', __($exception->getMessage()));
+            return;
+        }
+
+        $this->liveUsageStartsAt = null;
+        $this->success($startsAt->isFuture()
+            ? __('Live usage scheduled.')
+            : __('Live usage started. It cannot be paused.'));
+    }
+
+    public function setUserTimezone(string $timezone): void
+    {
+        if (in_array($timezone, timezone_identifiers_list(), true)) {
+            $this->userTimezone = $timezone;
+        }
+    }
+
+    public function getDisplayTimezoneProperty(): string
+    {
+        return in_array($this->userTimezone, timezone_identifiers_list(), true)
+            ? $this->userTimezone
+            : 'UTC';
+    }
+
+    public function getLiveUsageStateProperty(): string
+    {
+        $user = auth()->user();
+
+        if (!$user->live_usage_starts_at) {
+            return 'not_started';
+        }
+
+        if ($user->live_usage_starts_at->isFuture()) {
+            return 'scheduled';
+        }
+
+        return $user->hasActiveLiveUsageSession() ? 'active' : 'expired';
+    }
+
+    public function getLiveUsageHoursLeftProperty(): string
+    {
+        $user = auth()->user();
+        $duration = $user->getLiveUsageHoursGranted();
+        $durationLabel = $duration === '∞'
+            ? __('Unlimited')
+            : $duration . ' ' . ($duration == 1 ? __('hour') : __('hours'));
+
+        return match ($this->liveUsageState) {
+            'not_started' => $durationLabel,
+            'scheduled' => $user->live_usage_starts_at && $user->live_usage_ends_at
+                ? $this->formatScheduledLiveUsageHours($user->live_usage_starts_at, $user->live_usage_ends_at)
+                : __('Unlimited'),
+            'active' => $user->live_usage_ends_at
+                ? $this->formatRemainingLiveUsage($user->live_usage_ends_at)
+                : __('Unlimited'),
+            'expired' => $durationLabel,
+            default => '00',
+        };
+    }
+
+    private function formatRemainingLiveUsage($endsAt): string
+    {
+        return $this->formatLiveUsageDuration((int) now()->diffInSeconds($endsAt));
+    }
+
+    private function formatScheduledLiveUsageHours($startsAt, $endsAt): string
+    {
+        $hours = intdiv((int) $startsAt->diffInSeconds($endsAt), 3600);
+
+        return $hours . ' ' . ($hours === 1 ? __('hour') : __('hours'));
+    }
+
+    private function formatLiveUsageDuration(int $seconds): string
+    {
+        $secondsRemaining = max(0, $seconds);
+        $hours = intdiv($secondsRemaining, 3600);
+        $minutes = intdiv($secondsRemaining % 3600, 60);
+        $seconds = $secondsRemaining % 60;
+
+        return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+    }
+
     public function render()
     {
         return view('livewire.users.profile');
@@ -213,101 +316,6 @@ class extends Component {
         label-class="w-full px-3 py-3 text-left text-lg sm:w-auto sm:py-2 sm:text-2xl lg:text-3xl font-bold font-[Figtree] cursor-pointer"
         class="min-w-0 mx-auto"
     >
-
-        <!-- PROFILE TAB -->
-        <x-tab name="profile-tab" label="{{ __('Your profile') }}" class="flex min-w-0 flex-col">
-            {{-- HEADER + PROGRESS --}}
-            <div class="mb-6 w-full max-w-full min-w-0 mx-auto">
-                <div>
-                    <div class="flex justify-between text-sm mb-1">
-                        <span>{{ __('Profile completion') }}</span>
-                        <span>{{ round($this->completion) }}%</span>
-                    </div>
-
-                    <progress class="progress progress-primary w-full" value="{{ $this->completion }}" max="100"></progress>
-                </div>
-            </div>
-
-            {{-- INCENTIVE MESSAGE --}}
-            @if ($this->completion < 100)
-                <div class="alert alert-info mb-6 max-w-full min-w-0 mx-auto items-start text-sm sm:text-base">
-                    {{ __('Complete your profile to improve your experience!') }}
-                </div>
-            @endif
-
-            <x-form wire:submit="updateProfile">
-
-                {{-- PERSONAL INFORMATION --}}
-                <x-card class="mb-6 max-w-full mx-auto" shadow separator>
-                    <x-slot:title>
-                        <div class="flex items-center gap-2">
-                            <x-icon name="o-user" class="w-5 h-5" />
-                            <span>{{ __('Personal information') }}</span>
-                        </div>
-                    </x-slot:title>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <x-input label="{{__('First name')}}" wire:model="first_name" placeholder="{{ __('First name') }}" icon="o-user" inline/>
-                        <x-input label="{{__('Name')}}" wire:model="name" placeholder="{{ __('Name') }}" icon="o-user" inline/>
-                    </div>
-
-                    <x-input label="{{__('E-mail')}}" wire:model="email" placeholder="{{ __('E-mail') }}" icon="o-envelope" inline/>
-                    @if (! $emailVerified)
-                        <div class="alert alert-warning mt-4 items-start text-sm sm:text-base">
-                            {{ __('Your email is not verified. Please check your email box or get a new verification link.') }}
-                            
-                            <a href="{{ route('verification.notice') }}" class="btn btn-sm btn-link h-auto min-h-0 whitespace-normal text-left">
-                                {{ __('Resend verification email') }}
-                            </a>
-                        </div>
-                    @endif
-                </x-card>
-
-                {{-- SECURITY --}}
-                <x-card class="mb-6 max-w-full mx-auto" shadow separator>
-                    <x-slot:title>
-                        <div class="flex items-center gap-2">
-                            <x-icon name="o-shield-check" class="w-5 h-5" />
-                            <span>{{ __('Security') }}</span>
-                        </div>
-                    </x-slot:title>
-
-                    <x-input label="{{__('Current password')}}"
-                            placeholder="{{ __('Current password') }}" 
-                            type="password" 
-                            wire:model="current_password" 
-                            icon="o-key" inline/>
-
-                    <div class="grid md:grid-cols-2 gap-4 mt-4">
-                        <x-input label="{{__('New password')}}" 
-                                placeholder="{{ __('New password') }}" 
-                                type="password" 
-                                wire:model="password" 
-                                icon="o-lock-closed" inline/>
-
-                        <x-input label="{{__('Confirm password')}}"
-                                placeholder="{{ __('Confirm password') }}"
-                                type="password" 
-                                wire:model="password_confirmation" 
-                                icon="o-lock-closed" inline/>
-                    </div>
-
-                    <div class="mt-2 text-left sm:text-right">
-                        <x-button label="{{__('Forgot your password?')}}" class="btn-ghost max-w-full whitespace-normal" link="/forgot-password" />
-                    </div>
-
-                </x-card>
-
-                {{-- ACTION --}}
-                <div class="flex justify-stretch sm:justify-center">
-                    <x-button label="{{__('Save changes')}}" 
-                            type="submit" 
-                            icon="o-check" 
-                            class="btn-primary w-full px-6 sm:w-auto" />
-                </div>
-
-            </x-form>
-        </x-tab>
 
         <!-- PLAN TAB -->
         <x-tab
@@ -332,14 +340,112 @@ class extends Component {
                         color="text-primary"
                         class="font-bold text-xl"/>
 
-                    <x-stat
-                        title="{{ __('Live usage available') }}"
-                        value="{{ $current_plan['features']['live_usage_duration'] }}"
-                        icon="o-clock"
-                        color="text-primary"
-                        class="font-bold text-xl"/>
+                    <div wire:poll.1s.visible>
+                        <x-stat
+                            title="{{ __('Live usage available') }}"
+                            value="{{ $this->liveUsageHoursLeft }}"
+                            icon="o-clock"
+                            color="text-primary"
+                            class="font-bold text-xl"/>
+                    </div>
                 </div>
             </x-card>
+
+            <div x-data x-init="$wire.setUserTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone)">
+            <x-card shadow separator class="w-full max-w-full mx-auto" title="{{ __('Live usage') }}">
+                @php
+                    $liveUsageDuration = auth()->user()->getLiveUsageHoursGranted();
+                    $liveUsageState = $this->liveUsageState;
+                @endphp
+
+                @if ($liveUsageState === 'not_started')
+                    @if ($liveUsageDuration == 0)
+                        <p>{{ __('Your current plan does not include live submissions.') }}</p>
+                    @else
+                        <p class="mb-4">{{ __('Choose when your live submission time begins. Once started, the timer cannot be paused.') }}</p>
+                        <x-input
+                            type="datetime-local"
+                            label="{{ __('Start date and time') }}"
+                            wire:model="liveUsageStartsAt"
+                        />
+                        @error('liveUsageStartsAt')
+                            <div class="alert alert-error mt-3">{{ $message }}</div>
+                        @enderror
+                        <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+                            <x-button
+                                label="{{ __('Schedule start') }}"
+                                icon="o-calendar"
+                                class="btn-primary"
+                                wire:click="scheduleLiveUsage"
+                            />
+                            <x-button
+                                label="{{ __('Start now') }}"
+                                icon="o-play"
+                                class="btn-outline"
+                                wire:click="scheduleLiveUsage(true)"
+                            />
+                        </div>
+                    @endif
+                @elseif ($liveUsageState === 'scheduled')
+                    <div class="alert alert-info">
+                        {{ __('Live submissions are scheduled to start at :date.', ['date' => auth()->user()->live_usage_starts_at->copy()->timezone($this->displayTimezone)->format('d/m/Y, H:i')]) }}
+                        @if (auth()->user()->live_usage_ends_at)
+                            {{ __('And will end at :date.', ['date' => auth()->user()->live_usage_ends_at->copy()->timezone($this->displayTimezone)->format('d/m/Y,  H:i')]) }}
+                        @else
+                            {{ __('Unlimited live submissions are scheduled.') }}
+                        @endif
+                    </div>
+                @elseif ($liveUsageState === 'active')
+                    <div class="alert alert-success">
+                        @if (auth()->user()->live_usage_ends_at)
+                            {{ __('Live submissions are active until :date. The timer cannot be paused.', ['date' => auth()->user()->live_usage_ends_at->copy()->timezone($this->displayTimezone)->format('d/m/Y, H:i')]) }}
+                        @else
+                            {{ __('Unlimited live submissions are active.') }}
+                        @endif
+                    </div>
+                @else
+                <p>{{ __('Ended on :date at :time', [
+                        'date' => auth()->user()->live_usage_ends_at->copy()->timezone($this->displayTimezone)->format('d/m/Y'),
+                        'time' => auth()->user()->live_usage_ends_at->copy()->timezone($this->displayTimezone)->format('H:i'),
+                    ]) }}</p>
+                    <div class="mt-2 alert alert-warning">
+                        {{ __('This live usage period has ended. Wall display remain available, but new submissions are closed.') }}
+                    </div>
+
+                <!-- Give the option to start a new session if the live_usage_hours_granted allows it -->
+                    @if ($liveUsageDuration > 0)
+                        <hr class="my-3 border-base-content/10">
+                        <p class="text-lg text-base-content/70 mb-2">
+                            {{ __('Choose when your next live submission time begins. Once started, the timer cannot be paused.') }}
+                        </p>  
+                        <x-input
+                            type="datetime-local"
+                            label="{{ __('Start date and time') }}"
+                            wire:model="liveUsageStartsAt"
+                        />
+                        @error('liveUsageStartsAt')
+                            <div class="alert alert-error mt-3">{{ $message }}</div>
+                        @enderror
+                        <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+                            <x-button
+                                label="{{ __('Schedule start') }}"
+                                icon="o-calendar"
+                                class="btn-primary"
+                                wire:click="scheduleLiveUsage"
+                            />
+                            <x-button
+                                label="{{ __('Start now') }}"
+                                icon="o-play"
+                                class="btn-outline"
+                                wire:click="scheduleLiveUsage(true)"
+                            />
+                        </div>
+                    @endif
+
+
+                @endif
+            </x-card>
+            </div>
 
             <x-card shadow separator class="w-full mx-auto max-w-full h-full" title="{{ __('Plans') }}">
                     <x-slot:menu>
@@ -474,7 +580,7 @@ class extends Component {
                                             label="{{ __('Get a quote') }}"
                                             icon="o-pencil-square"
                                             class="w-full min-w-[8rem] bg-[#00bafe] btn-sm h-auto min-h-10 whitespace-normal px-2 text-center leading-tight"
-                                            wire:click="selectPlan({{ $level }})"
+                                            link="{{ route('contact') }}"
                                         />
                                     @elseif($level < $currentPlanLevel)
 
@@ -500,6 +606,104 @@ class extends Component {
                 </x-slot:actions>
             </x-card>
         </x-tab>
+
+        <!-- PROFILE TAB -->
+        <x-tab name="profile-tab" label="{{ __('Your profile') }}" class="flex min-w-0 flex-col">
+            {{-- HEADER + PROGRESS --}}
+            <div class="mb-6 w-full max-w-full min-w-0 mx-auto">
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>{{ __('Profile completion') }}</span>
+                        <span>{{ round($this->completion) }}%</span>
+                    </div>
+
+                    <progress class="progress progress-primary w-full" value="{{ $this->completion }}" max="100"></progress>
+                </div>
+            </div>
+
+            {{-- INCENTIVE MESSAGE --}}
+            @if ($this->completion < 100)
+                <div class="alert alert-info mb-6 max-w-full min-w-0 mx-auto items-start text-sm sm:text-base">
+                    {{ __('Complete your profile to improve your experience!') }}
+                </div>
+            @endif
+
+            <x-form wire:submit="updateProfile">
+
+                {{-- PERSONAL INFORMATION --}}
+                <x-card class="mb-6 max-w-full mx-auto" shadow separator>
+                    <x-slot:title>
+                        <div class="flex items-center gap-2">
+                            <x-icon name="o-user" class="w-5 h-5" />
+                            <span>{{ __('Personal information') }}</span>
+                        </div>
+                    </x-slot:title>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <x-input label="{{__('First name')}}" wire:model="first_name" placeholder="{{ __('First name') }}" icon="o-user" inline/>
+                        <x-input label="{{__('Name')}}" wire:model="name" placeholder="{{ __('Name') }}" icon="o-user" inline/>
+                    </div>
+
+                    <x-input label="{{__('E-mail')}}" wire:model="email" placeholder="{{ __('E-mail') }}" icon="o-envelope" inline/>
+                    @if (! $emailVerified)
+                        <div class="alert alert-warning mt-4 items-start text-sm sm:text-base">
+                            {{ __('Your email is not verified. Please check your email box or get a new verification link.') }}
+                            
+                            <a href="{{ route('verification.notice') }}" class="btn btn-sm btn-link h-auto min-h-0 whitespace-normal text-left">
+                                {{ __('Resend verification email') }}
+                            </a>
+                        </div>
+                    @endif
+                </x-card>
+
+                {{-- SECURITY --}}
+                <x-card class="mb-6 max-w-full mx-auto" shadow separator>
+                    <x-slot:title>
+                        <div class="flex items-center gap-2">
+                            <x-icon name="o-shield-check" class="w-5 h-5" />
+                            <span>{{ __('Security') }}</span>
+                        </div>
+                    </x-slot:title>
+
+                    <x-input label="{{__('Current password')}}"
+                            placeholder="{{ __('Current password') }}" 
+                            type="password" 
+                            wire:model="current_password" 
+                            icon="o-key" inline/>
+
+                    <div class="grid md:grid-cols-2 gap-4 mt-4">
+                        <x-input label="{{__('New password')}}" 
+                                placeholder="{{ __('New password') }}" 
+                                type="password" 
+                                wire:model="password" 
+                                icon="o-lock-closed" inline/>
+
+                        <x-input label="{{__('Confirm password')}}"
+                                placeholder="{{ __('Confirm password') }}"
+                                type="password" 
+                                wire:model="password_confirmation" 
+                                icon="o-lock-closed" inline/>
+                    </div>
+
+                    <div class="mt-2 text-left sm:text-right">
+                        <x-button label="{{__('Forgot your password?')}}" class="btn-ghost max-w-full whitespace-normal" link="/forgot-password" />
+                    </div>
+
+                </x-card>
+
+                {{-- ACTION --}}
+                <div class="flex justify-stretch sm:justify-center">
+                    <x-button label="{{__('Save changes')}}" 
+                            type="submit" 
+                            icon="o-check" 
+                            class="btn-primary w-full px-6 sm:w-auto" />
+                </div>
+            </x-card>
+
+            </x-form>
+        </x-tab>
+
+
     </x-tabs>
 
     </div>

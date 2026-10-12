@@ -42,3 +42,7 @@ Zone DNS en cours,
 Fail 2 ban installé non paramétré
 Root user non bloqué
 
+
+
+Mise à jour :
+12/10/2026 : Enabled imagigk for PHP 8.5-FPM. (PNG Qr Code download wasn't working)

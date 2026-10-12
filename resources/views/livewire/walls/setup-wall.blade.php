@@ -1458,7 +1458,7 @@ class extends Component {
                 }" 
                 class="mt-6">
                 
-                    <x-toggle label="{{__('Display QR Code?')}}" 
+                    <x-toggle label="{{__('Display QR Code on slideshow?')}}" 
                     @click="toggle()" right inline
                     ::checked="enabled"
                     />

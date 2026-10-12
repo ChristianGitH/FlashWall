@@ -90,6 +90,10 @@ class extends Component
                         <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>{{ $plan['features']['live_usage_duration'] }} {{ __('hours live usage') }}</li>
                         <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>{{ __('No time limit on dashboard access') }}</li>
                     @endif
+
+                    @if($plan['features']['support'])
+                        <li class="flex items-center gap-2"><span class="inline-flex h-2.5 w-2.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-400"></span>{{ __('Support via') }} {{ __($plan['features']['support']) }}</li>
+                    @endif
                 </ul>
 
                 <x-slot:actions separator>
@@ -97,7 +101,7 @@ class extends Component
                         <span class="badge badge-success">{{ __('Current') }}</span>
                     @elseif($level < $currentPlanLevel && $this->user)
                         <span class="text-sm text-zinc-600 dark:text-zinc-300">
-                            {{ __('Included in') }} {{ $current_plan['name'] ?? $current_plan->name ?? '' }}
+                            {{ __('Included in') }} {{ __($current_plan['name'] ?? $current_plan->name ?? '') }}
                         </span>
                     @elseif(!$this->user)
                         <x-button
